@@ -136,7 +136,7 @@ void ScanConfig::parse_opts(int argc, char **argv) {
     }
 
     if (classification) {
-        string result_file = "./output/results_" + string(classification).substr(14);
+        string result_file = "./output/results_" + string(classification).substr(13);
         snprintf(output, UINT8_MAX, "%s", result_file.c_str());
         if (string(classification).find("ICMP6") != string::npos)
             type = TR_ICMP;
