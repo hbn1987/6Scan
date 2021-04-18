@@ -34,6 +34,7 @@ void iteration_6scan(Stats* stats, IPList6* iplist, int it) {
 void init_6tree(Node_List& nodelist, IPList6* iplist, string seedset) {
     iplist->read_seedset(seedset);
     sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
+    iplist->seeds.erase(unique(iplist->seeds.begin(), iplist->seeds.end()), iplist->seeds.end());
     tree_generation(nodelist, iplist->seeds);
     iplist->seeds.clear();
 }

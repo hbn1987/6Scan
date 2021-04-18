@@ -195,7 +195,8 @@ int main(int argc, char **argv)
                     for (auto &node_pri : node_priority) {
                         stats->node_count = 0;
                         target_generation_6tree(iplist, node_pri.first->subspace, node_pri.first, 0);
-                        loop(&config, iplist, trace, stats);
+                        if (iplist->targets.size())
+                            loop(&config, iplist, trace, stats);
                         iplist->targets.clear();
                         iplist->seeded = false;
                         /* Quit if we've exceeded probe budget */

@@ -24,13 +24,13 @@ make
 -I # Network interface to use.
 -s [6Scan/6Tree/6Gen/Edgy] # Set IPv6 searching strategy. 
 -r # Set max probing rate, 50k pps by default.
--C [Active address file] # Address classification.
+-C [Active address file e.g., ./output/raw_ICMP6_yyyymmdd] # Address classification.
 ```
 ### Example
 ```shell
-./6hit -D hitlist
+./6scan -D hitlist
 # Download the IPv6 hitlist from https://ipv6hitlist.github.io/.
-./6hit -D alias
+./6scan -D alias
 # Download the aliased prefixes from https://ipv6hitlist.github.io/.
 ./6scan -P -t ICMP6 -I [interface e.g., enp2s0f0]
 # Pre-scan the latest local hitlist to make the seedset using ICMPv6 packet.
@@ -38,7 +38,7 @@ make
 # IPv6 Internet-wide scanning with 6Scan strategy using the latest local ICMPv6 seedset.
 ./6scan -t UDP6 -I [interface e.g., enp2s0f0] -s 6Tree
 # IPv6 Internet-wide scanning with 6Tree strategy using the latest local UDPv6 seedset.
-./6scan -C [./output/raw_ICMP6_yyyymmdd] 
+./6scan -C [Active address file e.g., ./output/raw_ICMP6_yyyymmdd] 
 # Classify the active address in the file of raw_ICMP6_yyyymmdd.
 ```
 

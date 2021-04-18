@@ -140,9 +140,9 @@ std::string get_ipv4(std::string ipv6);
 /* 6Scan parameters */
 #define DOWNLOAD "./download" // Hitlist and alias prefixes
 #define OUTPUT "./output" // Output folder
-#define RATE 300 // Probing rate
+#define RATE 50000 // Probing rate
 #define TTL 32
-#define BUDGET 6000 // Budget number, 100000000 by default
+#define BUDGET pow(2, 32) // Budget number, 100000000 by default
 
 /* 6Hit parameters */
 #define BGP_KEY_LEN 8

@@ -39,8 +39,8 @@ ICMP4::ICMP4(struct ip *ip, struct icmp *icmp, uint32_t elapsed): ICMP()
         if (quote->ip_p == IPPROTO_TCP) {
             struct tcphdr *tcp = (struct tcphdr *) (ptr + 8 + (quote->ip_hl << 2));
             rtt = elapsed - ntohl(tcp->th_seq);
-            if (elapsed < ntohl(tcp->th_seq))
-                cerr << "** RTT decode, elapsed: " << elapsed << " encoded: " << ntohl(tcp->th_seq) << endl;
+//            if (elapsed < ntohl(tcp->th_seq))
+//                cout << "** RTT decode, elapsed: " << elapsed << " encoded: " << ntohl(tcp->th_seq) << endl;
             sport = ntohs(tcp->th_sport);
             dport = ntohs(tcp->th_dport);
         }
@@ -63,10 +63,10 @@ ICMP4::ICMP4(struct ip *ip, struct icmp *icmp, uint32_t elapsed): ICMP()
                 timestamp = (payloadlen-2) << 16;
                 rtt = elapsed - timestamp;
             }
-            if (elapsed < timestamp) {
-                cerr << "** RTT decode, elapsed: " << elapsed << " encoded: " << timestamp << endl;
-                sport = dport = 0;
-            }
+//            if (elapsed < timestamp) {
+//                cout << "** RTT decode, elapsed: " << elapsed << " encoded: " << timestamp << endl;
+//                sport = dport = 0;
+//            }
         }
 
         /* Original probe was ICMP */
@@ -80,10 +80,10 @@ ICMP4::ICMP4(struct ip *ip, struct icmp *icmp, uint32_t elapsed): ICMP()
 
         /* According to Malone PAM 2007, 2% of replies have bad IP dst. */
         uint16_t sum = in_cksum((unsigned short *)&(quote->ip_dst), 4);
-        if (sport != sum) {
-            cerr << "** IP dst in ICMP reply quote invalid!" << endl;
-            sport = dport = 0;
-        }
+//        if (sport != sum) {
+//            cout << "** IP dst in ICMP reply quote invalid!" << endl;
+//            sport = dport = 0;
+//        }
 
         /* Finally, does this ICMP packet have an extension (RFC4884)? */
         length = (ntohl(icmp->icmp_void) & 0x00FF0000) >> 16;
@@ -190,8 +190,8 @@ ICMP6::ICMP6(struct ip6_hdr *ip, struct icmp6_hdr *icmp, uint32_t elapsed) : ICM
     uint32_t diff = qpayload->diff;
     if (elapsed >= diff)
         rtt = elapsed - diff;
-    else
-        cerr << "RTT decode, elapsed: " << elapsed << " encoded: " << diff << endl;
+//    else
+//        cout << "RTT decode, elapsed: " << elapsed << " encoded: " << diff << endl;
 
     /* ICMP6 echo replies only quote the 6scan payload, not the full packet! */
     if (((type == ICMP6_TIME_EXCEEDED) and (code == ICMP6_TIME_EXCEED_TRANSIT)) or
@@ -212,7 +212,7 @@ ICMP6::ICMP6(struct ip6_hdr *ip, struct icmp6_hdr *icmp, uint32_t elapsed) : ICM
         }
         uint16_t sum = in_cksum((unsigned short *)&(quote->ip6_dst), 16);
         if (sport != sum) {
-            cerr << "IP6 dst in ICMP6 reply quote invalid!" << endl;
+//            cout << "IP6 dst in ICMP6 reply quote invalid!" << endl;
             sport = dport = 0;
         }
     }
