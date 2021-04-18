@@ -166,10 +166,9 @@ int main(int argc, char **argv)
                 for (auto i = 0; i < iteration; ++i) {
                     iteration_6scan(stats, iplist, i);
                     loop(&config, iplist, trace, stats);
-                    cout << "Probing in iteration: " << i+1 << ", budget consumption: " << stats->count;
+                    cout << "Probing in iteration: " << i+1 << ", budget consumption: " << stats->count << endl;
                     iplist->targets.clear();
                     iplist->seeded = false;
-                    cout << "\r";
                     if (stats->count >= BUDGET)
                         break;
                 }
@@ -225,7 +224,7 @@ int main(int argc, char **argv)
 
             /* Scanning with Edgy strategy */
             else if (config.strategy == Edgy) {
-            cout << "Scanning with Edgy strategy...\n" << endl;
+            cout << "Scanning with Edgy strategy..." << endl;
             iplist->read_seedset(seedset);
             for (auto seed : iplist->seeds) {
                 stats->edgy.push_back(seed);
@@ -238,7 +237,7 @@ int main(int argc, char **argv)
                 }
                 stats->edgy.clear();
                 target_generation_edgy(iplist, edgy_set, mask);
-                cout << "\rProbing /" << mask << "'s every /" << mask + 8 << " prefixes...";
+                cout << "Probing /" << mask << "'s every /" << mask + 8 << " prefixes..." << endl;
                 loop(&config, iplist, trace, stats);
                 iplist->targets.clear();
                 iplist->seeded = false;
@@ -251,7 +250,7 @@ int main(int argc, char **argv)
         }
 
         stats->end_time();
-        cout << "\nWaiting " << SHUTDOWN_WAIT << "s for outstanding replies..." << endl;
+        cout << "Waiting " << SHUTDOWN_WAIT << "s for outstanding replies..." << endl;
         sleep(SHUTDOWN_WAIT);
         if(config.strategy)
             stats->dump(config.out);
