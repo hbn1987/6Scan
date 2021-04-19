@@ -73,9 +73,9 @@ static const char *Tr_Type_String[] = {"", "ICMP6", "ICMP", "UDP6", "UDP",
                                        "TCP6_SYN", "TCP_SYN", "TCP6_ACK",
                                        "TCP_ACK", "ICMP_REPLY"};
 
-typedef enum {Scan6 = 1, Tree6, Gen6, Edgy, US} search_strategy;
+typedef enum {Scan6 = 1, Tree6, Gen6, Edgy} search_strategy;
 
-static const char *search_strategy_str[] = {"", "6Scan", "6Tree", "6Gen", "Edgy", "US"};
+static const char *search_strategy_str[] = {"", "6Scan", "6Tree", "6Gen", "Edgy"};
 
 #define warn(x...) do {fprintf(stderr,"*** Warn: "); fprintf(stderr,x); fprintf(stderr,"\n");} while (0)
 #define fatal(x...) do {fprintf(stderr,"*** Fatal: "); fprintf(stderr,x); fprintf(stderr,"\n"); exit(-1);} while (0)
