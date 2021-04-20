@@ -63,14 +63,20 @@ void Sketch::Getsk(std::unordered_map<std::string, float>& sk_map)
     for (auto i = 0; i < sk_.depth*sk_.width; ++i) {
         total_count += sk_.counts[i]->count;
     }
-    for (auto i = 0; i < sk_.depth*sk_.width; ++i)
-    {
+    int tmp_sum = sk_.sum;
+    for (auto i = 0; i < sk_.depth*sk_.width; ++i) {
+        float reward = (sk_.counts[i]->sum + sk_.counts[i]->count)*1.0/(tmp_sum + total_count);
+        if (reward > 0.5) {
+            sk_.counts[i]->count = 0;
+            sk_.sum -= sk_.counts[i]->sum;
+            sk_.counts[i]->sum = 0;
+        }
+    }
+    for (auto i = 0; i < sk_.depth*sk_.width; ++i) {
         if (sk_.counts[i]->sum) {
             float reward = (sk_.counts[i]->sum + sk_.counts[i]->count)*1.0/(sk_.sum + total_count);
-            if (reward < 0.5) {
-                PAIR tmp(sk_.counts[i]->key, reward);
-                sk_map.insert(tmp);
-            }
+            PAIR tmp(sk_.counts[i]->key, reward);
+            sk_map.insert(tmp);
         }
     }
 }
