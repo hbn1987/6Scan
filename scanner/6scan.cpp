@@ -263,11 +263,6 @@ int main(int argc, char **argv)
     /* Classify the active addresses */
     if (config.classification) {
         cout << "Address classification..." << endl;
-        IPList4 *iplist = new IPList4();
-        iplist->setkey(config.seed);
-        Stats *stats = new Stats(0);
-        Traceroute4 *trace = new Traceroute4(&config, stats);
-        trace->unlock();
 
         uint64_t received = 0;       // Number of probes received
         uint64_t active_count = 0; // Found active addresses
@@ -358,6 +353,12 @@ int main(int argc, char **argv)
                 small_integer++;
         }
 
+        IPList4 *iplist = new IPList4();
+        iplist->setkey(config.seed);
+        Stats *stats = new Stats(0);
+        Traceroute4 *trace = new Traceroute4(&config, stats);
+        trace->unlock();
+
         iplist->read_result(results);
         if (iplist->targets.size()) {
             loop(&config, iplist, trace, stats);
@@ -413,6 +414,16 @@ int main(int argc, char **argv)
         fprintf(config.out, "# Hit active addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", active_count, (float) active_count * 100 / BUDGET);
         fprintf(config.out, "# Discovered new addresses: Number %" PRId64 ", Discovery rate %2.2f%%\n", new_count, (float) new_count * 100 / BUDGET);
         fprintf(config.out, "# IID allocation schemas: Alias %" PRId64 " (%2.2f%%), Small-integer %" \
+        PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
+        PRId64 " (%2.2f%%).\n", \
+        alias_count, (float) alias_count * 100 / new_count, small_integer, (float) small_integer * 100 / new_count, \
+        randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
+        EUI64_count, (float) EUI64_count * 100 / new_count);
+        
+        fprintf(stdout, "# Received ratio: %2.2f%%\n", (float) received * 100 / BUDGET);
+        fprintf(stdout, "# Hit active addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", active_count, (float) active_count * 100 / BUDGET);
+        fprintf(stdout, "# Discovered new addresses: Number %" PRId64 ", Discovery rate %2.2f%%\n", new_count, (float) new_count * 100 / BUDGET);
+        fprintf(stdout, "# IID allocation schemas: Alias %" PRId64 " (%2.2f%%), Small-integer %" \
         PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
         PRId64 " (%2.2f%%).\n", \
         alias_count, (float) alias_count * 100 / new_count, small_integer, (float) small_integer * 100 / new_count, \

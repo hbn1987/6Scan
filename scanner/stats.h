@@ -43,5 +43,9 @@ class Stats {
         fprintf(out, "# Budget: %" PRId64 "\n", count);
         fprintf(out, "# Probing rate: %2.2fpps\n", (float) count / t);
         fprintf(out, "# Time cost: Total %2.2fs, Preparation %2.2fs, Scanning %2.2fs\n", t, m, t-m);
+
+        fprintf(stdout, "# Budget: %" PRId64 "\n", count);
+        fprintf(stdout, "# Probing rate: %2.2fpps\n", (float) count / t);
+        fprintf(stdout, "# Time cost: Total %2.2fs, Preparation %2.2fs, Scanning %2.2fs\n", t, m, t-m);
     };
 };
