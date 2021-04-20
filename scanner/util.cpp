@@ -234,7 +234,7 @@ string ipv4_check(string ip) {
             return "";
         if (ip[i] == ':') {
             string tmp = ip.substr(flag, i-flag);
-            if (atoi(tmp.c_str()) > 256)
+            if (atoi(tmp.c_str()) > 255)
                 return "";
             else {
                 flag = i + 1;
