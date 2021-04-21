@@ -6,6 +6,12 @@ Towards Efficient Internet-wide Scanning in IPv6 Network
 
 Efficient network scanner which could scan the IPv6 network using various search strategies.
 
+## Require
+
+```shell
+apt-get install libcurl-dev, libjsoncpp-dev
+```
+
 ## Build
 
 ```shell
@@ -18,7 +24,7 @@ make
 
 ### Option
 ```shell
--D [hitlist/alias] # Download the IPv6 hitlist/aliased prefixes.
+-D [hitlist/alias/country-xx/as-xxxx] # Download the IPv6 hitlist/aliased prefixes/country prefix resource list/AS announced prefixes.
 -P # Pre-scan the hitlist.
 -t [ICMP6/TCP6_SYN/TCP6_ACK/UDP6] # Set probe type.
 -I # Network interface to use.
@@ -32,6 +38,10 @@ make
 # Download the IPv6 hitlist from https://ipv6hitlist.github.io/.
 ./6scan -D alias
 # Download the aliased prefixes from https://ipv6hitlist.github.io/.
+./6scan -D country-cn
+# Download ASNs, IPv4 ranges and IPv6 prefixes associated with China form https://stat.ripe.net/docs/data_api/.
+./6scan -D as-3333
+# Download all announced prefixes associated with AS 3333 form https://stat.ripe.net/docs/data_api/.
 ./6scan -P -t ICMP6 -I [interface e.g., enp2s0f0]
 # Pre-scan the latest local hitlist to make the seedset using ICMPv6 packet.
 ./6scan -t ICMP6 -I [interface e.g., enp2s0f0] -s 6Scan

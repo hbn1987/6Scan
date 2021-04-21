@@ -61,8 +61,7 @@ void data_download(string type)
     if (type == "hitlist") {
         filename_str = string("hitlist_") + querytime;
         it = find(file_names.begin(), file_names.end(), filename_str);
-        if (it == file_names.end())
-        {
+        if (it == file_names.end()) {
             cout << "Start downloading the hitlist" << endl;
             filename_str= DOWNLOAD + string("/") + filename_str + string(".xz");
             filename = filename_str.c_str();
@@ -73,14 +72,12 @@ void data_download(string type)
             int sysret = system(cmd.c_str());
             if (sysret == -1)
                 cout << "File decompression or download failed" << endl;
-        }
-        else
+        } else
             cout << "The hitlist has already been downloaded today" << endl;
     } else if (type == "alias") {
         filename_str = string("aliased_prefixes_") + querytime;
         it = find(file_names.begin(), file_names.end(), filename_str);
-        if (it == file_names.end())
-        {
+        if (it == file_names.end()) {
             cout << "Start downloading the aliased prefixes" << endl;
             filename_str= DOWNLOAD + string("/") + filename_str + string(".xz");
             filename = filename_str.c_str();
@@ -91,6 +88,29 @@ void data_download(string type)
             int sysret = system(cmd.c_str());
             if (sysret == -1)
                 cout << "File decompression or download failed" << endl;
+        }
+    } else if (type.substr(0, 7) == "country") {
+        filename_str = string("country_resource_list") + querytime;
+        it = find(file_names.begin(), file_names.end(), filename_str);
+        if (it == file_names.end()) {
+            cout << "Start downloading the country resource list" << endl;
+            filename_str= DOWNLOAD + string("/") + filename_str + string(".json");
+            filename = filename_str.c_str();
+            url = "https://stat.ripe.net/data/country-resource-list/data.json?resource=" + type.substr(type.size()-2);
+            download_raw_data(filename, url);
+            cout << "Finish downloading the country resource list" << endl;
+        }
+    } else if (type.substr(0, 2) == "as") {
+        filename_str = string("as_announced_prefixes") + querytime;
+        it = find(file_names.begin(), file_names.end(), filename_str);
+        if (it == file_names.end()) {
+            cout << "Start downloading the as announced prefixes" << endl;
+            filename_str= DOWNLOAD + string("/") + filename_str + string(".json");
+            filename = filename_str.c_str();
+            std::size_t idx = type.find("-");
+            url = "https://stat.ripe.net/data/announced-prefixes/data.json?resource=AS" + type.substr(idx+1);
+            download_raw_data(filename, url);
+            cout << "Finish downloading the as announced prefixes" << endl;
         }
     }
 }
