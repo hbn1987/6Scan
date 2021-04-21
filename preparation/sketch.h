@@ -15,6 +15,8 @@
 #include <time.h>
 #include "hash.h"
 
+#define Alias_Threshold 0.3
+
 class Sketch {
 
     typedef struct SBUCKET_type {

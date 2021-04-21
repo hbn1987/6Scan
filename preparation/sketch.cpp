@@ -66,10 +66,11 @@ void Sketch::Getsk(std::unordered_map<std::string, float>& sk_map)
     int tmp_sum = sk_.sum;
     for (auto i = 0; i < sk_.depth*sk_.width; ++i) {
         float reward = (sk_.counts[i]->sum + sk_.counts[i]->count)*1.0/(tmp_sum + total_count);
-        if (reward > 0.5) {
+        if (reward > Alias_Threshold) {
             sk_.counts[i]->count = 0;
             sk_.sum -= sk_.counts[i]->sum;
             sk_.counts[i]->sum = 0;
+            std::cout << "Alias alert: " << sk_.counts[i]->key << std::endl;
         }
     }
     for (auto i = 0; i < sk_.depth*sk_.width; ++i) {
