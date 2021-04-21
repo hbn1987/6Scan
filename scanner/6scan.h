@@ -62,8 +62,6 @@
 #include "libcperm/cperm.h"
 #include "preparation/sketch.h"
 #include "preparation/6tree.h"
-#include "classification/patricia.h"
-
 
 typedef enum {TR_ICMP6 = 1, TR_ICMP, TR_UDP6, TR_UDP,
               TR_TCP6_SYN, TR_TCP_SYN, TR_TCP6_ACK,
@@ -136,6 +134,7 @@ std::string get_ipv4(std::string ipv6);
 #include "icmp.h"
 #include "download.h"
 #include "strategy.h"
+#include "patricia.h"
 
 /* 6Scan parameters */
 #define DOWNLOAD "./download" // Hitlist and alias prefixes

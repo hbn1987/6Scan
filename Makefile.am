@@ -15,6 +15,7 @@ bin_PROGRAMS = 6scan
   scanner/util.cpp \
   scanner/download.cpp \
   scanner/strategy.cpp \
+  scanner/patricia.cpp \
   libcperm/cperm.c \
   libcperm/prefix.c \
   libcperm/cycle.c \
@@ -23,8 +24,7 @@ bin_PROGRAMS = 6scan
   libcperm/ciphers/speck.c \
   preparation/hash.cpp \
   preparation/sketch.cpp \
-  preparation/6tree.cpp \
-  classification/patricia.cpp
+  preparation/6tree.cpp
 
 include_HEADERS = \
   scanner/6scan.h \
@@ -36,6 +36,7 @@ include_HEADERS = \
   scanner/trace.h \
   scanner/download.h \
   scanner/strategy.h \
+  scanner/patricia.h \
   libcperm/cperm.h \
   libcperm/cperm-internal.h \
   libcperm/cycle.h \
@@ -46,5 +47,4 @@ include_HEADERS = \
   libcperm/ciphers/speck.h \
   preparation/hash.h \
   preparation/sketch.h \
-  preparation/6tree.h \
-  classification/patricia.h
+  preparation/6tree.h
