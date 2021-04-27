@@ -205,6 +205,8 @@ Cluster_Pri& cluster_pri, std::vector<std::string>& seeds)
 
 void target_generation_6gen(IPList6* iplist, string subspace, int start_idx)
 {
+    if (iplist->targets.size() >= BUDGET )
+        return;
     int idx;
     for (idx = start_idx; idx < 32; idx++)
     {
