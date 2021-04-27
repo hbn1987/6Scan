@@ -15,7 +15,7 @@
 #include <time.h>
 #include "hash.h"
 
-#define Alias_Threshold 0.3
+#define Alias_Threshold 0.4
 
 class Sketch {
 
