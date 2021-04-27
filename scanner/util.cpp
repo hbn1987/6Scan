@@ -242,7 +242,11 @@ string ipv4_check(string ip) {
             }
         }
     }
-    ipv4 += ip.substr(flag);
+    if (atoi(ip.substr(flag).c_str()) > 255) {
+        return "";
+    } else {
+        ipv4 += ip.substr(flag);
+    }
     return ipv4;
 }
 
