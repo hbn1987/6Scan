@@ -162,12 +162,8 @@ int get_dimension(string cluster) {
 void AHC(std::vector<std::string>& even_seeds, std::vector<std::string>& odd_seeds,
 std::vector<std::string>& cluster_seeds, std::vector<std::string>& clusters)
 {
-    if (cluster_seeds.size() == 0)
+    if (cluster_seeds.size() <= 1)
         return;
-    else if (cluster_seeds.size() == 1) {
-        clusters.push_back(cluster_seeds[cluster_seeds.size() - 1]);
-        return;
-    }
 
     if (cluster_seeds.size() > 1 && cluster_seeds.size() % 2 != 0) {
         cluster_seeds[cluster_seeds.size() - 2] = merge(cluster_seeds[cluster_seeds.size() - 2],
@@ -237,6 +233,7 @@ void init_6gen(IPList6* iplist, string seedset) {
 
     cluster_seeds.assign(iplist->seeds.begin(), iplist->seeds.end());
     AHC(even_seeds, odd_seeds, cluster_seeds, clusters);
+    cout << "Probing in subspace: " << clusters[clusters.size()-1] << endl;
     target_generation_6gen(iplist, clusters[clusters.size()-1], 0);
 
     iplist->seeds.clear();
