@@ -13,18 +13,19 @@ bin_PROGRAMS = 6scan
   scanner/trace4.cpp \
   scanner/trace6.cpp \
   scanner/util.cpp \
-  scanner/download.cpp \
-  scanner/strategy.cpp \
-  scanner/patricia.cpp \
+  strategy/strategy.cpp \
+  strategy/download.cpp \
+  strategy/patricia.cpp \
+  strategy/hash.cpp \
+  strategy/sketch.cpp \
+  strategy/6tree.cpp \
+  strategy/util.cpp \
   libcperm/cperm.c \
   libcperm/prefix.c \
   libcperm/cycle.c \
   libcperm/ciphers/rc5.c \
   libcperm/ciphers/rc5-16.c \
-  libcperm/ciphers/speck.c \
-  preparation/hash.cpp \
-  preparation/sketch.cpp \
-  preparation/6tree.cpp
+  libcperm/ciphers/speck.c
 
 include_HEADERS = \
   scanner/6scan.h \
@@ -34,9 +35,12 @@ include_HEADERS = \
   scanner/iplist.h \
   scanner/stats.h \
   scanner/trace.h \
-  scanner/download.h \
-  scanner/strategy.h \
-  scanner/patricia.h \
+  strategy/strategy.h \
+  strategy/download.h \
+  strategy/6tree.h \
+  strategy/hash.h \
+  strategy/sketch.h \
+  strategy/patricia.h \
   libcperm/cperm.h \
   libcperm/cperm-internal.h \
   libcperm/cycle.h \
@@ -44,7 +48,4 @@ include_HEADERS = \
   libcperm/prefix.h \
   libcperm/ciphers/rc5-16.h \
   libcperm/ciphers/rc5.h \
-  libcperm/ciphers/speck.h \
-  preparation/hash.h \
-  preparation/sketch.h \
-  preparation/6tree.h
+  libcperm/ciphers/speck.h

@@ -1,4 +1,3 @@
-#include <ctime>
 #include "6scan.h"
 
 static struct option long_options[] = {
@@ -71,6 +70,8 @@ void ScanConfig::parse_opts(int argc, char **argv) {
         case 's':
             if (strcmp(optarg, "6Scan") == 0) {
                 strategy = Scan6;
+            } else if(strcmp(optarg, "6Hit") == 0) {
+                strategy = Hit6;
             } else if(strcmp(optarg, "6Tree") == 0) {
                 strategy = Tree6;
             } else if(strcmp(optarg, "6Gen") == 0) {

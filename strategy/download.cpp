@@ -1,12 +1,6 @@
-// Download the hitlist
-
+#include "strategy.h"
 #include <curl/curl.h>
 #include <curl/easy.h>
-#include <string>
-#include <ctime>
-#include <dirent.h>
-#include <fstream>
-#include "6scan.h"
 
 bool download_raw_data(const char* filename, string url) {
     CURL* curl;

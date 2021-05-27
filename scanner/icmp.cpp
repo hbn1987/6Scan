@@ -325,7 +325,6 @@ void ICMP::write(FILE ** out, char *src, char *target) {
 }
 
 void ICMP4::write(FILE ** out, Stats* stats) {
-    cout << "in write" << endl;
     if ((sport == 0) and (dport == 0))
         return;
     char src[INET_ADDRSTRLEN];
@@ -357,13 +356,13 @@ void ICMP6::write(FILE ** out, Stats* stats) {
     }
     ICMP::write(out, src, target);
     switch (stats->strategy) {
-        case Scan6:
+        case Hit6:
             stats->sk->Update(seed2vec(src));
             break;
-        case Tree6:
-            if (strcmp(src, target) == 0)
-                stats->node_count++;
-            break;
+//        case Tree6:
+//            if (strcmp(src, target) == 0)
+//                stats->node_count++;
+//            break;
         case Edgy:
             stats->edgy.push_back(seed2vec(src));
     }

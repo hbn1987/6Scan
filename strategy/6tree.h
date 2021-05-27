@@ -1,11 +1,3 @@
-#ifndef TREE_H
-#define TREE_H
-
-#include <iostream>
-#include <string>
-#include <vector>
-#include <algorithm>
-
 // Space tree node
 struct SpaceTreeNode
 {
@@ -25,13 +17,14 @@ struct SpaceTreeNode
     int dim_num = 0;
     // Number of active addresses in this dimension
     int active = 0;
-
+    // The subspace of the node's ancestor
+    std::string ancestor;
 };
 
 typedef std::vector<struct SpaceTreeNode*> Node_List;
 
 void tree_generation(Node_List& nodelist, std::vector<std::string>& active_seeds);
 
-void release_tree(struct SpaceTreeNode *node);
+void tree_generation_6scan(Node_List& nodelist, std::vector<std::string>& active_seeds);
 
-#endif
+void release_tree(struct SpaceTreeNode *node);

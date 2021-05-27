@@ -151,7 +151,7 @@ int main(int argc, char **argv)
             loop(&config, iplist, trace, stats);
         }
 
-        /* IPv6 scanning with different strategy */
+        /* IPv6 scanning with different strategies */
         if (config.strategy) {
             string type = Tr_Type_String[config.type];
             string seedset = get_seedset(type);
@@ -160,11 +160,35 @@ int main(int argc, char **argv)
             /* Scanning with 6Scan strategy */
             if (config.strategy == Scan6) {
                 cout << "Scanning with 6Scan strategy..." << endl;
-                init_6scan(stats,seedset); // Init and update prefix sketch
+                Node_List nodelist;
+                unordered_set<string> scanned_subspace;
+                init_6scan(nodelist, iplist, seedset); // Partition the candidate scanning space
+                stats->prepare_time(); // Calculate the time cost of preparation
+                for (auto i = 0; i < nodelist.size(); ++i) {
+                    if (scanned_subspace.find(nodelist[i]->subspace) == scanned_subspace.end()) {
+                        scanned_subspace.insert(nodelist[i]->subspace);
+                        target_generation_6scan(iplist, nodelist[i]->subspace, 0);
+                        if (iplist->targets.size())
+                            loop(&config, iplist, trace, stats);
+                        iplist->targets.clear();
+                        iplist->seeded = false;
+                        cout << "Probing in subspace: " << nodelist[i]->subspace << ", budget consumption: " << stats->count << endl;
+                        if (stats->count >= BUDGET)
+                            break;
+                    }
+                }
+                release_tree(nodelist);
+                exit(-1);
+            }
+
+            /* Scanning with 6Hit strategy */
+            else if (config.strategy == Hit6) {
+                cout << "Scanning with 6Hit strategy..." << endl;
+                init_6hit(stats,seedset); // Init and update prefix sketch
                 stats->prepare_time(); // Calculate the time cost of preparation
                 int iteration = pow(16, SUBNET_LEN);
                 for (auto i = 0; i < iteration; ++i) {
-                    iteration_6scan(stats, iplist, i);
+                    iteration_6hit(stats, iplist, i);
                     loop(&config, iplist, trace, stats);
                     cout << "Probing in iteration: " << i+1 << ", budget consumption: " << stats->count << endl;
                     iplist->targets.clear();
@@ -180,35 +204,17 @@ int main(int argc, char **argv)
                 Node_List nodelist;
                 init_6tree(nodelist, iplist, seedset); // Partition the candidate scanning space
                 stats->prepare_time(); // Calculate the time cost of preparation
-                Node_Pri node_priority;
-                for (auto iter = 1; iter < 32; ++iter) {
-                    for (auto &node : nodelist) {
-                        if (node->dim_num == iter) {
-                            float pri = 0;
-                            if (node->children_num)
-                                pri = (float)node->active/(node->children_num * pow(16, iter-1));
-                            node_priority.push_back(make_pair(node, pri));
-                        }
-                    }
-                    sort(node_priority.begin(), node_priority.end(), Node_Cmp());
-                    for (auto &node_pri : node_priority) {
-                        stats->node_count = 0;
-                        target_generation_6tree(iplist, node_pri.first->subspace, node_pri.first, 0);
+                for (auto &node : nodelist) {
+                    if (node->dim_num) {
+                        target_generation_6tree(iplist, node->subspace, node, 0);
                         if (iplist->targets.size())
                             loop(&config, iplist, trace, stats);
                         iplist->targets.clear();
                         iplist->seeded = false;
-                        /* Quit if we've exceeded probe budget */
                         if (stats->count >= BUDGET)
                             break;
-                        sleep(1); // Waiting 1s for outstanding replies...
-                        if (node_pri.first->parent)
-                            node_pri.first->parent->active += stats->node_count; // Update parent node's activity
+                        cout << "Probing in subspace: " << node->subspace << ", budget consumption: " << stats->count << endl;
                     }
-                    node_priority.clear();
-                    if (stats->count >= BUDGET)
-                        break;
-                    cout << "Probing in iteration: " << iter << ", budget consumption: " << stats->count << endl;
                 }
                 release_tree(nodelist);
             }

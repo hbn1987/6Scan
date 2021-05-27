@@ -1,5 +1,3 @@
-#include "6scan.h"
-
 #ifdef _LINUX
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>

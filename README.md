@@ -28,7 +28,7 @@ make
 -P # Pre-scan the hitlist.
 -t [ICMP6/TCP6_SYN/TCP6_ACK/UDP6] # Set probe type.
 -I # Network interface to use.
--s [6Scan/6Tree/6Gen/Edgy] # Set IPv6 searching strategy. 
+-s [6Scan/6Hit/6Tree/6Gen/Edgy] # Set IPv6 searching strategy. 
 -r # Set max probing rate, 50k pps by default.
 -C [Active address file e.g., ./output/raw_ICMP6_yyyymmdd] # Address classification.
 ```
@@ -76,13 +76,11 @@ and the address classification results in the file that begin with results_.
 >R. Beverly, R. Durairajan, D. Plonka, and J. P. Rohrer, “In the IP of the Beholder: Strategies for Active IPv6 Topology Discovery,” in IMC, 2018.
 ### IPv6 hitlist
 >O. Gasser, Q. Scheitle, S. Gebhard, and G. Carle, “Scanning the IPv6 Internet: Towards a Comprehensive Hitlist,” in TMA, 2016.
-### Search strategy (6Scan, 6Tree, 6Gen, Edgy)
+### Search strategy
 >B. Hou, Z. Cai, K. Wu, J. Su, and Y. Xiong, “6Hit: A Reinforcement Learning-based Approach to Target Generation for Internet-wide IPv6 Scanning,” in INFOCOM, 2021. \
 >Z. Liu, Y. Xiong, X. Liu, W. Xie, and P. Zhu, “6Tree: Efficient Dynamic Discovery of Active Addresses in the IPv6 Address Space,” Comput. Networks, 2019. \
 >A. Murdock, F. Li, P. Bramsen, Z. Durumeric, and V. Paxson, “Target Generation for Internet-Wide IPv6 Scanning,” in IMC, 2017. \
 >E. C. Rye and R. Beverly, “Discovering the IPv6 Network Periphery,” in PAM, 2020.
-### Prefix Sketch
->L. Tang, Q. Huang, and P.P.C. Lee, “MV-Sketch: A Fast and Compact Invertible Sketch for Heavy Flow Detection in Network Data Streams,” in INFOCOM, 2019.
 ### Address classification
 >Q. Hu and N. Brownlee, “How Interface ID Allocation Mechanisms are Performed in IPv6,” in CoNEXT Student Workshop, 2014.
 ### Alias resolution

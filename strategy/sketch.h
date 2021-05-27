@@ -1,21 +1,4 @@
-#ifndef SKETCH_H
-#define SKETCH_H
-
-#include <vector>
-#include <unordered_map>
-#include <utility>
-#include <cstring>
-#include <cmath>
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <string>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <time.h>
 #include "hash.h"
-
-#define Alias_Threshold 0.4
 
 class Sketch {
 
@@ -55,5 +38,3 @@ class Sketch {
 };
 
 typedef std::pair<std::string, float> PAIR;
-
-#endif

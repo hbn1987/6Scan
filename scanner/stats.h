@@ -1,4 +1,5 @@
 #include "6scan.h"
+#include "strategy/sketch.h"
 
 class Stats {
     public:

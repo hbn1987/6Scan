@@ -57,11 +57,13 @@
 #include <map>
 #include <algorithm>
 #include <unordered_set>
+#include <unordered_map>
 #include <bitset>
+#include <utility>
+#include <cstring>
+#include <ctime>
 
 #include "libcperm/cperm.h"
-#include "preparation/sketch.h"
-#include "preparation/6tree.h"
 
 typedef enum {TR_ICMP6 = 1, TR_ICMP, TR_UDP6, TR_UDP,
               TR_TCP6_SYN, TR_TCP_SYN, TR_TCP6_ACK,
@@ -71,9 +73,9 @@ static const char *Tr_Type_String[] = {"", "ICMP6", "ICMP", "UDP6", "UDP",
                                        "TCP6_SYN", "TCP_SYN", "TCP6_ACK",
                                        "TCP_ACK", "ICMP_REPLY"};
 
-typedef enum {Scan6 = 1, Tree6, Gen6, Edgy} search_strategy;
+typedef enum {Scan6 = 1, Hit6, Tree6, Gen6, Edgy} search_strategy;
 
-static const char *search_strategy_str[] = {"", "6Scan", "6Tree", "6Gen", "Edgy"};
+static const char *search_strategy_str[] = {"", "6Scan", "6Hit", "6Tree", "6Gen", "Edgy"};
 
 #define warn(x...) do {fprintf(stderr,"*** Warn: "); fprintf(stderr,x); fprintf(stderr,"\n");} while (0)
 #define fatal(x...) do {fprintf(stderr,"*** Fatal: "); fprintf(stderr,x); fprintf(stderr,"\n"); exit(-1);} while (0)
@@ -118,23 +120,15 @@ double zrand();
 void permseed(uint8_t *);
 void permseed(uint8_t *, uint32_t);
 uint32_t intlog(uint32_t in);
-std::string get_scan_time();
-std::vector<std::string> str_split(std::string &s, const char &c);
-std::string seed2vec(std::string line);
-std::string vec2colon(std::string line);
-std::string dec2hex(int dec, int len);
-int str_cmp(std::string s1, std::string s2);
-std::string get_ipv4(std::string ipv6);
 
 #include "6config.h"
 #include "mac.h"
-#include "stats.h"
 #include "iplist.h"
+#include "stats.h"
 #include "trace.h"
 #include "icmp.h"
-#include "download.h"
-#include "strategy.h"
-#include "patricia.h"
+
+#include "strategy/strategy.h"
 
 /* 6Scan parameters */
 #define DOWNLOAD "./download" // Hitlist and alias prefixes
@@ -143,12 +137,13 @@ std::string get_ipv4(std::string ipv6);
 #define TTL 32
 #define BUDGET 100000000 // Budget number, 100000000 by default
 
-/* 6Hit parameters */
 #define BGP_KEY_LEN 8
 #define ITERATION int(log(BUDGET)/log(2) * 100)
 #define PREFIX_KEY_LEN  int(32 - ceil(log(BUDGET)/log(16)))
 #define SUBNET_LEN  int(ceil(log(ITERATION)/log(16)))
 #define BUDGET_ITERATION  float((BUDGET * 1.0)/pow(16, SUBNET_LEN))
+#define Alias_Threshold 0.3
+#define DIMENSION ceil(log(BUDGET)/log(16))
 
 using namespace std;
 

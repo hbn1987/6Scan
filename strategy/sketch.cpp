@@ -1,4 +1,4 @@
-#include "sketch.h"
+#include "strategy.h"
 
 Sketch::Sketch(int depth, int width, int bgp_key_len, int prefix_key_len) {
     sk_.depth = depth;
