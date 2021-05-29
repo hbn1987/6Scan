@@ -1,11 +1,45 @@
 #include "strategy.h"
 
 /* 6Scan strategy */
-void init_6scan(Node_List& nodelist, IPList6* iplist, string seedset) {
+void get_grandfather(Node_List& nodelist) {
+    for (auto& node : nodelist) {
+        if (node->parent->parent) { // Father is not root
+            if (node->parent->parent->dim_num == DIMENSION - 1)
+                node->grandfather = node->parent->parent->subspace;
+            else {
+                int reduce_dim = node->parent->parent->dim_num - (DIMENSION - 1);
+                string subspace = node->parent->parent->subspace;
+                for (auto i = 0; i < reduce_dim; ++i) {
+                    for (auto j = 0; j< 32; ++j) {
+                        if (subspace[j] != node->subspace[j]) {
+                            subspace[j] = node->subspace[j];
+                            break;
+                        }
+                    }
+                }
+                node->grandfather = subspace;
+            }
+        } else { // Father is root
+            string subspace = node->subspace;
+            for (auto i = 0; i < 2; ++i) {
+                for (auto j = 31; j >= 0; --j) {
+                    if (subspace[j] != '*') {
+                        subspace[j] = '*';
+                        break;
+                    }
+                }
+            }
+            node->grandfather = subspace;
+        }
+    }
+}
+
+void init_6scan(Node_List& nodelist, IPList6* iplist, string seedset, unordered_set<string>& scanned_node) {
     iplist->read_seedset(seedset);
     sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
     iplist->seeds.erase(unique(iplist->seeds.begin(), iplist->seeds.end()), iplist->seeds.end());
-    tree_generation_6scan(nodelist, iplist->seeds);
+    tree_generation_6scan(nodelist, iplist->seeds, scanned_node);
+    get_grandfather(nodelist);    
     iplist->seeds.clear();
 }
 
@@ -32,6 +66,52 @@ void target_generation_6scan(IPList6* iplist, string subspace, int start_idx)
             subspace[idx] = 'a' + i - 10;
         }
         target_generation_6scan(iplist, subspace, idx + 1);
+    }
+}
+
+void find_sibling(struct SpaceTreeNode* node, Node_List& nodelist, unordered_set<string>& scanned_node, int sibling_num) {
+    int num = 0;
+    while (node->index < 256 && num < sibling_num) {
+        string var_dim = dec2hex(node->index, 2);
+        string sibling = node->subspace;
+        for (auto i = 0; i < 2; ++i) {
+            for (auto j = 0; j < 32; ++j) {
+                if (sibling[j] != node->grandfather[j]) {
+                    sibling[j] = var_dim[i];
+                    break;
+                }
+            }
+        }
+        node->index++;
+        if (scanned_node.find(sibling) == scanned_node.end()) {
+            struct SpaceTreeNode *new_node = new struct SpaceTreeNode;
+            new_node->subspace = sibling;
+            new_node->active = 0;
+            new_node->grandfather = node->grandfather;
+            new_node->index = node->index;
+            nodelist.push_back(new_node);
+            scanned_node.insert(sibling);
+            num++;
+        }
+    }
+}
+
+void iteration_6scan(Node_List& nodelist_sorted, Node_List& nodelist, unordered_set<string>& scanned_node) {
+    nodelist_sorted.assign(nodelist.begin(), nodelist.end());
+    sort(nodelist_sorted.begin(), nodelist_sorted.end(), Node_Active_Cmp());
+    int level = nodelist_sorted.size() / 4;
+    for (auto i = 0; i < nodelist_sorted.size(); ++i) {
+        if (nodelist_sorted[i]->index < 256) {
+            if (i < level) {
+                find_sibling(nodelist_sorted[i], nodelist, scanned_node, 3);
+                continue;
+            } else if (i < 2 * level) {
+                find_sibling(nodelist_sorted[i], nodelist, scanned_node, 2);
+                continue;
+            } else if (i < 3 * level) {
+                find_sibling(nodelist_sorted[i], nodelist, scanned_node, 1);
+            }
+        }
     }
 }
 
@@ -132,12 +212,6 @@ void target_generation_6tree(IPList6* iplist, string subspace, struct SpaceTreeN
         }
         target_generation_6tree(iplist, subspace, node, idx + 1);
     }
-}
-
-void release_tree(Node_List& nodelist)
-{
-    release_tree(nodelist[0]);
-    nodelist.clear();
 }
 
 /* 6Gen strategy */

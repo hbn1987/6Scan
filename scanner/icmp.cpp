@@ -153,7 +153,6 @@ ICMP6::ICMP6(struct ip6_hdr *ip, struct icmp6_hdr *icmp, uint32_t elapsed) : ICM
     unsigned char *ptr = (unsigned char *) icmp;
     quote = (struct ip6_hdr *) (ptr + sizeof(struct icmp6_hdr));            /* Quoted IPv6 hdr */
     struct ip6_ext *eh = NULL;                /* Pointer to any extension header */
-    struct scanpayload *qpayload = NULL;     /* Quoted ICMPv6 yrp payload */
     uint16_t ext_hdr_len = 0;
     quote_p = quote->ip6_nxt;
     int offset = 0;
@@ -182,7 +181,9 @@ ICMP6::ICMP6(struct ip6_hdr *ip, struct icmp6_hdr *icmp, uint32_t elapsed) : ICM
         }
     }
 
-    if (ntohl(qpayload->id) == 0x7363616E)
+    stringstream fingerprint ;
+    fingerprint << hex << ntohl(qpayload->id);
+    if (fingerprint.str().substr(0, 3) == "653")
         is_scan = true;
     ttl = qpayload->ttl;
     instance = qpayload->instance;
@@ -359,10 +360,12 @@ void ICMP6::write(FILE ** out, Stats* stats) {
         case Hit6:
             stats->sk->Update(seed2vec(src));
             break;
-//        case Tree6:
-//            if (strcmp(src, target) == 0)
-//                stats->node_count++;
-//            break;
+       case Scan6:
+            if (strcmp(src, target) == 0) {
+                int index = ntohl(qpayload->id) - 0x6530000;
+                stats->nodelist[index]->active++;
+            }
+            break;
         case Edgy:
             stats->edgy.push_back(seed2vec(src));
     }

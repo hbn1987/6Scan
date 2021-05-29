@@ -65,6 +65,7 @@ class Traceroute6 : public Traceroute {
     void probe(struct in6_addr, int);
     void probePrint(struct in6_addr, int);
     void probe(void *, struct in6_addr, int);
+    void change_fingerprint(int);
 
     private:
     void make_transport(int);

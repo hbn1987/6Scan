@@ -1,5 +1,6 @@
 #include "6scan.h"
 #include "strategy/sketch.h"
+#include "strategy/6tree.h"
 
 class Stats {
     public:
@@ -10,7 +11,7 @@ class Stats {
     Sketch* sk = NULL;
     std::unordered_map<std::string, float> sk_map;
 
-    uint64_t node_count = 0;
+    Node_List nodelist;
 
     std::vector<std::string> edgy;
 
@@ -28,6 +29,8 @@ class Stats {
     ~Stats() {
         if (sk)
             delete sk;
+        if (nodelist.size())
+            nodelist.clear();
     };
 
     void prepare_time() {

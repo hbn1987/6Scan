@@ -33,7 +33,7 @@ Traceroute6::Traceroute6(ScanConfig *_config, Stats *_stats) : Traceroute(_confi
 
     /* Init 6scan payload struct */
     payload = (struct scanpayload *)malloc(sizeof(struct scanpayload));
-    payload->id = htonl(0x7363616E);
+    payload->id = htonl(0x0653FFFF); // Fingerprint 6Sxx
     payload->instance = config->instance;
 
     pthread_create(&recv_thread, NULL, listener6, this);
@@ -55,8 +55,7 @@ void Traceroute6::probePrint(struct in6_addr addr, int ttl) {
     cout << addrstr << " ttl = " << ttl << " t = " << diff << "us" << endl;
 }
 
-void
-Traceroute6::probe(struct in6_addr addr, int ttl) {
+void Traceroute6::probe(struct in6_addr addr, int ttl) {
     struct sockaddr_ll target;
     memset(&target, 0, sizeof(target));
     target.sll_ifindex = if_nametoindex(config->int_name);
@@ -66,8 +65,7 @@ Traceroute6::probe(struct in6_addr addr, int ttl) {
     probe(&target, addr, ttl);
 }
 
-void
-Traceroute6::probe(void *target, struct in6_addr addr, int ttl) {
+void Traceroute6::probe(void *target, struct in6_addr addr, int ttl) {
     outip->ip6_hlim = ttl;
     outip->ip6_dst = addr;
 
@@ -135,8 +133,7 @@ Traceroute6::probe(void *target, struct in6_addr addr, int ttl) {
     pcount++;
 }
 
-void
-Traceroute6::make_frag_eh(uint8_t nxt) {
+void Traceroute6::make_frag_eh(uint8_t nxt) {
     void *transport = frame + ETH_HDRLEN + sizeof(ip6_hdr);
     struct ip6_frag *eh = (struct ip6_frag *) transport;
     eh->ip6f_nxt = nxt;  
@@ -145,8 +142,7 @@ Traceroute6::make_frag_eh(uint8_t nxt) {
     eh->ip6f_ident = 0x8008;
 }
 
-void
-Traceroute6::make_hbh_eh(uint8_t nxt) {
+void Traceroute6::make_hbh_eh(uint8_t nxt) {
     uint8_t *transport = frame + ETH_HDRLEN + sizeof(ip6_hdr);
     struct ip6_ext *eh = (struct ip6_ext *) transport;
     eh->ip6e_nxt = nxt;  
@@ -159,8 +155,7 @@ Traceroute6::make_hbh_eh(uint8_t nxt) {
     memset(transport, 0, 4);
 }
 
-void 
-Traceroute6::make_transport(int ext_hdr_len) {
+void Traceroute6::make_transport(int ext_hdr_len) {
     void *transport = frame + ETH_HDRLEN + sizeof(ip6_hdr) + ext_hdr_len;
     uint16_t sum = in_cksum((unsigned short *)&(outip->ip6_dst), 16);
     if (config->type == TR_ICMP6) {
@@ -203,4 +198,10 @@ Traceroute6::make_transport(int ext_hdr_len) {
         payload->fudge = compute_data(tcp->th_sum, crafted_cksum);
         tcp->th_sum = crafted_cksum;
     }
+}
+
+void Traceroute6::change_fingerprint(int index) {
+    string fingerprint = "0653" + dec2hex(index, 4);
+    unsigned long fgp_ul = strtoul(fingerprint.c_str(), NULL, 16);
+    payload->id = htonl(fgp_ul);
 }

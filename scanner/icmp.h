@@ -69,6 +69,7 @@ class ICMP6 : public ICMP {
     void print();
     void write(FILE **, Stats *);
     void write2seeds(FILE **);
+    struct scanpayload *qpayload = NULL;     /* Quoted ICMPv6 payload */
 
     private:
     struct ip6_hdr *quote;

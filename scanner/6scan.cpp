@@ -160,25 +160,24 @@ int main(int argc, char **argv)
             /* Scanning with 6Scan strategy */
             if (config.strategy == Scan6) {
                 cout << "Scanning with 6Scan strategy..." << endl;
-                Node_List nodelist;
-                unordered_set<string> scanned_subspace;
-                init_6scan(nodelist, iplist, seedset); // Partition the candidate scanning space
-                stats->prepare_time(); // Calculate the time cost of preparation
-                for (auto i = 0; i < nodelist.size(); ++i) {
-                    if (scanned_subspace.find(nodelist[i]->subspace) == scanned_subspace.end()) {
-                        scanned_subspace.insert(nodelist[i]->subspace);
-                        target_generation_6scan(iplist, nodelist[i]->subspace, 0);
-                        if (iplist->targets.size())
-                            loop(&config, iplist, trace, stats);
-                        iplist->targets.clear();
-                        iplist->seeded = false;
-                        cout << "Probing in subspace: " << nodelist[i]->subspace << ", budget consumption: " << stats->count << endl;
-                        if (stats->count >= BUDGET)
-                            break;
-                    }
+                unordered_set<string> scanned_node; // Store the address space that has been scanned
+                Node_List nodelist_sorted; // A node list sorted by the activeity of nodes
+                init_6scan(stats->nodelist, iplist, seedset, scanned_node); // Partition the candidate scanning space
+                stats->prepare_time(); // Calculate the time cost of preparation                               
+                for (auto i = nodelist_sorted.size(); i < stats->nodelist.size(); ++i) {                       
+                    target_generation_6scan(iplist, stats->nodelist[i]->subspace, 0);
+                    trace->change_fingerprint(i); // Change fingerprint
+                    if (iplist->targets.size())
+                        loop(&config, iplist, trace, stats);
+                    iplist->targets.clear();
+                    iplist->seeded = false;
+                    cout << "Probing in subspace: " << stats->nodelist[i]->subspace << ", budget consumption: " << stats->count << endl;
+                    if (stats->count >= BUDGET)
+                        break;
+                    if (i == stats->nodelist.size() - 1)
+                        iteration_6scan(nodelist_sorted, stats->nodelist, scanned_node); 
+                    cout << stats->nodelist[i]->active << endl;                 
                 }
-                release_tree(nodelist);
-                exit(-1);
             }
 
             /* Scanning with 6Hit strategy */
@@ -201,10 +200,9 @@ int main(int argc, char **argv)
             /* Scanning with 6Tree strategy */
             else if (config.strategy == Tree6) {
                 cout << "Scanning with 6Tree strategy..." << endl;
-                Node_List nodelist;
-                init_6tree(nodelist, iplist, seedset); // Partition the candidate scanning space
+                init_6tree(stats->nodelist, iplist, seedset); // Partition the candidate scanning space
                 stats->prepare_time(); // Calculate the time cost of preparation
-                for (auto &node : nodelist) {
+                for (auto &node : stats->nodelist) {
                     if (node->dim_num) {
                         target_generation_6tree(iplist, node->subspace, node, 0);
                         if (iplist->targets.size())
@@ -216,7 +214,6 @@ int main(int argc, char **argv)
                         cout << "Probing in subspace: " << node->subspace << ", budget consumption: " << stats->count << endl;
                     }
                 }
-                release_tree(nodelist);
             }
 
             /* Scanning with 6Gen strategy */
