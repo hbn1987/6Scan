@@ -175,8 +175,7 @@ int main(int argc, char **argv)
                     if (stats->count >= BUDGET)
                         break;
                     if (i == stats->nodelist.size() - 1)
-                        iteration_6scan(nodelist_sorted, stats->nodelist, scanned_node); 
-                    cout << stats->nodelist[i]->active << endl;                 
+                        iteration_6scan(nodelist_sorted, stats->nodelist, scanned_node);               
                 }
             }
 
@@ -221,7 +220,6 @@ int main(int argc, char **argv)
                 cout << "Scanning with 6Gen strategy..." << endl;
                 init_6gen(iplist, seedset);
                 stats->prepare_time();
-                cout << "Probing begins..." << endl;
                 loop(&config, iplist, trace, stats);
             }
 

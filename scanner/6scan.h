@@ -133,9 +133,9 @@ uint32_t intlog(uint32_t in);
 /* 6Scan parameters */
 #define DOWNLOAD "./download" // Hitlist and alias prefixes
 #define OUTPUT "./output" // Output folder
-#define RATE 5000 // Probing rate
+#define RATE 8500 // Probing rate
 #define TTL 32
-#define BUDGET 100000000 // Budget number, 100000000 by default
+#define BUDGET 300000000 // Budget number
 
 #define BGP_KEY_LEN 8
 #define ITERATION int(log(BUDGET)/log(2) * 100)

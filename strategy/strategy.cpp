@@ -101,6 +101,11 @@ void iteration_6scan(Node_List& nodelist_sorted, Node_List& nodelist, unordered_
     sort(nodelist_sorted.begin(), nodelist_sorted.end(), Node_Active_Cmp());
     int level = nodelist_sorted.size() / 4;
     for (auto i = 0; i < nodelist_sorted.size(); ++i) {
+        if (nodelist_sorted[i]->active / pow(16, nodelist_sorted[i]->dim_num) > 0.9) {
+            cout << "Alias alert: " << nodelist_sorted[i]->subspace << endl;
+            nodelist_sorted[i]->active = 0;
+            continue;
+        }
         if (nodelist_sorted[i]->index < 256) {
             if (i < level) {
                 find_sibling(nodelist_sorted[i], nodelist, scanned_node, 3);
