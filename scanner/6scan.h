@@ -143,7 +143,7 @@ uint32_t intlog(uint32_t in);
 #define SUBNET_LEN  int(ceil(log(ITERATION)/log(16)))
 #define BUDGET_ITERATION  float((BUDGET * 1.0)/pow(16, SUBNET_LEN))
 #define Alias_Threshold 0.3
-#define DIMENSION ceil(log(BUDGET)/log(16))
+#define DIMENSION int(log(BUDGET)/log(16))
 
 using namespace std;
 

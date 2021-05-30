@@ -7,7 +7,7 @@
 #include <dirent.h>
 #include <fstream>
 
-void init_6scan(Node_List& nodelist, IPList6* iplist, std::string seedset, std::unordered_set<std::string>& scanned_node);
+void init_6scan(Node_List& nodelist, Node_List& nodelist_small, IPList6* iplist, std::string seedset);
 void target_generation_6scan(IPList6* iplist, std::string subspace, int start_idx);
 void iteration_6scan(Node_List& nodelist_sorted, Node_List& nodelist, std::unordered_set<std::string>& scanned_node);
 

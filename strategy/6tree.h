@@ -40,4 +40,4 @@ struct Node_Active_Cmp {
 
 void tree_generation(Node_List&, std::vector<std::string>&);
 
-void tree_generation_6scan(Node_List&, std::vector<std::string>&, std::unordered_set<std::string>& scanned_node);
+void tree_generation_6scan(Node_List&, std::vector<std::string>&);

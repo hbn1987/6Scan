@@ -100,7 +100,7 @@ void DHC(struct SpaceTreeNode *node, std::vector<std::string>& active_seeds, Nod
     }
 }
 
-void DHC_6scan(struct SpaceTreeNode *node, std::vector<std::string>& active_seeds, Node_List& node_list, int subspace_dim, unordered_set<string>& scanned_node) {
+void DHC_6scan(struct SpaceTreeNode *node, std::vector<std::string>& active_seeds, Node_List& node_list, int subspace_dim) {
     int node_vector_num = node->upper - node->lower + 1;
     if (node->dim_num <= subspace_dim){
         return;
@@ -158,13 +158,9 @@ void DHC_6scan(struct SpaceTreeNode *node, std::vector<std::string>& active_seed
     for (int i = 0; i < children_num; i++)
     {
         init_subspace(node->children[i], active_seeds);
-        if (node->children[i]->dim_num == subspace_dim) {
-            if (scanned_node.find(node->children[i]->subspace) == scanned_node.end()) {
-                node_list.push_back(node->children[i]);
-                scanned_node.insert(node->children[i]->subspace);
-            }
-        }
-        DHC_6scan(node->children[i], active_seeds, node_list, subspace_dim, scanned_node);
+        if (node->children[i]->dim_num && node->children[i]->dim_num <= subspace_dim)
+            node_list.push_back(node->children[i]);
+        DHC_6scan(node->children[i], active_seeds, node_list, subspace_dim);
     }
 }
 
@@ -183,7 +179,7 @@ void tree_generation(Node_List& node_list, std::vector<std::string>& active_seed
     DHC(root, active_seeds, node_list);
 }
 
-void tree_generation_6scan(Node_List& node_list, std::vector<std::string>& active_seeds, unordered_set<string>& scanned_node)
+void tree_generation_6scan(Node_List& node_list, std::vector<std::string>& active_seeds)
 {
     // Space tree generation
     struct SpaceTreeNode *root = new struct SpaceTreeNode;
@@ -195,7 +191,7 @@ void tree_generation_6scan(Node_List& node_list, std::vector<std::string>& activ
 
     init_subspace(root, active_seeds);
     int subspace_dim = DIMENSION - 3;
-    DHC_6scan(root, active_seeds, node_list, subspace_dim, scanned_node);
+    DHC_6scan(root, active_seeds, node_list, subspace_dim);
 }
 
 void release_tree(struct SpaceTreeNode *node)

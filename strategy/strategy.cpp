@@ -34,11 +34,26 @@ void get_grandfather(Node_List& nodelist) {
     }
 }
 
-void init_6scan(Node_List& nodelist, IPList6* iplist, string seedset, unordered_set<string>& scanned_node) {
+void partition_nodelist(Node_List& nodelist, Node_List& nodelist_small) {
+    sort(nodelist.begin(), nodelist.end(), Node_Dim_Cmp());
+    int index = 0;
+    for (auto node : nodelist) {
+        if (node->dim_num == DIMENSION - 3)
+            break;
+        index++;
+    }
+    if (index >= 0) {
+        nodelist_small.assign(nodelist.begin(), nodelist.begin() + index);
+        nodelist.erase(nodelist.begin(), nodelist.begin() + index);
+    }
+}
+
+void init_6scan(Node_List& nodelist, Node_List& nodelist_small, IPList6* iplist, string seedset) {
     iplist->read_seedset(seedset);
     sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
     iplist->seeds.erase(unique(iplist->seeds.begin(), iplist->seeds.end()), iplist->seeds.end());
-    tree_generation_6scan(nodelist, iplist->seeds, scanned_node);
+    tree_generation_6scan(nodelist, iplist->seeds);
+    partition_nodelist(nodelist, nodelist_small);
     get_grandfather(nodelist);    
     iplist->seeds.clear();
 }
