@@ -254,7 +254,7 @@ int get_dimension(string cluster) {
 }
 
 void AHC(std::vector<std::string>& even_seeds, std::vector<std::string>& odd_seeds,
-std::vector<std::string>& cluster_seeds, std::vector<std::string>& clusters)
+std::vector<std::string>& cluster_seeds, set<std::string>& clusters)
 {
     if (cluster_seeds.size() <= 1)
         return;
@@ -276,9 +276,9 @@ std::vector<std::string>& cluster_seeds, std::vector<std::string>& clusters)
     for (auto i = 0; i < even_seeds.size(); ++i) {
         string clus = merge(odd_seeds[i], even_seeds[i]);
         int dims = get_dimension(clus);
-        if (dims == DIMENSION)
-            clusters.push_back(clus);
-        else if (dims < DIMENSION)
+        if (dims == DIMENSION - 3)
+            clusters.insert(clus);
+        else if (dims < DIMENSION - 3)
             cluster_seeds.push_back(clus);
     }
 
@@ -319,22 +319,19 @@ void target_generation_6gen(IPList6* iplist, string subspace, int start_idx)
     }
 }
 
-void init_6gen(IPList6* iplist, string seedset) {
+void init_6gen(IPList6* iplist, string seedset, set<string>& clusters) {
     iplist->read_seedset(seedset);
     sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
 
-    std::vector<std::string> even_seeds, odd_seeds, cluster_seeds, clusters;
+    std::vector<std::string> even_seeds, odd_seeds, cluster_seeds;
 
     cluster_seeds.assign(iplist->seeds.begin(), iplist->seeds.end());
     AHC(even_seeds, odd_seeds, cluster_seeds, clusters);
-    cout << "Probing in subspace: " << clusters[clusters.size()-1] << endl;
-    target_generation_6gen(iplist, clusters[clusters.size()-1], 0);
 
     iplist->seeds.clear();
     even_seeds.clear();
     odd_seeds.clear();
     cluster_seeds.clear();
-    clusters.clear();
 }
 
 /* Edgy strategy */

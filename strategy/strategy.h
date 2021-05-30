@@ -6,6 +6,7 @@
 #include "patricia.h"
 #include <dirent.h>
 #include <fstream>
+#include <set>
 
 void init_6scan(Node_List& nodelist, Node_List& nodelist_small, IPList6* iplist, std::string seedset);
 void target_generation_6scan(IPList6* iplist, std::string subspace, int start_idx);
@@ -17,7 +18,8 @@ void iteration_6hit(Stats* stats, IPList6* iplist, int it);
 void init_6tree(Node_List& nodelist, IPList6* iplist, std::string seedset);
 void target_generation_6tree(IPList6* iplist, std::string subspace, struct SpaceTreeNode* node, int start_idx);
 
-void init_6gen(IPList6* iplist, std::string seedset);
+void init_6gen(IPList6* iplist, std::string seedset, std::set<std::string>& clusters);
+void target_generation_6gen(IPList6* iplist, std::string subspace, int start_idx);
 
 void init_Edgy(IPList6* iplist, std::string seedset);
 void target_generation_edgy(IPList6* iplist, std::unordered_set<std::string>& edgy_set, int mask);

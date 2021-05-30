@@ -227,9 +227,20 @@ int main(int argc, char **argv)
             /* Scanning with 6Gen strategy */
             else if (config.strategy == Gen6) {
                 cout << "Scanning with 6Gen strategy..." << endl;
-                init_6gen(iplist, seedset);
+                set<string> clusters;
+                init_6gen(iplist, seedset, clusters);
                 stats->prepare_time();
-                loop(&config, iplist, trace, stats);
+                for (set<string>::reverse_iterator it = clusters.rbegin(); it != clusters.rend(); ++it) {
+                    target_generation_6gen(iplist, *it, 0);
+                    if (iplist->targets.size())
+                        loop(&config, iplist, trace, stats);
+                    iplist->targets.clear();
+                    iplist->seeded = false;
+                    if (stats->count >= BUDGET)
+                        break;
+                    cout << "Probing in subspace: " << *it << ", budget consumption: " << stats->count << endl;
+                }
+                clusters.clear();
             }
 
             /* Scanning with Edgy strategy */

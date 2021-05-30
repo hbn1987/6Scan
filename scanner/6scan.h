@@ -133,7 +133,7 @@ uint32_t intlog(uint32_t in);
 /* 6Scan parameters */
 #define DOWNLOAD "./download" // Hitlist and alias prefixes
 #define OUTPUT "./output" // Output folder
-#define RATE 8500 // Probing rate
+#define RATE 8000 // Probing rate
 #define TTL 32
 #define BUDGET 300000000 // Budget number
 
