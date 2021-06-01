@@ -1,36 +1,99 @@
 #include "strategy.h"
+Random::Random(uint32_t permsize_) {
+    permsize = permsize_;
+    memset(key, 0, KEYLEN);
+    int seed = 100;
+    if (permsize > 5000000)
+        mode = PERM_MODE_CYCLE;
+    permseed(key, seed);
+    perm = cperm_create(permsize, mode, PERM_CIPHER_SPECK, key, 8);
+}
+
+Random::~Random() {
+    cperm_destroy(perm);
+}
+
+void Random::get_random(uint32_t iter, std::vector<std::string>& rand_vec) {
+    rand_vec.clear();
+    for (auto i = 0; i < iter; ++i) {
+        if (PERM_END == cperm_next(perm, &next))
+            break;
+        rand_vec.push_back(dec2hex(next, (DIMENSION - 3)));
+    }
+}
+
+void target_generation(IPList6* iplist, string subspace, int start_idx)
+{
+    if (iplist->targets.size() >= BUDGET )
+        return;
+    int idx;
+    for (idx = start_idx; idx < 32; idx++)
+    {
+        if (subspace[idx] == '*')
+        {
+            break;
+        }
+    }
+    if (idx == 32)
+    {
+        string ip = vec2colon(subspace) + "/128";
+        iplist->subnet6(ip, iplist->targets);
+        return;
+    }
+    for (int i = 0; i < 16; i++)
+    {
+        if (i < 10)
+        {
+            subspace[idx] = '0' + i;
+        }
+        else // i >= 10
+        {
+            subspace[idx] = 'a' + i - 10;
+        }
+        target_generation(iplist, subspace, idx + 1);
+    }
+}
 
 /* 6Scan strategy */
-void get_grandfather(Node_List& nodelist) {
-    for (auto& node : nodelist) {
-        if (node->parent->parent) { // Father is not root
-            if (node->parent->parent->dim_num == DIMENSION - 1)
-                node->grandfather = node->parent->parent->subspace;
-            else {
-                int reduce_dim = node->parent->parent->dim_num - (DIMENSION - 1);
-                string subspace = node->parent->parent->subspace;
-                for (auto i = 0; i < reduce_dim; ++i) {
-                    for (auto j = 0; j< 32; ++j) {
-                        if (subspace[j] != node->subspace[j]) {
-                            subspace[j] = node->subspace[j];
-                            break;
-                        }
-                    }
-                }
-                node->grandfather = subspace;
-            }
-        } else { // Father is root
-            string subspace = node->subspace;
-            for (auto i = 0; i < 2; ++i) {
-                for (auto j = 31; j >= 0; --j) {
-                    if (subspace[j] != '*') {
-                        subspace[j] = '*';
-                        break;
-                    }
-                }
-            }
-            node->grandfather = subspace;
+/* 6Hit strategy */
+void target_generation_6hit(IPList6* iplist, std::string subspace, std::vector<std::string> rand_vec, int size) {
+    vector<int> index;
+    for (auto i = 0; i < 32; ++i) {
+        if (subspace[i] == '*')
+            index.push_back(i);
+    }
+    
+    for (auto i = 0; i <size; ++i) {
+        string ip = subspace;
+        string rand_dim = rand_vec[i];
+        int len = index.size() - 1;
+        for (auto j : index) {
+            ip[j] = rand_dim[len--];
         }
+        ip = vec2colon(ip) + "/128";
+        iplist->subnet6(ip, iplist->targets);
+    }
+}
+
+void target_generation_6hit(IPList6* iplist, std::string subspace, std::vector<std::string> rand_vec, int ranking, int level) {
+    int rand_vec_size = rand_vec.size();
+    if (ranking < level) {
+        target_generation_6hit(iplist, subspace, rand_vec, rand_vec_size);
+        return;
+    } else if (ranking < 2 * level) {
+        target_generation_6hit(iplist, subspace, rand_vec, rand_vec_size / 2);
+        return;
+    } else if (ranking < 3 * level) {
+        target_generation_6hit(iplist, subspace, rand_vec, rand_vec_size / 3);
+        return;
+    } else {
+        target_generation_6hit(iplist, subspace, rand_vec, rand_vec_size / 4);
+    }
+}
+
+void get_prior_activity(Node_List& nodelist) {
+    for (auto& node : nodelist) {
+        node->active = node->upper - node->lower;
     }
 }
 
@@ -48,121 +111,14 @@ void partition_nodelist(Node_List& nodelist, Node_List& nodelist_small) {
     }
 }
 
-void init_6scan(Node_List& nodelist, Node_List& nodelist_small, IPList6* iplist, string seedset) {
+void init_6hit(Node_List& nodelist, Node_List& nodelist_small, IPList6* iplist, string seedset) {
     iplist->read_seedset(seedset);
     sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
     iplist->seeds.erase(unique(iplist->seeds.begin(), iplist->seeds.end()), iplist->seeds.end());
-    tree_generation_6scan(nodelist, iplist->seeds);
+    tree_generation_6hit(nodelist, iplist->seeds);
     partition_nodelist(nodelist, nodelist_small);
-    get_grandfather(nodelist);    
+    get_prior_activity(nodelist);  
     iplist->seeds.clear();
-}
-
-void target_generation_6scan(IPList6* iplist, string subspace, int start_idx)
-{
-    int idx;
-    for (idx = start_idx; idx < 32; idx++) {
-        if (subspace[idx] == '*')
-            break;
-    }
-    if (idx == 32) {
-        string ip = vec2colon(subspace) + "/128";
-        iplist->subnet6(ip, iplist->targets);
-        return;
-    }
-    for (int i = 0; i < 16; i++)
-    {
-        if (i < 10)
-        {
-            subspace[idx] = '0' + i;
-        }
-        else // i >= 10
-        {
-            subspace[idx] = 'a' + i - 10;
-        }
-        target_generation_6scan(iplist, subspace, idx + 1);
-    }
-}
-
-void find_sibling(struct SpaceTreeNode* node, Node_List& nodelist, unordered_set<string>& scanned_node, int sibling_num) {
-    int num = 0;
-    while (node->index < 256 && num < sibling_num) {
-        string var_dim = dec2hex(node->index, 2);
-        string sibling = node->subspace;
-        for (auto i = 0; i < 2; ++i) {
-            for (auto j = 0; j < 32; ++j) {
-                if (sibling[j] != node->grandfather[j]) {
-                    sibling[j] = var_dim[i];
-                    break;
-                }
-            }
-        }
-        node->index++;
-        if (scanned_node.find(sibling) == scanned_node.end()) {
-            struct SpaceTreeNode *new_node = new struct SpaceTreeNode;
-            new_node->subspace = sibling;
-            new_node->active = 0;
-            new_node->grandfather = node->grandfather;
-            new_node->index = node->index;
-            nodelist.push_back(new_node);
-            scanned_node.insert(sibling);
-            num++;
-        }
-    }
-}
-
-void iteration_6scan(Node_List& nodelist_sorted, Node_List& nodelist, unordered_set<string>& scanned_node) {
-    nodelist_sorted.assign(nodelist.begin(), nodelist.end());
-    sort(nodelist_sorted.begin(), nodelist_sorted.end(), Node_Active_Cmp());
-    int level = nodelist_sorted.size() / 4;
-    for (auto i = 0; i < nodelist_sorted.size(); ++i) {
-        if (nodelist_sorted[i]->active / pow(16, nodelist_sorted[i]->dim_num) > 0.9) {
-            cout << "Alias alert: " << nodelist_sorted[i]->subspace << endl;
-            nodelist_sorted[i]->active = 0;
-            continue;
-        }
-        if (nodelist_sorted[i]->index < 256) {
-            if (i < level) {
-                find_sibling(nodelist_sorted[i], nodelist, scanned_node, 3);
-                continue;
-            } else if (i < 2 * level) {
-                find_sibling(nodelist_sorted[i], nodelist, scanned_node, 2);
-                continue;
-            } else if (i < 3 * level) {
-                find_sibling(nodelist_sorted[i], nodelist, scanned_node, 1);
-            }
-        }
-    }
-}
-
-/* 6Hit strategy */
-void init_6hit(Stats* stats, string in) {
-    int sk_depth = log(BUDGET) / log(2) * 10; // number of rows in sketch
-    int sk_width = log(BUDGET) / log(2) / 10 + 1; // number of column in sketch
-    stats->sk = new Sketch(sk_depth, sk_width, BGP_KEY_LEN, PREFIX_KEY_LEN);
-    ifstream inlist;
-    inlist.open(in);
-    string line;
-    while (getline(inlist, line)) {
-        if (!line.empty() && line[line.size() - 1] == '\r')
-            line.erase( remove(line.begin(), line.end(), '\r'), line.end());
-        stats->sk->Update(seed2vec(line));
-    }
-    inlist.close();
-    //stats->sk->PrintAll();
-}
-
-void iteration_6hit(Stats* stats, IPList6* iplist, int it) {
-    stats->sk->Getsk(stats->sk_map);
-    string subnet_hex = dec2hex(it, SUBNET_LEN);
-    for (auto& iter : stats->sk_map) {
-        string add_zero((31 - PREFIX_KEY_LEN - SUBNET_LEN), '0');
-        int mask = round(log(iter.second * BUDGET_ITERATION)/log(2)) > 0 ? 128 - round(log(iter.second * BUDGET_ITERATION)/log(2)) : 128;
-        string range = vec2colon(iter.first + subnet_hex + add_zero + "1") + "/" + to_string(mask);
-        iplist->subnet6(range, iplist->targets);
-    }
-    stats->sk_map.clear();
-    //stats->sk->PrintAll();
 }
 
 /* 6Tree strategy */
@@ -287,38 +243,6 @@ std::vector<std::string>& cluster_seeds, set<std::string>& clusters)
     AHC(even_seeds, odd_seeds, cluster_seeds, clusters);
 }
 
-void target_generation_6gen(IPList6* iplist, string subspace, int start_idx)
-{
-    if (iplist->targets.size() >= BUDGET )
-        return;
-    int idx;
-    for (idx = start_idx; idx < 32; idx++)
-    {
-        if (subspace[idx] == '*')
-        {
-            break;
-        }
-    }
-    if (idx == 32)
-    {
-        string ip = vec2colon(subspace) + "/128";
-        iplist->subnet6(ip, iplist->targets);
-        return;
-    }
-    for (int i = 0; i < 16; i++)
-    {
-        if (i < 10)
-        {
-            subspace[idx] = '0' + i;
-        }
-        else // i >= 10
-        {
-            subspace[idx] = 'a' + i - 10;
-        }
-        target_generation_6gen(iplist, subspace, idx + 1);
-    }
-}
-
 void init_6gen(IPList6* iplist, string seedset, set<string>& clusters) {
     iplist->read_seedset(seedset);
     sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
@@ -342,5 +266,7 @@ void target_generation_edgy(IPList6* iplist, std::unordered_set<std::string>& ed
             string ip = vec2colon(iter + dec2hex(i, 2) + add_zero + "1") + "/128";
             iplist->subnet6(ip, iplist->targets);
         }
+        if (iplist->targets.size() >= pow(16, DIMENSION - 3))
+            break;
     }
 }

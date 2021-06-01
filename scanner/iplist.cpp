@@ -194,10 +194,10 @@ uint32_t IPList4::next_address_rand(struct in_addr *in) {
     static uint32_t next = 0;
 
     if (not seeded)
-    seed();
+        seed();
 
     if (PERM_END == cperm_next(perm, &next))
-    return 0;
+        return 0;
 
     in->s_addr = targets[next];
     return 1;
@@ -212,10 +212,10 @@ uint32_t IPList6::next_address_rand(struct in6_addr *in)
 {
     static uint32_t next = 0;
     if (not seeded)
-    seed();
+        seed();
 
     if (PERM_END == cperm_next(perm, &next))
-    return 0;
+        return 0;
     *in = targets[next];
     return 1;
 }

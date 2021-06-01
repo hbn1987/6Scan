@@ -16,9 +16,7 @@ bin_PROGRAMS = 6scan
   strategy/strategy.cpp \
   strategy/download.cpp \
   strategy/patricia.cpp \
-  strategy/hash.cpp \
-  strategy/sketch.cpp \
-  strategy/6tree.cpp \
+  strategy/tree.cpp \
   strategy/util.cpp \
   libcperm/cperm.c \
   libcperm/prefix.c \
@@ -37,9 +35,7 @@ include_HEADERS = \
   scanner/trace.h \
   strategy/strategy.h \
   strategy/download.h \
-  strategy/6tree.h \
-  strategy/hash.h \
-  strategy/sketch.h \
+  strategy/tree.h \
   strategy/patricia.h \
   libcperm/cperm.h \
   libcperm/cperm-internal.h \

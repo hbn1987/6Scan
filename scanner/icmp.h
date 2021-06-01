@@ -45,6 +45,7 @@ class ICMP {
     uint8_t replytos;
     struct timeval tv;
     mpls_label_t *mpls_stack;
+    uint32_t fingerprint;
 };
 
 class ICMP4 : public ICMP {

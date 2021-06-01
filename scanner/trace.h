@@ -1,5 +1,6 @@
 struct scanpayload {
     uint32_t id;
+    uint32_t fingerprint;
     struct in6_addr target; /* v6 target address, to detect spoofed responses */
     uint8_t instance; /* instance */
     uint8_t ttl;      /* sent TTL */
@@ -65,7 +66,7 @@ class Traceroute6 : public Traceroute {
     void probe(struct in6_addr, int);
     void probePrint(struct in6_addr, int);
     void probe(void *, struct in6_addr, int);
-    void change_fingerprint(int);
+    void change_fingerprint(uint64_t);
 
     private:
     void make_transport(int);

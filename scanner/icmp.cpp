@@ -181,9 +181,7 @@ ICMP6::ICMP6(struct ip6_hdr *ip, struct icmp6_hdr *icmp, uint32_t elapsed) : ICM
         }
     }
 
-    stringstream fingerprint ;
-    fingerprint << hex << ntohl(qpayload->id);
-    if (fingerprint.str().substr(0, 3) == "653")
+    if (ntohl(qpayload->id) == 0x06536361)
         is_scan = true;
     ttl = qpayload->ttl;
     instance = qpayload->instance;
@@ -356,18 +354,17 @@ void ICMP6::write(FILE ** out, Stats* stats) {
         inet_ntop(AF_INET6, &ip_src, target, INET6_ADDRSTRLEN);
     }
     ICMP::write(out, src, target);
-    switch (stats->strategy) {
+    switch (stats->strategy) {        
+        case Scan6:
         case Hit6:
-            stats->sk->Update(seed2vec(src));
-            break;
-       case Scan6:
             if (strcmp(src, target) == 0) {
-                int index = ntohl(qpayload->id) - 0x6530000;
+                uint64_t index = ntohl(qpayload->fingerprint);
                 stats->nodelist[index]->active++;
             }
             break;
         case Edgy:
-            stats->edgy.push_back(seed2vec(src));
+            if (strcmp(src, target) == 0)
+                stats->edgy.push_back(seed2vec(src));
     }
 }
 

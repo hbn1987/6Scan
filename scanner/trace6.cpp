@@ -33,13 +33,14 @@ Traceroute6::Traceroute6(ScanConfig *_config, Stats *_stats) : Traceroute(_confi
 
     /* Init 6scan payload struct */
     payload = (struct scanpayload *)malloc(sizeof(struct scanpayload));
-    payload->id = htonl(0x0653FFFF); // Fingerprint 6Sxx
+    payload->id = htonl(0x06536361); // ID = 6Sca
+    payload->fingerprint = htonl(0);
+
     payload->instance = config->instance;
 
     pthread_create(&recv_thread, NULL, listener6, this);
     /* give listener thread time to startup */
     sleep(1);
-
 }
 
 Traceroute6::~Traceroute6() {
@@ -200,8 +201,6 @@ void Traceroute6::make_transport(int ext_hdr_len) {
     }
 }
 
-void Traceroute6::change_fingerprint(int index) {
-    string fingerprint = "0653" + dec2hex(index, 4);
-    unsigned long fgp_ul = strtoul(fingerprint.c_str(), NULL, 16);
-    payload->id = htonl(fgp_ul);
+void Traceroute6::change_fingerprint(uint64_t index) {
+    payload->fingerprint = htonl(index);
 }

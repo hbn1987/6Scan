@@ -1,15 +1,11 @@
 #include "6scan.h"
-#include "strategy/sketch.h"
-#include "strategy/6tree.h"
+#include "strategy/tree.h"
 
 class Stats {
     public:
     int strategy = 0;
     uint64_t count = 0;       // number of probes sent
     uint64_t baddst = 0;      // checksum invalid on destination in response
-
-    Sketch* sk = NULL;
-    std::unordered_map<std::string, float> sk_map;
 
     Node_List nodelist;
 
@@ -27,8 +23,6 @@ class Stats {
     };
 
     ~Stats() {
-        if (sk)
-            delete sk;
         if (nodelist.size())
             nodelist.clear();
     };

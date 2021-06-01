@@ -128,8 +128,6 @@ uint32_t intlog(uint32_t in);
 #include "trace.h"
 #include "icmp.h"
 
-#include "strategy/strategy.h"
-
 /* 6Scan parameters */
 #define DOWNLOAD "./download" // Hitlist and alias prefixes
 #define OUTPUT "./output" // Output folder
@@ -137,13 +135,10 @@ uint32_t intlog(uint32_t in);
 #define TTL 32
 #define BUDGET 300000000 // Budget number
 
-#define BGP_KEY_LEN 8
-#define ITERATION int(log(BUDGET)/log(2) * 100)
-#define PREFIX_KEY_LEN  int(32 - ceil(log(BUDGET)/log(16)))
-#define SUBNET_LEN  int(ceil(log(ITERATION)/log(16)))
-#define BUDGET_ITERATION  float((BUDGET * 1.0)/pow(16, SUBNET_LEN))
-#define Alias_Threshold 0.3
+#define Alias_Threshold 0.9
 #define DIMENSION int(log(BUDGET)/log(16))
+
+#include "strategy/strategy.h"
 
 using namespace std;
 

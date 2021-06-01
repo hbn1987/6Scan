@@ -7,21 +7,32 @@
 #include <dirent.h>
 #include <fstream>
 #include <set>
+class Random {
+    public:
+    Random(uint32_t permsize_);
+    ~Random();
+    void get_random(uint32_t iter, std::vector<std::string>& rand_vec);
+
+    cperm_t* perm = NULL;
+    uint32_t permsize = 0;
+    PermMode mode = PERM_MODE_PREFIX;
+    uint8_t key[KEYLEN];
+    uint32_t next = 0;
+};
+
+void target_generation(IPList6* iplist, std::string subspace, int start_idx);
 
 void init_6scan(Node_List& nodelist, Node_List& nodelist_small, IPList6* iplist, std::string seedset);
-void target_generation_6scan(IPList6* iplist, std::string subspace, int start_idx);
 void iteration_6scan(Node_List& nodelist_sorted, Node_List& nodelist, std::unordered_set<std::string>& scanned_node);
 
-void init_6hit(Stats* stats, std::string in);
-void iteration_6hit(Stats* stats, IPList6* iplist, int it);
+void init_6hit(Node_List& nodelist, Node_List& nodelist_small, IPList6* iplist, std::string seedset);
+void target_generation_6hit(IPList6* iplist, std::string subspace, std::vector<std::string> rand_vec, int ranking, int level);
 
 void init_6tree(Node_List& nodelist, IPList6* iplist, std::string seedset);
 void target_generation_6tree(IPList6* iplist, std::string subspace, struct SpaceTreeNode* node, int start_idx);
 
 void init_6gen(IPList6* iplist, std::string seedset, std::set<std::string>& clusters);
-void target_generation_6gen(IPList6* iplist, std::string subspace, int start_idx);
 
-void init_Edgy(IPList6* iplist, std::string seedset);
 void target_generation_edgy(IPList6* iplist, std::unordered_set<std::string>& edgy_set, int mask);
 
 std::string get_scan_time();

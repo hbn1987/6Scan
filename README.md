@@ -39,9 +39,9 @@ make
 ./6scan -D alias
 # Download the aliased prefixes from https://ipv6hitlist.github.io/.
 ./6scan -D country-cn
-# Download ASNs, IPv4 ranges and IPv6 prefixes associated with China form https://stat.ripe.net/docs/data_api/.
+# Download ASNs, IPv4 ranges and IPv6 prefixes associated with China from https://stat.ripe.net/docs/data_api/.
 ./6scan -D as-3333
-# Download all announced prefixes associated with AS 3333 form https://stat.ripe.net/docs/data_api/.
+# Download all announced prefixes associated with AS 3333 from https://stat.ripe.net/docs/data_api/.
 ./6scan -P -t ICMP6 -I [interface e.g., enp2s0f0]
 # Pre-scan the latest local hitlist to make the seedset using ICMPv6 packet.
 ./6scan -t ICMP6 -I [interface e.g., enp2s0f0] -s 6Scan
