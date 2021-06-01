@@ -1,4 +1,5 @@
 #include "strategy.h"
+
 Random::Random(uint32_t permsize_) {
     permsize = permsize_;
     memset(key, 0, KEYLEN);
