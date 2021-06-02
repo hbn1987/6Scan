@@ -56,6 +56,29 @@ void target_generation(IPList6* iplist, string subspace, int start_idx)
 }
 
 /* 6Scan strategy */
+int init_6scan(Node_List& nodelist, IPList6* iplist, string seedset) {
+    iplist->read_seedset(seedset);
+    sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
+    iplist->seeds.erase(unique(iplist->seeds.begin(), iplist->seeds.end()), iplist->seeds.end());
+    tree_generation(nodelist, iplist->seeds);
+    sort(nodelist.begin(), nodelist.end(), Node_Dim_Cmp());
+    iplist->seeds.clear();
+
+    int index = 0;
+    for (auto& node : nodelist) {
+        if (node->dim_num >= DIMENSION - 3)
+            break;
+        index++;
+    }
+    return index;
+}
+
+void get_revenue(struct SpaceTreeNode* node) {
+    for (auto i = 0; i < node->children_num; ++i) {
+        node->active += node->children[i]->active * 1.0 / pow(16, node->children[i]->dim_num);
+    }
+}
+
 /* 6Hit strategy */
 void target_generation_6hit(IPList6* iplist, std::string subspace, std::vector<std::string> rand_vec, int size) {
     vector<int> index;
@@ -267,7 +290,7 @@ void target_generation_edgy(IPList6* iplist, std::unordered_set<std::string>& ed
             string ip = vec2colon(iter + dec2hex(i, 2) + add_zero + "1") + "/128";
             iplist->subnet6(ip, iplist->targets);
         }
-        if (iplist->targets.size() >= pow(16, DIMENSION - 3))
+        if (iplist->targets.size() >= pow(16, 5)) // Minimize the impact of alias
             break;
     }
 }

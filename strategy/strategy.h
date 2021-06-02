@@ -22,8 +22,8 @@ class Random {
 
 void target_generation(IPList6* iplist, std::string subspace, int start_idx);
 
-void init_6scan(Node_List& nodelist, Node_List& nodelist_small, IPList6* iplist, std::string seedset);
-void iteration_6scan(Node_List& nodelist_sorted, Node_List& nodelist, std::unordered_set<std::string>& scanned_node);
+int init_6scan(Node_List& nodelist, IPList6* iplist, std::string seedset);
+void get_revenue(struct SpaceTreeNode* node);
 
 void init_6hit(Node_List& nodelist, Node_List& nodelist_small, IPList6* iplist, std::string seedset);
 void target_generation_6hit(IPList6* iplist, std::string subspace, std::vector<std::string> rand_vec, int ranking, int level);

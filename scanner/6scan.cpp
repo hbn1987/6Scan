@@ -160,32 +160,48 @@ int main(int argc, char **argv)
             /* Scanning with 6Scan strategy */
             if (config.strategy == Scan6) {
                 cout << "Scanning with 6Scan strategy..." << endl;
-                // unordered_set<string> scanned_node; // Store the address space that has been scanned
-                // Node_List nodelist_small, nodelist_sorted; // A node list sorted by the activeity of nodes
-                // init_6scan(stats->nodelist, nodelist_small, iplist, seedset); // Partition the candidate scanning space
-                // stats->prepare_time(); // Calculate the time cost of preparation
-                // for (auto node : nodelist_small) {
-                //     target_generation(iplist, node->subspace, 0);
-                //     if (iplist->targets.size())
-                //         loop(&config, iplist, trace, stats);
-                //     iplist->targets.clear();
-                //     iplist->seeded = false;
-                //     cout << "Probing in subspace: " << node->subspace << ", budget consumption: " << stats->count << endl;
-                // }
-                // for (auto i = nodelist_sorted.size(); i < stats->nodelist.size(); ++i) {
-                //     scanned_node.insert(stats->nodelist[i]->subspace);
-                //     target_generation_6scan(iplist, stats->nodelist[i]->subspace, 0);
-                //     //trace->change_fingerprint(i); // Change fingerprint
-                //     if (iplist->targets.size())
-                //         loop(&config, iplist, trace, stats);
-                //     iplist->targets.clear();
-                //     iplist->seeded = false;
-                //     cout << "Probing in subspace: " << stats->nodelist[i]->subspace << ", budget consumption: " << stats->count << endl;
-                //     if (stats->count >= BUDGET)
-                //         break;
-                //     if (i == stats->nodelist.size() - 1)
-                //         iteration_6scan(nodelist_sorted, stats->nodelist, scanned_node);               
-                // }
+                int bound = init_6scan(stats->nodelist, iplist, seedset); // Partition the candidate scanning space
+                stats->prepare_time(); // Calculate the time cost of preparation
+                for (auto i = 0; i < bound; ++i) {
+                    trace->change_fingerprint(i);                    
+                    target_generation_6tree(iplist, stats->nodelist[i]->subspace, stats->nodelist[i], 0);
+                    if (iplist->targets.size())
+                        loop(&config, iplist, trace, stats);
+                    iplist->targets.clear();
+                    iplist->seeded = false;
+                    if (stats->count >= BUDGET)
+                        break;
+                    cout << "Probing in subspace: " << stats->nodelist[i]->subspace << ", budget consumption: " << stats->count << endl;                    
+                }
+
+                Node_List node_priority;
+                for (auto dim = DIMENSION - 3; dim <= DIMENSION + 1; ++dim) {
+                    node_priority.clear();
+                    for (auto i = bound; i < stats->nodelist.size(); ++i) {
+                        if (stats->nodelist[i]->dim_num == dim) {
+                            node_priority.push_back(stats->nodelist[i]);
+                            get_revenue(stats->nodelist[i]);
+                            bound++;
+                        } else if (stats->nodelist[i]->dim_num > dim)
+                            break;
+                    }
+                    sort(node_priority.begin(), node_priority.end(), Node_Active_Cmp());
+                    for (auto& node : node_priority) {
+                        Node_List::iterator it = find(stats->nodelist.begin(), stats->nodelist.end(), node);
+                        uint64_t index = distance(stats->nodelist.begin(), it);
+                        trace->change_fingerprint(index);
+                        target_generation_6tree(iplist, node->subspace, node, 0);
+                        if (iplist->targets.size())
+                            loop(&config, iplist, trace, stats);
+                        iplist->targets.clear();
+                        iplist->seeded = false;
+                        if (stats->count >= BUDGET)
+                            break;
+                        cout << "Probing in subspace: " << node->subspace << ", budget consumption: " << stats->count << endl;  
+                    }
+                    if (stats->count >= BUDGET)
+                        break;
+                }
             }
 
             /* Scanning with 6Hit strategy */
@@ -218,16 +234,20 @@ int main(int argc, char **argv)
                     sort(node_priority.begin(), node_priority.end(), Node_Active_Cmp());
                     rand.get_random(num_per_iter, rand_vec);
 
-                    for (auto j = 0; j < node_priority.size(); ++j) {
-                        trace->change_fingerprint(j); // Change fingerprint
-                        target_generation_6hit(iplist, node_priority[j]->subspace, rand_vec, j, level);
+                    int ranking = 0;
+                    for (auto& node : node_priority) {
+                        Node_List::iterator it = find(stats->nodelist.begin(), stats->nodelist.end(), node);
+                        uint64_t index = distance(stats->nodelist.begin(), it);
+                        trace->change_fingerprint(index); // Change fingerprint
+                        target_generation_6hit(iplist, node->subspace, rand_vec, ranking, level);
                         if (iplist->targets.size())
                             loop(&config, iplist, trace, stats);
                         iplist->targets.clear();
                         iplist->seeded = false;
-                        cout << "Probing in subspace (partly): " << node_priority[j]->subspace << ", budget consumption: " << stats->count << endl;
+                        ranking++;
                         if (stats->count >= BUDGET)
                             break;
+                        cout << "Probing in iteration: " << i + 1 << ", within the subspace: " << node->subspace << ", budget consumption: " << stats->count << endl;
                     }
                     if (stats->count >= BUDGET)
                         break;             
@@ -282,7 +302,8 @@ int main(int argc, char **argv)
                 unordered_set<string> edgy_set;
                 for (auto mask = 48; mask < 120; mask += 8) {
                     for (auto& iter : stats->edgy) {
-                        edgy_set.insert(iter.substr(0, mask/4));
+                        if (iter.length() == 32)
+                            edgy_set.insert(iter.substr(0, mask/4));
                     }
                     stats->edgy.clear();
                     target_generation_edgy(iplist, edgy_set, mask);

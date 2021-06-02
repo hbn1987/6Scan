@@ -17,7 +17,7 @@ struct SpaceTreeNode
     int dim_num = 0;
 
     // Number of active addresses in this dimension
-    int active = 0;
+    float active = 0;
 };
 
 typedef std::vector<struct SpaceTreeNode*> Node_List;

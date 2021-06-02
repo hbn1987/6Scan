@@ -28,8 +28,7 @@ make
 -P # Pre-scan the hitlist.
 -t [ICMP6/TCP6_SYN/TCP6_ACK/UDP6] # Set probe type.
 -I # Network interface to use.
--s [6Scan/6Hit/6Tree/6Gen/Edgy] # Set IPv6 searching strategy. 
--r # Set max probing rate, 50k pps by default.
+-s [6Scan/6Hit/6Tree/6Gen/Edgy] # Set IPv6 searching strategy.
 -C [Active address file e.g., ./output/raw_ICMP6_yyyymmdd] # Address classification.
 ```
 ### Example

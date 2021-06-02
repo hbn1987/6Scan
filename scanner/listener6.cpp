@@ -64,7 +64,7 @@ void *listener6(void *args) {
                 }
                 delete icmp;
             }
-        } 
+        }
     }
     return NULL;
 }
