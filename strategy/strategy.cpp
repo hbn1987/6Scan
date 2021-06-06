@@ -73,9 +73,10 @@ int init_6scan(Node_List& nodelist, IPList6* iplist, string seedset) {
     return index;
 }
 
-void get_revenue(struct SpaceTreeNode* node) {
-    for (auto i = 0; i < node->children_num; ++i) {
-        node->active += node->children[i]->active * 1.0 / pow(16, node->children[i]->dim_num);
+void update_active(Node_List& nodelist, int begin, int end) {
+    for (auto i = begin; i < end; ++i) {
+        if (nodelist[i]->parent)
+            nodelist[i]->parent->active += nodelist[i]->active;
     }
 }
 
@@ -290,7 +291,7 @@ void target_generation_edgy(IPList6* iplist, std::unordered_set<std::string>& ed
             string ip = vec2colon(iter + dec2hex(i, 2) + add_zero + "1") + "/128";
             iplist->subnet6(ip, iplist->targets);
         }
-        if (iplist->targets.size() >= pow(16, 5)) // Minimize the impact of alias
+        if (iplist->targets.size() >= (BUDGET / 9))
             break;
     }
 }

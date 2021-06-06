@@ -131,9 +131,9 @@ uint32_t intlog(uint32_t in);
 /* 6Scan parameters */
 #define DOWNLOAD "./download" // Hitlist and alias prefixes
 #define OUTPUT "./output" // Output folder
-#define RATE 8000 // Probing rate
-#define TTL 32
-#define BUDGET 300000000 // Budget number
+#define RATE 60000 // Probing rate
+#define TTL 64
+#define BUDGET 500000000 // Budget number
 
 #define Alias_Threshold 0.9
 #define DIMENSION int(log(BUDGET)/log(16))

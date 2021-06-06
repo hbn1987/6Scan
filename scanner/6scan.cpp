@@ -174,19 +174,24 @@ int main(int argc, char **argv)
                     cout << "Probing in subspace: " << stats->nodelist[i]->subspace << ", budget consumption: " << stats->count << endl;                    
                 }
 
+                update_active(stats->nodelist, 0, bound);
                 Node_List node_priority;
                 for (auto dim = DIMENSION - 3; dim <= DIMENSION + 1; ++dim) {
+                    int lastbound = bound;
                     node_priority.clear();
                     for (auto i = bound; i < stats->nodelist.size(); ++i) {
                         if (stats->nodelist[i]->dim_num == dim) {
                             node_priority.push_back(stats->nodelist[i]);
-                            get_revenue(stats->nodelist[i]);
                             bound++;
                         } else if (stats->nodelist[i]->dim_num > dim)
                             break;
                     }
                     sort(node_priority.begin(), node_priority.end(), Node_Active_Cmp());
                     for (auto& node : node_priority) {
+                        if (node->active / pow(16, node->dim_num) > Alias_Threshold) {
+                            cout << "Alias alert: " << node->subspace << endl;
+                            continue;
+                        }
                         Node_List::iterator it = find(stats->nodelist.begin(), stats->nodelist.end(), node);
                         uint64_t index = distance(stats->nodelist.begin(), it);
                         trace->change_fingerprint(index);
@@ -201,6 +206,7 @@ int main(int argc, char **argv)
                     }
                     if (stats->count >= BUDGET)
                         break;
+                    update_active(stats->nodelist, lastbound, bound);
                 }
             }
 
@@ -323,6 +329,10 @@ int main(int argc, char **argv)
         stats->end_time();
         cout << "Waiting " << SHUTDOWN_WAIT << "s for outstanding replies..." << endl;
         sleep(SHUTDOWN_WAIT);
+        if(config.pre_scan) {
+            float t = (float) tsdiff(&stats->end, &stats->start) / 1000.0;
+            cout << "Pre-scan time cost: " << t << "s, Probing rate: " << (float) stats->count / t << "pps" << endl;
+        }
         if(config.strategy)
             stats->dump(config.out);
         delete iplist;

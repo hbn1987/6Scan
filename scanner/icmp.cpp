@@ -176,7 +176,7 @@ ICMP6::ICMP6(struct ip6_hdr *ip, struct icmp6_hdr *icmp, uint32_t elapsed) : ICM
         } else if (quote_p == IPPROTO_ICMPV6) {
             qpayload = (struct scanpayload *) (ptr + offset + sizeof(struct icmp6_hdr));
         } else {
-            warn("unknown quote\n");
+            warn("unknown quote");
             return;
         }
     }
