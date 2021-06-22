@@ -297,33 +297,32 @@ int main(int argc, char **argv)
             }
 
             /* Scanning with Edgy strategy */
-            else if (config.strategy == Edgy) {
-                cout << "Scanning with Edgy strategy..." << endl;
-                iplist->read_seedset(seedset);
-                for (auto& seed : iplist->seeds) {
-                    stats->edgy.push_back(seed);
-                }
-                iplist->seeds.clear();
-                stats->prepare_time();
-                unordered_set<string> edgy_set;
-                for (auto mask = 48; mask < 120; mask += 8) {
-                    for (auto& iter : stats->edgy) {
-                        if (iter.length() == 32)
-                            edgy_set.insert(iter.substr(0, mask/4));
-                    }
-                    stats->edgy.clear();
-                    target_generation_edgy(iplist, edgy_set, mask);
-                    if (iplist->targets.size())
-                        loop(&config, iplist, trace, stats);
-                    iplist->targets.clear();
-                    iplist->seeded = false;
-                    edgy_set.clear();
-                    if (stats->count >= BUDGET)
-                        break;                
-                    cout << "Probing /" << mask << "'s every /" << mask + 8 << " prefixes, budget consumption: " << stats->count << endl;
-                    sleep(10);
-                }
-            }
+            // else if (config.strategy == Edgy) {
+            //     cout << "Scanning with Edgy strategy..." << endl;
+            //     iplist->read_seedset(seedset);
+            //     for (auto& seed : iplist->seeds) {
+            //         stats->edgy.push_back(seed);
+            //     }
+            //     iplist->seeds.clear();
+            //     stats->prepare_time();
+            //     unordered_set<string> edgy_set;
+            //     for (auto mask = 40; mask < 124; mask += 4) {
+            //         for (auto& iter : stats->edgy) {
+            //             edgy_set.insert(iter.substr(0, mask/4));
+            //         }
+            //         stats->edgy.clear();
+            //         target_generation_edgy(iplist, edgy_set, mask);
+            //         if (iplist->targets.size())
+            //             loop(&config, iplist, trace, stats);
+            //         iplist->targets.clear();
+            //         iplist->seeded = false;
+            //         edgy_set.clear();
+            //         if (stats->count >= BUDGET)
+            //             break;                
+            //         cout << "Probing /" << mask << "'s every /" << mask + 4 << " prefixes, budget consumption: " << stats->count << endl;
+            //         sleep(1);
+            //     }
+            // }
         }
 
         stats->end_time();
@@ -404,6 +403,8 @@ int main(int argc, char **argv)
         }
         delete alias_tree;
 
+        new_count = new_count - alias_count; // De-alias
+
         /* Small-integer and EUI-64 detection */
         string::size_type idx1, idx2;
         for (auto iter = results.begin(); iter != results.end(); ++iter) {
@@ -476,7 +477,7 @@ int main(int argc, char **argv)
                     if (bit2[i] == 0)
                         count_zero++;
                 }
-                if (count_zero >= 30 && count_zero <= 34 ) {
+                if (count_zero >= 29 && count_zero <= 35 ) {
                     randomized_count++;
                     iter->second = "randomized";
                 }
@@ -492,22 +493,20 @@ int main(int argc, char **argv)
             fprintf(config.out, "%s\n", iter.c_str());
         }
         fprintf(config.out, "# Received ratio: %2.2f%%\n", (float) received * 100 / BUDGET);
-        fprintf(config.out, "# Hit active addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", active_count, (float) active_count * 100 / BUDGET);
+        fprintf(config.out, "# Alias addresses: Number %" PRId64, alias_count);
         fprintf(config.out, "# Discovered new addresses: Number %" PRId64 ", Discovery rate %2.2f%%\n", new_count, (float) new_count * 100 / BUDGET);
-        fprintf(config.out, "# IID allocation schemas: Alias %" PRId64 " (%2.2f%%), Small-integer %" \
+        fprintf(config.out, "# IID allocation schemas: Small-integer %" \
         PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
-        PRId64 " (%2.2f%%).\n", \
-        alias_count, (float) alias_count * 100 / new_count, small_integer, (float) small_integer * 100 / new_count, \
+        PRId64 " (%2.2f%%).\n", small_integer, (float) small_integer * 100 / new_count, \
         randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
         EUI64_count, (float) EUI64_count * 100 / new_count);
         
         fprintf(stdout, "# Received ratio: %2.2f%%\n", (float) received * 100 / BUDGET);
-        fprintf(stdout, "# Hit active addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", active_count, (float) active_count * 100 / BUDGET);
+        fprintf(stdout, "# Alias addresses: Number %" PRId64, alias_count);
         fprintf(stdout, "# Discovered new addresses: Number %" PRId64 ", Discovery rate %2.2f%%\n", new_count, (float) new_count * 100 / BUDGET);
-        fprintf(stdout, "# IID allocation schemas: Alias %" PRId64 " (%2.2f%%), Small-integer %" \
+        fprintf(stdout, "# IID allocation schemas: Small-integer %" \
         PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
-        PRId64 " (%2.2f%%).\n", \
-        alias_count, (float) alias_count * 100 / new_count, small_integer, (float) small_integer * 100 / new_count, \
+        PRId64 " (%2.2f%%).\n", small_integer, (float) small_integer * 100 / new_count, \
         randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
         EUI64_count, (float) EUI64_count * 100 / new_count);
 

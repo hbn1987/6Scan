@@ -47,8 +47,8 @@ make
 # IPv6 Internet-wide scanning with 6Scan strategy using the latest local ICMPv6 seedset.
 ./6scan -t UDP6 -I [interface e.g., enp2s0f0] -s 6Tree
 # IPv6 Internet-wide scanning with 6Tree strategy using the latest local UDPv6 seedset.
-./6scan -C [Active address file e.g., ./output/raw_ICMP6_yyyymmdd] 
-# Classify the active address in the file of raw_ICMP6_yyyymmdd.
+./6scan -C [Active address file e.g., ./output/raw_6Scan_ICMP6_yyyymmdd] 
+# Classify the active address in the file of raw_6Scan_ICMP6_yyyymmdd.
 ```
 
 ## Output
@@ -80,7 +80,7 @@ and the address classification results in the file that begin with results_.
 >Z. Liu, Y. Xiong, X. Liu, W. Xie, and P. Zhu, “6Tree: Efficient Dynamic Discovery of Active Addresses in the IPv6 Address Space,” Comput. Networks, 2019. \
 >A. Murdock, F. Li, P. Bramsen, Z. Durumeric, and V. Paxson, “Target Generation for Internet-Wide IPv6 Scanning,” in IMC, 2017. \
 >E. C. Rye and R. Beverly, “Discovering the IPv6 Network Periphery,” in PAM, 2020.
-### Address classification
->Q. Hu and N. Brownlee, “How Interface ID Allocation Mechanisms are Performed in IPv6,” in CoNEXT Student Workshop, 2014.
 ### Alias resolution
 >O. Gasser et al., “Clusters in the Expanse: Understanding and Unbiasing IPv6 Hitlists,” in IMC, 2018.
+### Address classification
+>Q. Hu and N. Brownlee, “How Interface ID Allocation Mechanisms are Performed in IPv6,” in CoNEXT Student Workshop, 2014.

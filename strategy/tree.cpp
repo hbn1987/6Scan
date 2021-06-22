@@ -37,9 +37,8 @@ void init_subspace(struct SpaceTreeNode *node, std::vector<std::string>& active_
 
 void DHC(struct SpaceTreeNode *node, std::vector<std::string>& active_seeds, Node_List& node_list)
 {
-    int node_vector_num = node->upper - node->lower + 1;
-    if (node_vector_num <= 16)
-    {
+    // int node_vector_num = node->upper - node->lower + 1;
+    if (node->dim_num <= DIMENSION - 4){
         return ;
     }
     int var_dimen = 0;
@@ -102,7 +101,6 @@ void DHC(struct SpaceTreeNode *node, std::vector<std::string>& active_seeds, Nod
 }
 
 void DHC_6hit(struct SpaceTreeNode *node, std::vector<std::string>& active_seeds, Node_List& node_list, int subspace_dim) {
-    int node_vector_num = node->upper - node->lower + 1;
     if (node->dim_num <= subspace_dim){
         return;
     }

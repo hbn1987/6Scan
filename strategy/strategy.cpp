@@ -285,13 +285,13 @@ void init_6gen(IPList6* iplist, string seedset, set<string>& clusters) {
 
 /* Edgy strategy */
 void target_generation_edgy(IPList6* iplist, std::unordered_set<std::string>& edgy_set, int mask) {
-    string add_zero((31 - mask/4 - 2), '0');
+    string add_zero((31 - mask/4 - 1), '0');
     for (auto iter : edgy_set) {
-        for (auto i = 0; i < 256; ++i) {
-            string ip = vec2colon(iter + dec2hex(i, 2) + add_zero + "1") + "/128";
+        for (auto i = 0; i < 16; ++i) {
+            string ip = vec2colon(iter + dec2hex(i, 1) + add_zero + "1") + "/128";
             iplist->subnet6(ip, iplist->targets);
         }
-        if (iplist->targets.size() >= (BUDGET / 9))
+        if (iplist->targets.size() >= (BUDGET / (mask / 2))) // minimize the impact of alias
             break;
     }
 }
