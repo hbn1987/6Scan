@@ -359,7 +359,8 @@ void ICMP6::write(FILE ** out, Stats* stats) {
         case Hit6:
             if (strcmp(src, target) == 0) {
                 uint64_t index = ntohl(qpayload->fingerprint);
-                stats->nodelist[index]->active++;
+                if (index < stats->nodelist.size())
+                    stats->nodelist[index]->active++;
             }
             break;
         case Edgy:

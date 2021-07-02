@@ -19,7 +19,7 @@ void Random::get_random(uint32_t iter, std::vector<std::string>& rand_vec) {
     for (auto i = 0; i < iter; ++i) {
         if (PERM_END == cperm_next(perm, &next))
             break;
-        rand_vec.push_back(dec2hex(next, (DIMENSION - 3)));
+        rand_vec.push_back(dec2hex(next, (DIMENSION - 2)));
     }
 }
 
@@ -126,7 +126,7 @@ void partition_nodelist(Node_List& nodelist, Node_List& nodelist_small) {
     sort(nodelist.begin(), nodelist.end(), Node_Dim_Cmp());
     int index = 0;
     for (auto node : nodelist) {
-        if (node->dim_num == DIMENSION - 3)
+        if (node->dim_num == DIMENSION - 2)
             break;
         index++;
     }
@@ -235,7 +235,7 @@ int get_dimension(string cluster) {
 }
 
 void AHC(std::vector<std::string>& even_seeds, std::vector<std::string>& odd_seeds,
-std::vector<std::string>& cluster_seeds, set<std::string>& clusters)
+std::vector<std::string>& cluster_seeds, vector<std::string>& clusters, vector<std::string>& clusters_big)
 {
     if (cluster_seeds.size() <= 1)
         return;
@@ -258,24 +258,26 @@ std::vector<std::string>& cluster_seeds, set<std::string>& clusters)
         string clus = merge(odd_seeds[i], even_seeds[i]);
         int dims = get_dimension(clus);
         if (dims == DIMENSION - 3)
-            clusters.insert(clus);
+            clusters.push_back(clus);
         else if (dims < DIMENSION - 3)
             cluster_seeds.push_back(clus);
+        else if (dims > DIMENSION -3)
+            clusters_big.push_back(clus);
     }
 
     even_seeds.clear();
     odd_seeds.clear();
-    AHC(even_seeds, odd_seeds, cluster_seeds, clusters);
+    AHC(even_seeds, odd_seeds, cluster_seeds, clusters, clusters_big);
 }
 
-void init_6gen(IPList6* iplist, string seedset, set<string>& clusters) {
+void init_6gen(IPList6* iplist, string seedset, vector<string>& clusters, vector<std::string>& clusters_big) {
     iplist->read_seedset(seedset);
     sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
 
     std::vector<std::string> even_seeds, odd_seeds, cluster_seeds;
 
     cluster_seeds.assign(iplist->seeds.begin(), iplist->seeds.end());
-    AHC(even_seeds, odd_seeds, cluster_seeds, clusters);
+    AHC(even_seeds, odd_seeds, cluster_seeds, clusters, clusters_big);
 
     iplist->seeds.clear();
     even_seeds.clear();

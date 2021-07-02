@@ -189,7 +189,7 @@ void tree_generation_6hit(Node_List& node_list, std::vector<std::string>& active
     root->children_num = 0;
 
     init_subspace(root, active_seeds);
-    int subspace_dim = DIMENSION - 3;
+    int subspace_dim = DIMENSION - 2;
     DHC_6hit(root, active_seeds, node_list, subspace_dim);
 }
 

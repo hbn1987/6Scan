@@ -31,10 +31,11 @@ void target_generation_6hit(IPList6* iplist, std::string subspace, std::vector<s
 void init_6tree(Node_List& nodelist, IPList6* iplist, std::string seedset);
 void target_generation_6tree(IPList6* iplist, std::string subspace, struct SpaceTreeNode* node, int start_idx);
 
-void init_6gen(IPList6* iplist, std::string seedset, std::set<std::string>& clusters);
+void init_6gen(IPList6* iplist, std::string seedset, std::vector<std::string>& clusters, std::vector<std::string>& clusters_big);
 
 void target_generation_edgy(IPList6* iplist, std::unordered_set<std::string>& edgy_set, int mask);
 
+int get_dimension(std::string cluster);
 std::string get_scan_time();
 std::vector<std::string> str_split(std::string &s, const char &c);
 std::string seed2vec(std::string line);
