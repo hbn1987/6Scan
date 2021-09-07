@@ -491,7 +491,9 @@ patricia_search_best2 (patricia_tree_t *patricia, prefix_t *prefix, int inclusiv
     int cnt = 0;
 
     assert (patricia);
-    assert (prefix);
+    //assert (prefix);
+    if(!prefix)
+        return (NULL);
     assert (prefix->bitlen <= patricia->maxbits);
 
     if (patricia->head == NULL)

@@ -84,7 +84,7 @@ void data_download(string type)
                 cout << "File decompression or download failed" << endl;
         }
     } else if (type.substr(0, 7) == "country") {
-        filename_str = string("country_resource_list") + querytime;
+        filename_str = type + "_" + querytime;
         it = find(file_names.begin(), file_names.end(), filename_str);
         if (it == file_names.end()) {
             cout << "Start downloading the country resource list" << endl;
@@ -95,13 +95,13 @@ void data_download(string type)
             cout << "Finish downloading the country resource list" << endl;
         }
     } else if (type.substr(0, 2) == "as") {
-        filename_str = string("as_announced_prefixes") + querytime;
+        filename_str = type + "_" + querytime;
         it = find(file_names.begin(), file_names.end(), filename_str);
         if (it == file_names.end()) {
             cout << "Start downloading the as announced prefixes" << endl;
             filename_str= DOWNLOAD + string("/") + filename_str + string(".json");
             filename = filename_str.c_str();
-            std::size_t idx = type.find("-");
+            std::size_t idx = type.find("_");
             url = "https://stat.ripe.net/data/announced-prefixes/data.json?resource=AS" + type.substr(idx+1);
             download_raw_data(filename, url);
             cout << "Finish downloading the as announced prefixes" << endl;
@@ -130,24 +130,32 @@ string query_file(string query_name, string dir)
     return to_string(last_time);
 }
 
-string get_hitlist()
-{
-    cout << "Start pre-scanning the latest hitlist in local" << endl;
+string get_hitlist() {
     string file_hitlist;
     file_hitlist = DOWNLOAD + string("/hitlist_") + query_file(string("hitlist_"), DOWNLOAD);
     return file_hitlist;
 }
 
-string get_seedset(string type)
-{
+string get_seedset(string type) {
     string file_seedset;
     file_seedset = OUTPUT + string("/seeds_") + type + string("_") + query_file(string("seeds_") + type, OUTPUT);
     return file_seedset;
 }
 
-string get_aliasfile()
-{
+string get_aliasfile() {
     string file_alias;
     file_alias = DOWNLOAD + string("/aliased_prefixes_") + query_file(string("aliased_prefixes_"), DOWNLOAD);
     return file_alias;
+}
+
+string get_countryfile(string scope) {
+    string file_country;
+    file_country = DOWNLOAD + string("/") + scope + string("_")  + query_file(scope, DOWNLOAD) + string(".json");
+    return file_country;
+}
+
+string get_asfile(string scope) {
+    string file_as;
+    file_as = DOWNLOAD + string("/") + scope + string("_")  + query_file(scope, DOWNLOAD) + string(".json");
+    return file_as;
 }

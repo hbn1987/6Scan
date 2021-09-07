@@ -100,7 +100,7 @@ int sane(ScanConfig * config)
         fatal("*** IPv6 requires specifying an interface!");
     if (config->pre_scan and not config->type)
         fatal("*** Pre-scan must specify the type of package!");
-    if (not config->pre_scan and config->ipv6 and not config->strategy)
+    if (not config->alias_range and config->pre_scan and config->ipv6 and not config->strategy)
         fatal("*** IPv6 scanning must specify the search strategy!");
     if (config->pre_scan and config->strategy)
         fatal("*** Cannot specify pre-scan and regular scan at the same time!");
@@ -143,12 +143,88 @@ int main(int argc, char **argv)
         trace->unlock();
 
         /* Pre-scan */
-        if (config.pre_scan) {            
+        if (config.pre_scan) {   
+            cout << "Start pre-scanning the latest hitlist in local" << endl;         
             string hitlist = get_hitlist(); //Read the latest hitlist in local           
-            iplist->setkey(config.seed);  // Randomize permutation key
+            iplist->setkey(config.seed); // Randomize permutation key
             iplist->read_hitlist(hitlist);
             cout << "Probing begins..." << endl;
             loop(&config, iplist, trace, stats);
+        }
+
+        /* Active search and alias resolution within a scope using heuristic strategy*/
+        if (config.alias) {
+            string scope = string(config.alias_range);   
+            cout << "Active search and alias resolution within the scope of " << scope << endl; 
+            string scope_file;
+            if (scope.find("country") != string::npos){ //Read the latest scope file in local       
+                scope_file = get_countryfile(scope);       
+            } else {
+                scope_file = get_asfile(scope);
+            }
+            readJson(scope_file, stats->prefixes); 
+
+            string type = Tr_Type_String[config.type];
+            iplist->setkey(config.seed);
+
+            if (scope.find("country") != string::npos){ // 32-bit mask for national-level and 48-bit mask for AS level     
+                stats->mask = 32;       
+            } else {
+                stats->mask = 48;
+            }
+
+            for (auto& it : stats->prefixes) {
+                int pos = it.find("/");
+                it = seed2vec(it.substr(0, pos));
+            }
+
+            while (stats->mask <= 112) {
+                for (auto& it : stats->prefixes) {
+                    stats->prefix_map.insert(pair<string, int>{it.substr(0, stats->mask/4), 0});
+                }
+
+                target_generation_heuristic(iplist, stats->prefix_map, stats->mask);
+                
+                if (iplist->targets.size())
+                    loop(&config, iplist, trace, stats);
+                iplist->targets.clear();
+                iplist->seeded = false;
+                sleep(1);
+                cout << "Probing " << stats->prefix_map.size() << " /" << stats->mask << "'s every /" << stats->mask + 4 << " subprefixes with host address of ::1, budget consumption: " << stats->count << endl;
+                
+                if (stats->count >= BUDGET)
+                    break;                
+                
+                cout << "Candicate alias-prefix resolution with mask of " << stats->mask << " ..." << endl;
+                unordered_map<string, int>::iterator it = stats->prefix_map.begin();
+                while (it != stats->prefix_map.end()) {
+                    if (it->second > 15) {
+                        for (auto i = 0; i < stats->prefixes.size(); ++i) { // Radical deletion of possible alias prefixes
+                            if (stats->prefixes[i].find(it->first) != string::npos)
+                                stats->prefixes.erase(stats->prefixes.begin() + i);
+                        }                      
+                        target_generation_alias(iplist, get_alias(it->first, stats->mask));
+                        it++;
+                    } else {                        
+                        stats->prefix_map.erase(it++);
+                    }
+                }
+
+                if (iplist->targets.size())
+                    loop(&config, iplist, trace, stats);
+                iplist->targets.clear();
+                iplist->seeded = false;
+                sleep(1);
+
+                for (auto& it : stats->prefix_map) {
+                    if (it.second > 16) {                        
+                        string alias_prefix = get_alias(it.first, stats->mask);
+                        stats->dump_alias(config.alias_out, alias_prefix);
+                    }
+                }
+                stats->prefix_map.clear();
+                stats->mask += 4;
+            }
         }
 
         /* IPv6 scanning with different strategies */
@@ -333,44 +409,16 @@ int main(int argc, char **argv)
                 clusters_big.clear();
                 scanned_clusters.clear();
             }
-
-            /* Scanning with Edgy strategy */
-            // else if (config.strategy == Edgy) {
-            //     cout << "Scanning with Edgy strategy..." << endl;
-            //     iplist->read_seedset(seedset);
-            //     for (auto& seed : iplist->seeds) {
-            //         stats->edgy.push_back(seed);
-            //     }
-            //     iplist->seeds.clear();
-            //     stats->prepare_time();
-            //     unordered_set<string> edgy_set;
-            //     for (auto mask = 40; mask < 124; mask += 4) {
-            //         for (auto& iter : stats->edgy) {
-            //             edgy_set.insert(iter.substr(0, mask/4));
-            //         }
-            //         stats->edgy.clear();
-            //         target_generation_edgy(iplist, edgy_set, mask);
-            //         if (iplist->targets.size())
-            //             loop(&config, iplist, trace, stats);
-            //         iplist->targets.clear();
-            //         iplist->seeded = false;
-            //         edgy_set.clear();
-            //         if (stats->count >= BUDGET)
-            //             break;                
-            //         cout << "Probing /" << mask << "'s every /" << mask + 4 << " prefixes, budget consumption: " << stats->count << endl;
-            //         sleep(1);
-            //     }
-            // }
         }
 
         stats->end_time();
         cout << "Waiting " << SHUTDOWN_WAIT << "s for outstanding replies..." << endl;
         sleep(SHUTDOWN_WAIT);
-        if(config.pre_scan) {
+        if(config.pre_scan or config.alias) {
             float t = (float) tsdiff(&stats->end, &stats->start) / 1000.0;
-            cout << "Pre-scan time cost: " << t << "s, Probing rate: " << (float) stats->count / t << "pps" << endl;
+            cout << "Time cost: " << t << "s, Probing rate: " << (float) stats->count / t << "pps" << endl;
         }
-        if(config.strategy)
+        if(config.strategy and not config.alias)
             stats->dump(config.out);
         delete iplist;
         delete trace;
@@ -385,11 +433,12 @@ int main(int argc, char **argv)
         uint64_t received = 0;       // Number of probes received
         uint64_t active_count = 0; // Found active addresses
         uint64_t new_count = 0; // Found new addresses
-        uint64_t alias_count = 0;
-        uint64_t EUI64_count = 0;
-        uint64_t small_integer = 0;
-        uint64_t embedded_IPv4 = 0;
-        uint64_t randomized_count = 0;
+        uint64_t alias_count = 0; // Aliased addresses
+        uint64_t EUI64_count = 0; // EUI64 addresses
+        uint64_t small_integer = 0; // Small_integer addresses
+        uint64_t embedded_IPv4 = 0; // Embedded IPv4 addresses
+        uint64_t randomized_count = 0; // Randomized addresses
+        uint64_t others_count = 0;
 
         string line;
         unordered_map<string, string> results;
@@ -412,8 +461,15 @@ int main(int argc, char **argv)
         active_count = results.size();
 
         /* Remove the seed addresses */
-        string type = Tr_Type_String[config.type - 1];
-        string file_name = get_seedset(type);
+        cout << "Removing the seed addresses..." << endl;
+        string file_name;
+        if (config.type) { // If no type is specified, the entire hitlist is excluded
+            string type = Tr_Type_String[config.type - 1];
+            file_name = get_seedset(type);
+        } else {
+            file_name = get_hitlist();
+        }
+        
         string seed;
         infile.open(file_name);
         while (getline(infile, seed)) {
@@ -426,6 +482,7 @@ int main(int argc, char **argv)
         new_count = results.size();
 
         /* Alias resolution */
+        cout << "Aliased addresses resolution..." << endl;
         Patricia *alias_tree = new Patricia(128);
         file_name = get_aliasfile();
         infile.open(file_name);
@@ -443,84 +500,90 @@ int main(int argc, char **argv)
 
         new_count = new_count - alias_count; // De-alias
 
-        // /* Small-integer and EUI-64 detection */
-        // string::size_type idx1, idx2;
-        // for (auto iter = results.begin(); iter != results.end(); ++iter) {
-        //     if (iter->second == "other") {
-        //         idx1 = iter->first.find("::");
-        //         if (idx1 != string::npos && (iter->first.size() - idx1 < 5)) {
-        //             iter->second = "small-integer";
-        //         }
+        /* Small-integer and EUI-64 detection */
+        cout << "Small-integer and EUI-64 detection..." << endl;
+        string::size_type idx1, idx2;
+        for (auto iter = results.begin(); iter != results.end(); ++iter) {
+            if (iter->second == "other") {
+                idx1 = iter->first.find("::");
+                if (idx1 != string::npos) {
+                    iter->second = "small-integer";
+                }
 
-        //         idx1 = iter->first.find("ff:fe");
-        //         if (idx1 != string::npos) {
-        //             idx2 = seed2vec(iter->first).find_last_of("fffe");
-        //             if (idx2 == 25) {
-        //                 EUI64_count++;
-        //                 iter->second = "EUI-64";
-        //             }
-        //         }
-        //     }
-        // }
+                idx1 = iter->first.find("ff:fe");
+                if (idx1 != string::npos) {
+                    idx2 = seed2vec(iter->first).find_last_of("fffe");
+                    if (idx2 == 25) {
+                        EUI64_count++;
+                        iter->second = "EUI-64";
+                    }
+                }
+            }
+        }
 
-        // /* Embedded-IPv4 detection */
-        // for (auto iter = results.begin(); iter != results.end(); ++iter) {
-        //     if (iter->second == "other") {
-        //         string ipv4 = get_ipv4(iter->first);
-        //         if (ipv4.length())
-        //             iter->second = ipv4;
-        //     } else if (iter->second == "small-integer")
-        //         small_integer++;
-        // }
+        /* Embedded-IPv4 detection */
+        cout << "Embedded-IPv4 addresses detection..." << endl;
+        for (auto iter = results.begin(); iter != results.end(); ++iter) {
+            if (iter->second == "other") {
+                string ipv4 = get_ipv4(iter->first);
+                if (ipv4.length())
+                    iter->second = ipv4;
+            } else if (iter->second == "small-integer")
+                small_integer++;
+        }
 
-        // IPList4 *iplist = new IPList4();
-        // iplist->setkey(config.seed);
-        // Stats *stats = new Stats(0);
-        // Traceroute4 *trace = new Traceroute4(&config, stats);
-        // trace->unlock();
+        IPList4 *iplist = new IPList4();
+        iplist->setkey(config.seed);
+        Stats *stats = new Stats(0);
+        Traceroute4 *trace = new Traceroute4(&config, stats);
+        trace->unlock();
 
-        // iplist->read_result(results);
-        // if (iplist->targets.size()) {
-        //     loop(&config, iplist, trace, stats);
-        //     cout << "Waiting 5's for outstanding replies..." << endl;
-        //     sleep(5);
-        // }
+        iplist->read_result(results);
+        if (iplist->targets.size()) {
+            loop(&config, iplist, trace, stats);
+            cout << "Waiting 5's for outstanding replies..." << endl;
+            sleep(5);
+        }
 
-        // for (auto iter1 : stats->IPv4) {
-        //     for (auto iter2 = results.begin(); iter2 != results.end(); ++iter2) {
-        //         if (iter1 == iter2->second) {
-        //             embedded_IPv4++;
-        //             iter2->second = "embedded-IPv4";
-        //         }
-        //     }
-        // }
+        for (auto iter = results.begin(); iter != results.end(); ++iter) {
+            if (isdigit((iter->second)[0])) {
+                if (stats->IPv4.find(iter->second) != stats->IPv4.end()) {
+                    embedded_IPv4++;
+                    iter->second = "embedded-IPv4";
+                    stats->IPv4.erase(iter->second);
+                }
+            }            
+        }
         
-        // for (auto iter = results.begin(); iter != results.end(); ++iter) {
-        //     if (isdigit((iter->second)[0]))
-        //         iter->second = "other";
-        // }
+        for (auto iter = results.begin(); iter != results.end(); ++iter) {
+            if (isdigit((iter->second)[0]))
+                iter->second = "other";
+        }
 
-        // /* Randomized detection */
-        // for (auto iter = results.begin(); iter != results.end(); ++iter) {
-        //     if (iter->second == "other") {
-        //         string vec = seed2vec(iter->first);
-        //         string vec1 = vec.substr(16, 8);
-        //         string vec2 = vec.substr(24, 8);
-        //         bitset<32> bit1(stoll(vec1, nullptr, 16));
-        //         bitset<32> bit2(stoll(vec2, nullptr, 16));
-        //         int count_zero = 0;
-        //         for (auto i = 0; i < 32; ++i) {
-        //             if (bit1[i] == 0)
-        //                 count_zero++;
-        //             if (bit2[i] == 0)
-        //                 count_zero++;
-        //         }
-        //         if (count_zero >= 29 && count_zero <= 35 ) {
-        //             randomized_count++;
-        //             iter->second = "randomized";
-        //         }
-        //     }
-        // }
+        /* Randomized detection */
+        cout << "Randomized addresses detection..." << endl;
+        for (auto iter = results.begin(); iter != results.end(); ++iter) {
+            if (iter->second == "other") {
+                string vec = seed2vec(iter->first);
+                string vec1 = vec.substr(16, 8);
+                string vec2 = vec.substr(24, 8);
+                bitset<32> bit1(stoll(vec1, nullptr, 16));
+                bitset<32> bit2(stoll(vec2, nullptr, 16));
+                int count_zero = 0;
+                for (auto i = 0; i < 32; ++i) {
+                    if (bit1[i] == 0)
+                        count_zero++;
+                    if (bit2[i] == 0)
+                        count_zero++;
+                }
+                if (count_zero >= 16 && count_zero <= 48) {
+                    randomized_count++;
+                    iter->second = "randomized";
+                }
+            }
+        }
+
+        others_count = new_count - small_integer - randomized_count - embedded_IPv4 - EUI64_count;
 
         /* Output the results */
         fprintf(config.out, "%-40s    %s\n", "# Discovered new addresses", "IID allocation schemes");
@@ -533,25 +596,25 @@ int main(int argc, char **argv)
         fprintf(config.out, "# Received ratio: %2.2f%%\n", (float) received * 100 / BUDGET);
         fprintf(config.out, "# Alias addresses %" PRId64 "\n", alias_count);
         fprintf(config.out, "# Discovered new addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", new_count, (float) new_count * 100 / BUDGET);
-        // fprintf(config.out, "# IID allocation schemas: Small-integer %" \
-        // PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
-        // PRId64 " (%2.2f%%).\n", small_integer, (float) small_integer * 100 / new_count, \
-        // randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
-        // EUI64_count, (float) EUI64_count * 100 / new_count);
+        fprintf(config.out, "# IID allocation schemas: Small-integer %" \
+        PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
+        PRId64 " (%2.2f%%), Others %" PRId64 " (%2.2f%%).\n", small_integer, (float) small_integer * 100 / new_count, \
+        randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
+        EUI64_count, (float) EUI64_count * 100 / new_count, others_count, (float) others_count * 100 / new_count);
         
         fprintf(stdout, "# Received ratio: %2.2f%%\n", (float) received * 100 / BUDGET);
         fprintf(stdout, "# Alias addresses %" PRId64 "\n", alias_count);
         fprintf(stdout, "# Discovered new addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", new_count, (float) new_count * 100 / BUDGET);
-        // fprintf(stdout, "# IID allocation schemas: Small-integer %" \
-        // PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
-        // PRId64 " (%2.2f%%).\n", small_integer, (float) small_integer * 100 / new_count, \
-        // randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
-        // EUI64_count, (float) EUI64_count * 100 / new_count);
+        fprintf(stdout, "# IID allocation schemas: Small-integer %" \
+        PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
+        PRId64 " (%2.2f%%), Others %" PRId64 " (%2.2f%%).\n", small_integer, (float) small_integer * 100 / new_count, \
+        randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
+        EUI64_count, (float) EUI64_count * 100 / new_count, others_count, (float) others_count * 100 / new_count);
 
         results.clear();
-        // delete iplist;
-        // delete trace;
-        // delete stats;
+        delete iplist;
+        delete trace;
+        delete stats;
         cout << "End running 6Scan" << endl;
     }
 }

@@ -4,6 +4,7 @@
 #include "scanner/6scan.h"
 #include "download.h"
 #include "patricia.h"
+#include "jsonreader.h"
 #include <dirent.h>
 #include <fstream>
 #include <set>
@@ -33,7 +34,9 @@ void target_generation_6tree(IPList6* iplist, std::string subspace, struct Space
 
 void init_6gen(IPList6* iplist, std::string seedset, std::vector<std::string>& clusters, std::vector<std::string>& clusters_big);
 
-void target_generation_edgy(IPList6* iplist, std::unordered_set<std::string>& edgy_set, int mask);
+void target_generation_heuristic(IPList6* iplist, std::unordered_map<std::string, int>& prefix_map, int mask);
+
+void target_generation_alias(IPList6* iplist, std::string line);
 
 int get_dimension(std::string cluster);
 std::string get_scan_time();

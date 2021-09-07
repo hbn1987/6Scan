@@ -24,11 +24,12 @@ make
 
 ### Option
 ```shell
--D [hitlist/alias/country-xx/as-xxxx] # Download the IPv6 hitlist/aliased prefixes/country prefix resource list/AS announced prefixes.
+-D [hitlist/alias/country_xx/as_xxxx] # Download the IPv6 hitlist/aliased prefixes/country prefix resource list/AS announced prefixes.
 -P # Pre-scan the hitlist.
 -t [ICMP6/TCP6_SYN/TCP6_ACK/UDP6] # Set probe type.
 -I # Network interface to use.
 -s [6Scan/6Hit/6Tree/6Gen/Edgy] # Set IPv6 searching strategy.
+-A [country-xx/as-xxxx] # Active search and alias resolution within a region using heuristic algorithm
 -C [Active address file e.g., ./output/raw_ICMP6_yyyymmdd] # Address classification.
 ```
 ### Example
@@ -37,12 +38,14 @@ make
 # Download the IPv6 hitlist from https://ipv6hitlist.github.io/.
 ./6scan -D alias
 # Download the aliased prefixes from https://ipv6hitlist.github.io/.
-./6scan -D country-cn
-# Download ASNs, IPv4 ranges and IPv6 prefixes associated with China from https://stat.ripe.net/docs/data_api/.
-./6scan -D as-3333
+./6scan -D country_cn
+# Download ASNs, IPv4 ranges and IPv6 prefixes associated with China from https://stat.ripe.net/docs/data_api/ using 2-digit ISO-3166 country code.
+./6scan -D as_3333
 # Download all announced prefixes associated with AS 3333 from https://stat.ripe.net/docs/data_api/.
 ./6scan -P -t ICMP6 -I [interface e.g., enp2s0f0]
 # Pre-scan the latest local hitlist to make the seedset using ICMPv6 packet.
+./6scan -A country_cn -t ICMP6 -I [interface e.g., enp2s0f0]
+# Active search and alias resolution of Chinese IPv6 address resources with ICMPv6 packet.
 ./6scan -t ICMP6 -I [interface e.g., enp2s0f0] -s 6Scan
 # IPv6 Internet-wide scanning with 6Scan strategy using the latest local ICMPv6 seedset.
 ./6scan -t UDP6 -I [interface e.g., enp2s0f0] -s 6Tree
@@ -64,7 +67,7 @@ and the address classification results in the file that begin with results_.
 |Probing rate|number of packets sent per second|
 |Received ratio|ratio of total number of received packets to the budget|
 |Hit active addresses|hit active addresses|
-|Discovered new addresses|found active addresses after removing the seed addresses|
+|Discovered new addresses|found active addresses after removing the seeds and the aliased addresses|
 |Time cost|time cost of the preparation and scanning time|
 |Address classification|IID allocation schemas i.e., Alias, Small-integer, Randomized, Embedded-IPv4, EUI-64, and Other|
 
@@ -79,7 +82,6 @@ and the address classification results in the file that begin with results_.
 >B. Hou, Z. Cai, K. Wu, J. Su, and Y. Xiong, “6Hit: A Reinforcement Learning-based Approach to Target Generation for Internet-wide IPv6 Scanning,” in INFOCOM, 2021. \
 >Z. Liu, Y. Xiong, X. Liu, W. Xie, and P. Zhu, “6Tree: Efficient Dynamic Discovery of Active Addresses in the IPv6 Address Space,” Comput. Networks, 2019. \
 >A. Murdock, F. Li, P. Bramsen, Z. Durumeric, and V. Paxson, “Target Generation for Internet-Wide IPv6 Scanning,” in IMC, 2017. \
->E. C. Rye and R. Beverly, “Discovering the IPv6 Network Periphery,” in PAM, 2020.
 ### Alias resolution
 >O. Gasser et al., “Clusters in the Expanse: Understanding and Unbiasing IPv6 Hitlists,” in IMC, 2018.
 ### Address classification

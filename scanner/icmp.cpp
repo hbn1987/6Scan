@@ -363,13 +363,10 @@ void ICMP6::write(FILE ** out, Stats* stats) {
                     stats->nodelist[index]->active++;
             }
             break;
-        case Edgy:
-            if (strcmp(src, target) == 0)
-                stats->edgy.push_back(seed2vec(src));
     }
 }
 
-void ICMP6::write2seeds(FILE ** out) {
+void ICMP6::write2seeds(FILE ** out, Stats* stats) { // Pre-scan and Heuristic use this function
     char src[INET6_ADDRSTRLEN];
     char target[INET6_ADDRSTRLEN];
     inet_ntop(AF_INET6, &ip_src, src, INET6_ADDRSTRLEN);
@@ -387,8 +384,21 @@ void ICMP6::write2seeds(FILE ** out) {
     else {
         inet_ntop(AF_INET6, &ip_src, target, INET6_ADDRSTRLEN);
     }
-    if (strcmp(src, target) == 0)
-        ICMP::write(out, src, target);
+    if (strcmp(src, target) == 0) {        
+        if (stats->strategy == Heuristic) {                        
+            string addr = seed2vec(src);            
+            string prefix = addr.substr(0, stats->mask/4);
+            unordered_map<string, int>::iterator iter = stats->prefix_map.find(prefix);
+            if (iter != stats->prefix_map.end())
+                iter->second++;
+            if (addr.substr(addr.length()-4) != "1234") { // If the address is not the pseudorandom address, write it into the hitlist
+                stats->prefixes.push_back(addr);
+                ICMP::write(out, src, target);
+            }
+        } else { // Pre-scan
+            ICMP::write(out, src, target);
+        }
+    }
 }
 
 struct in6_addr ICMP6::quoteDst6() {

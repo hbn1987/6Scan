@@ -285,15 +285,19 @@ void init_6gen(IPList6* iplist, string seedset, vector<string>& clusters, vector
     cluster_seeds.clear();
 }
 
-/* Edgy strategy */
-void target_generation_edgy(IPList6* iplist, std::unordered_set<std::string>& edgy_set, int mask) {
+/* Herustic strategy */
+void target_generation_heuristic(IPList6* iplist, std::unordered_map<std::string, int>& prefix_map, int mask) {
     string add_zero((31 - mask/4 - 1), '0');
-    for (auto iter : edgy_set) {
+    for (auto& iter : prefix_map) {
         for (auto i = 0; i < 16; ++i) {
-            string ip = vec2colon(iter + dec2hex(i, 1) + add_zero + "1") + "/128";
+            string ip = vec2colon(iter.first + dec2hex(i, 1) + add_zero + "1") + "/128";
             iplist->subnet6(ip, iplist->targets);
         }
-        if (iplist->targets.size() >= (BUDGET / (mask / 2))) // minimize the impact of alias
-            break;
     }
+}
+
+void target_generation_alias(IPList6* iplist, std::string line) {
+    int pos = line.find("/");
+    line = line.substr(0, pos) + "1234/128"; // 1234 acts as a random number
+    iplist->subnet6(line, iplist->targets);
 }

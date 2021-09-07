@@ -4,12 +4,14 @@
 class Stats {
     public:
     int strategy = 0;
+    int mask;
     uint64_t count = 0;       // number of probes sent
     uint64_t baddst = 0;      // checksum invalid on destination in response
 
     Node_List nodelist;
 
-    std::vector<std::string> edgy;
+    std::unordered_map<std::string, int> prefix_map;
+    std::vector<std::string> prefixes;
 
     std::unordered_set<std::string> IPv4;
 
@@ -46,4 +48,8 @@ class Stats {
         fprintf(stdout, "# Probing rate: %2.2fpps\n", (float) count / t);
         fprintf(stdout, "# Time cost: Total %2.2fs, Preparation %2.2fs, Scanning %2.2fs\n", t, m, t-m);
     };
+
+    void dump_alias(FILE *alias_out, std::string alias_prefix) {
+        fprintf(alias_out, "%s\n", alias_prefix.c_str());
+    }
 };

@@ -2,6 +2,7 @@
 
 static struct option long_options[] = {
     {"srcaddr", required_argument, NULL, 'a'},
+    {"alias", required_argument, NULL, 'A'},
     {"classification", required_argument, NULL, 'C'},
     {"download", required_argument, NULL, 'D'},
     {"help", no_argument, NULL, 'h'},
@@ -33,12 +34,17 @@ void ScanConfig::parse_opts(int argc, char **argv) {
         usage(argv[0]);
     seed = time(NULL);
 
-    params["Program"] = val_t("6Scan v" + string(VERSION), true);
+    params["Program"] = val_t("6Scan", true);
 
-    while (-1 != (c = getopt_long(argc, argv, "a:C:D:E:G:hI:M:p:Pr:s:t:X:", long_options, &opt_index))) {
+    while (-1 != (c = getopt_long(argc, argv, "a:A:C:D:E:G:hI:M:p:Pr:s:t:X:", long_options, &opt_index))) {
         switch (c) {
         case 'a':
             probesrc = optarg;
+            break;
+        case 'A':
+            alias = true;
+            alias_range = optarg;            
+            strategy = Heuristic;
             break;
         case 'C':
             classification = optarg;
@@ -76,9 +82,7 @@ void ScanConfig::parse_opts(int argc, char **argv) {
                 strategy = Tree6;
             } else if(strcmp(optarg, "6Gen") == 0) {
                 strategy = Gen6;
-            } else if(strcmp(optarg, "Edgy") == 0) {
-                strategy = Edgy;
-            }
+            } 
             break;
         case 't':
             if (strcmp(optarg, "ICMP6") == 0) {
@@ -122,16 +126,28 @@ void ScanConfig::parse_opts(int argc, char **argv) {
     /* Set default output file */
     if (0 != access(string(OUTPUT).c_str(),0))
         mkdir(string(OUTPUT).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-    output = (char *) malloc(UINT8_MAX);
+    output = (char *) malloc (UINT8_MAX);
 
     string scan_time = get_scan_time();
 
     if (pre_scan) {
         string seed_file = "./output/seeds_" + string(Tr_Type_String[type]) + "_" + scan_time;
-        snprintf(output, UINT8_MAX, "%s" , seed_file.c_str());
+        snprintf(output, UINT8_MAX, "%s", seed_file.c_str());
     }
 
-    if (strategy) {
+    if (alias) {
+        string hitlist_file = "./output/hitlist_" + string(alias_range) + "_" + string(Tr_Type_String[type]) + "_" + scan_time;
+        string alias_file = "./output/alias_" + string(alias_range) + "_"+ string(Tr_Type_String[type]) + "_" + scan_time;
+        snprintf(output, UINT8_MAX, "%s", hitlist_file.c_str());
+
+        alias_output = (char *) malloc (UINT8_MAX);
+        snprintf(alias_output, UINT8_MAX, "%s", alias_file.c_str());
+        alias_out = fopen(alias_output, "w+");
+        if (alias_out == NULL)
+            fatal("%s: cannot open %s: %s", __func__, alias_output, strerror(errno));
+    }
+
+    if (strategy and not alias) {
         string result_file = "./output/raw_" + string(search_strategy_str[strategy]) + "_" + string(Tr_Type_String[type]) + "_" + scan_time;
         snprintf(output, UINT8_MAX, "%s", result_file.c_str());
     }
@@ -185,13 +201,11 @@ void ScanConfig::usage(char *prog) {
     << "                                      (default: TCP_ACK)" << endl
     << "  -r, --rate              Scan rate in pps (default: 10)" << endl
     << "  -a, --srcaddr           Source address of probes (default: auto)" << endl
-    << "  -C  --classification    Classification the active addresses" << endl
     << "  -p, --port              Transport dst port (default: 80)" << endl
     << "  -I, --interface         Network interface (required for IPv6)" << endl
     << "  -G, --dstmac            MAC of gateway router (default: auto)" << endl
     << "  -M, --srcmac            MAC of probing host (default: auto)" << endl
     << "  -X, --v6eh              Ext Header number to add (default: none)" << endl
-
-    << endl;
+    << "  See README for more details!" << endl;
     exit(-1);
 }

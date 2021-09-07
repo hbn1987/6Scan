@@ -18,6 +18,7 @@ bin_PROGRAMS = 6scan
   strategy/patricia.cpp \
   strategy/tree.cpp \
   strategy/util.cpp \
+  strategy/jsonreader.cpp \
   libcperm/cperm.c \
   libcperm/prefix.c \
   libcperm/cycle.c \
@@ -37,6 +38,7 @@ include_HEADERS = \
   strategy/download.h \
   strategy/tree.h \
   strategy/patricia.h \
+  strategy/jsonreader.h \
   libcperm/cperm.h \
   libcperm/cperm-internal.h \
   libcperm/cycle.h \

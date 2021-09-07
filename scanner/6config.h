@@ -6,14 +6,16 @@ public:
     ScanConfig() : rate(0), output(NULL), count(0), seed(0),
     dstport(80), ipv6(false), int_name(NULL), dstmac(NULL),
     srcmac(NULL), probesrc(NULL), instance(0), v6_eh(255),
-    out(NULL), pre_scan(false), type(0), strategy(0),
-    classification(NULL), download(NULL){};
+    out(NULL), pre_scan(false), alias(false), type(0), 
+    strategy(0), classification(NULL), download(NULL), alias_range(NULL),
+    alias_output(NULL), alias_out(NULL){};
 
     void parse_opts(int argc, char **argv);
     void usage(char *prog);
     void set(std::string, std::string, bool);
     unsigned int rate;
     char *output;
+    char *alias_output;
     uint64_t count;
     uint32_t seed;
     uint16_t dstport;
@@ -27,8 +29,11 @@ public:
     uint8_t instance;
     uint8_t v6_eh;
     FILE *out;
+    FILE *alias_out;
     params_t params;
     bool pre_scan;
+    bool alias;
     char* download;
+    char* alias_range;
     char* classification;
 };

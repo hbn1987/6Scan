@@ -17,7 +17,9 @@ LDFLAGS="-L/usr/local/lib"
 AX_CHECK_ZLIB
 
 LIBCURL_CHECK_CONFIG([],[],[],AC_MSG_ERROR([Requires libcurl.]))
-LIBS="$LIBCURL $LIBS"
+LIBJSON="-ljsoncpp"
+LIBS="$LIBJSON $LIBCURL $LIBS"
+
 
 AC_MSG_RESULT(Determined host operating system: $host_os)
 case $host_os in

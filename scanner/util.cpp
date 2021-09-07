@@ -116,3 +116,18 @@ void instanceLock(uint8_t instance) {
         exit(-1);
     }
 }
+
+string get_alias (string line, int mask) {
+    int len = ceil(mask * 1.0 / 4 / 4);
+
+    string res_str = "";
+    for (int i = 0; i < len - 1; ++i)
+    {
+        res_str += line.substr(i * 4, 4);
+        res_str += ':';
+    }
+    res_str += line.substr((len - 1) * 4);
+    res_str += "::/";
+    res_str += to_string(mask);
+    return res_str;
+}

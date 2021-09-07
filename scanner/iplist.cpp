@@ -139,7 +139,7 @@ void IPList6::subnet6(string s, vector<struct in6_addr>& targets) {
         //inet_ntop(AF_INET6, &next, output, INET6_ADDRSTRLEN);
         //cout << "End: " << output << endl;
     } else {
-        fatal("Error parsing IPv6 subnet: %s", s.c_str());
+        warn("Error parsing IPv6 subnet: %s", s.c_str());
     }
     free(p);
 }

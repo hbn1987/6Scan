@@ -11,7 +11,7 @@ class ICMP {
     ICMP();
     virtual void print() {};
     virtual void write(FILE **, Stats *) {};
-    virtual void write2seeds(FILE **) {};
+    virtual void write2seeds(FILE **, Stats *) {};
     virtual uint32_t getSrc() { return 0; };
     virtual struct in6_addr *getSrc6() { return NULL; };
     virtual uint32_t quoteDst() { return 0; };
@@ -69,7 +69,7 @@ class ICMP6 : public ICMP {
     struct in6_addr quoteDst6();
     void print();
     void write(FILE **, Stats *);
-    void write2seeds(FILE **);
+    void write2seeds(FILE **, Stats *);
     struct scanpayload *qpayload = NULL;     /* Quoted ICMPv6 payload */
 
     private:

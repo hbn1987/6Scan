@@ -57,8 +57,8 @@ void *listener6(void *args) {
                 ICMP *icmp = new ICMP6(ip, ippayload, elapsed);
                 if (icmp->is_scan) {
                     //icmp->print();
-                    if (trace->config->pre_scan)
-                        icmp->write2seeds(&(trace->config->out));
+                    if (trace->config->pre_scan or trace->config->alias)
+                        icmp->write2seeds(&(trace->config->out), trace->stats);
                     else
                         icmp->write(&(trace->config->out), trace->stats);
                 }

@@ -76,8 +76,9 @@ Traceroute4::probe(struct sockaddr_in *target, int ttl) {
     } else if ( (TR_TCP_SYN == config->type) || (TR_TCP_ACK == config->type) ) {
         probeTCP(target, ttl);
     } else {
-        cerr << "** bad trace type:" << config->type << endl;
-        assert(false);
+        cout << "No trace type: " << config->type << ", using ICMPv4" << endl;
+        probeICMP(target, ttl);
+        // assert(false);
     }
 }
 
