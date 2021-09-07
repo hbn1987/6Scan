@@ -1,0 +1,1 @@
+void readJson(std::string scope_file, std::vector<std::string>& prefixes);
