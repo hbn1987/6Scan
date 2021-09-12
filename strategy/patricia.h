@@ -139,8 +139,7 @@ class Patricia {
     void populate(int family, std::ifstream& infile);
     void populate(int family, std::ifstream& infile, bool alias);
     void populateBlock(int family, std::ifstream& infile);
-    void populate6(std::ifstream& infile) {
-        populate(AF_INET6, infile); };
+    void populate6(std::ifstream& infile) { populate(AF_INET6, infile); };
     int matchingPrefix(uint32_t addr);
     int matchingPrefix(const char *string);
 

@@ -8,7 +8,8 @@ public:
     srcmac(NULL), probesrc(NULL), instance(0), v6_eh(255),
     out(NULL), pre_scan(false), alias(false), type(0), 
     strategy(0), classification(NULL), download(NULL), alias_range(NULL),
-    alias_output(NULL), alias_out(NULL){};
+    alias_output(NULL), alias_out(NULL), region_limit(NULL), hitlist(false),
+    level(NULL){};
 
     void parse_opts(int argc, char **argv);
     void usage(char *prog);
@@ -33,7 +34,10 @@ public:
     params_t params;
     bool pre_scan;
     bool alias;
+    bool hitlist;
     char* download;
     char* alias_range;
     char* classification;
+    char* region_limit;
+    char* level;
 };

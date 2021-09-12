@@ -230,7 +230,7 @@ int main(int argc, char **argv)
         /* IPv6 scanning with different strategies */
         if (config.strategy) {
             string type = Tr_Type_String[config.type];
-            string seedset = get_seedset(type);
+            string seedset = get_seedset(type, config.region_limit);
             iplist->setkey(config.seed);
 
             /* Scanning with 6Scan strategy */
@@ -465,7 +465,7 @@ int main(int argc, char **argv)
         string file_name;
         if (config.type) { // If no type is specified, the entire hitlist is excluded
             string type = Tr_Type_String[config.type - 1];
-            file_name = get_seedset(type);
+            file_name = get_seedset(type, config.region_limit);
         } else {
             file_name = get_hitlist();
         }

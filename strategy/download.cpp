@@ -124,16 +124,35 @@ string query_file(string query_name, string dir)
         }
     }
     if (last_time == 0)
-    {
         fatal("There is no relevant data locally, please download first!");
-    }
     return to_string(last_time);
+}
+
+void query_file_all(string query_name, string dir, vector<string>& file_names) {
+    vector<string> temp_file_names = get_file_names(dir);
+    for (auto i = 0; i < temp_file_names.size(); ++i) {
+        string::size_type pos_start = temp_file_names[i].find(query_name);
+        if (pos_start != string::npos) {
+            file_names.push_back(temp_file_names[i]);
+        }
+    }
+    if (file_names.size() == 0)
+        fatal("There is no relevant data locally, please download first!");
 }
 
 string get_hitlist() {
     string file_hitlist;
     file_hitlist = DOWNLOAD + string("/hitlist_") + query_file(string("hitlist_"), DOWNLOAD);
     return file_hitlist;
+}
+
+string get_seedset(string type, char* region) {
+    string file_seedset;
+    if (NULL == region) 
+        file_seedset = OUTPUT + string("/seeds_") + type + string("_") + query_file(string("seeds_") + type, OUTPUT);
+    else
+        file_seedset = OUTPUT + string("/hitlist_") + string(region) + string("_") + type + string("_") + query_file(string("hitlist_") + string(region) + string("_") + type, OUTPUT);
+    return file_seedset;
 }
 
 string get_seedset(string type) {
@@ -152,6 +171,20 @@ string get_countryfile(string scope) {
     string file_country;
     file_country = DOWNLOAD + string("/") + scope + string("_")  + query_file(scope, DOWNLOAD) + string(".json");
     return file_country;
+}
+
+void get_countryfile_all(vector<string>& countries) {    
+    query_file_all("country", DOWNLOAD, countries);
+    for (auto& country : countries) {
+        country = DOWNLOAD + string("/") + country;
+    }
+}
+
+void get_aliasfile_all(vector<string>& aliases) {    
+    query_file_all("alias", OUTPUT, aliases);
+    for (auto& alias : aliases) {
+        alias = OUTPUT + string("/") + alias;
+    }
 }
 
 string get_asfile(string scope) {
