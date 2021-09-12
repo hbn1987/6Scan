@@ -484,10 +484,23 @@ int main(int argc, char **argv)
         /* Alias resolution */
         cout << "Aliased addresses resolution..." << endl;
         Patricia *alias_tree = new Patricia(128);
-        file_name = get_aliasfile();
+        file_name = get_aliasfile(); // Gasser's alias prefix list
         infile.open(file_name);
         alias_tree->populate6(infile);
         infile.close();
+
+        if (config.region_limit) {
+            vector<string> aliases;
+            get_aliasfile_all(aliases);
+            for (auto& it : aliases) {
+                if (it.find(string(config.region_limit)) != string::npos)
+                    file_name = it;
+            }
+            infile.open(file_name);
+            alias_tree->populate6(infile);
+            infile.close();
+        }
+
         int *alias = NULL;
         for (auto iter = results.begin(); iter != results.end(); ++iter) {
             alias = (int *) alias_tree->get(AF_INET6, iter->first.c_str());

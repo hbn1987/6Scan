@@ -187,6 +187,12 @@ void ScanConfig::parse_opts(int argc, char **argv) {
             type = TR_TCP_SYN;
         else if(string(classification).find("UDP6") != string::npos)
             type = TR_UDP;
+        if (string(classification).find("country") != string::npos) {
+            auto pos = string(classification).find("country");
+            region_limit = (char*) malloc (10 * sizeof(char));
+            strncpy(region_limit, classification + pos, 10);
+            region_limit[10] = '\0';       
+        }
     }
 
     out = fopen(output, "w+");
