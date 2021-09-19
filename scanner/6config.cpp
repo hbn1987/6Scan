@@ -36,7 +36,7 @@ void ScanConfig::parse_opts(int argc, char **argv) {
 
     params["Program"] = val_t("6Scan", true);
 
-    while (-1 != (c = getopt_long(argc, argv, "a:A:C:D:E:G:hHI:l:L:M:p:Pr:s:t:X:", long_options, &opt_index))) {
+    while (-1 != (c = getopt_long(argc, argv, "a:A:C:D:E:G:hHI:l:L:M:p:Pr:R:s:t:X:", long_options, &opt_index))) {
         switch (c) {
         case 'a':
             probesrc = optarg;
@@ -81,6 +81,9 @@ void ScanConfig::parse_opts(int argc, char **argv) {
             break;
         case 'r':
             rate = strtol(optarg, &endptr, 10);
+            break;
+        case 'R':
+            dealias = optarg;
             break;
         case 's':
             if (strcmp(optarg, "6Scan") == 0) {
@@ -195,9 +198,24 @@ void ScanConfig::parse_opts(int argc, char **argv) {
         }
     }
 
-    out = fopen(output, "w+");
-    if (out == NULL)
-        fatal("%s: cannot open %s: %s", __func__, output, strerror(errno));
+    if (dealias) {
+        if (string(dealias).find("ICMP6") != string::npos)
+            type = TR_ICMP;
+        else if (string(dealias).find("TCP6") != string::npos)
+            type = TR_TCP_SYN;
+        else if(string(dealias).find("UDP6") != string::npos)
+            type = TR_UDP;
+        if (string(dealias).find("country") != string::npos) {
+            auto pos = string(dealias).find("country");
+            region_limit = (char*) malloc (10 * sizeof(char));
+            strncpy(region_limit, dealias + pos, 10);
+            region_limit[10] = '\0';       
+        }
+    } else {
+        out = fopen(output, "w+");
+        if (out == NULL)
+            fatal("%s: cannot open %s: %s", __func__, output, strerror(errno));
+    }
 
     /* Set default destination port based on tracetype, if not set */
     if (not dstport) {

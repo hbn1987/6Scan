@@ -9,7 +9,7 @@ public:
     out(NULL), pre_scan(false), alias(false), type(0), 
     strategy(0), classification(NULL), download(NULL), alias_range(NULL),
     alias_output(NULL), alias_out(NULL), region_limit(NULL), hitlist(false),
-    level(NULL){};
+    level(NULL), dealias(NULL){};
 
     void parse_opts(int argc, char **argv);
     void usage(char *prog);
@@ -40,4 +40,5 @@ public:
     char* classification;
     char* region_limit;
     char* level;
+    char* dealias;
 };

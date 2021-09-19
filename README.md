@@ -65,6 +65,8 @@ make
 # Analyze the regional distribution of addresses that respond to ICMPv6 packets in the Gasser's hitlist(seedset).
 ./6scan -H -L alias
 # Compare the alias prefixes we obtained with Gasser's alias prefix list.
+./6scan -R [Reginal hitlist file e.g., ./output/hitlist_country_in_ICMP6_yyyymmdd]
+# Remove the alias addresses in the reginal hitlist file.
 ```
 
 ## Output

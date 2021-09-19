@@ -198,7 +198,7 @@ int main(int argc, char **argv)
                 cout << "Candicate alias-prefix resolution with mask of " << stats->mask << " ..." << endl;
                 unordered_map<string, int>::iterator it = stats->prefix_map.begin();
                 while (it != stats->prefix_map.end()) {
-                    if (it->second > 15) {
+                    if (it->second > 12) {
                         for (auto i = 0; i < stats->prefixes.size(); ++i) { // Radical deletion of possible alias prefixes
                             if (stats->prefixes[i].find(it->first) != string::npos)
                                 stats->prefixes.erase(stats->prefixes.begin() + i);
@@ -629,5 +629,65 @@ int main(int argc, char **argv)
         delete trace;
         delete stats;
         cout << "End running 6Scan" << endl;
+    }
+
+    if (config.dealias) {
+        cout << "De-alias the regional hitlist..." << endl;        
+
+        uint64_t active_count = 0; // Found active addresses
+        uint64_t new_count = 0; // Found new addresses
+        uint64_t alias_count = 0; // Aliased addresses
+
+        string line;
+        unordered_set<string> results;
+
+        ifstream infile;
+        infile.open(string(config.dealias));
+        while (getline(infile, line)) {
+            if (!line.empty() && line[line.size() - 1] == '\r')
+                line.erase( remove(line.begin(), line.end(), '\r'), line.end());
+            results.insert(line);
+        }
+        infile.close();
+        active_count = results.size();
+
+        string file_name;
+
+        /* Alias resolution */
+        cout << "Aliased addresses resolution..." << endl;
+        Patricia *alias_tree = new Patricia(128);
+        file_name = get_aliasfile(); // Gasser's alias prefix list
+        infile.open(file_name);
+        alias_tree->populate6(infile);
+        infile.close();
+
+        if (config.region_limit) {
+            vector<string> aliases;
+            get_aliasfile_all(aliases);
+            for (auto& it : aliases) {
+                if (it.find(string(config.region_limit)) != string::npos)
+                    file_name = it;
+            }
+            infile.open(file_name);
+            alias_tree->populate6(infile);
+            infile.close();
+        }
+
+        ofstream file_writer(config.dealias, ios_base::out);
+
+        int *alias = NULL;
+        for (auto& iter : results) {
+            alias = (int *) alias_tree->get(AF_INET6, iter.c_str());
+            if (alias)
+                alias_count++;
+            else
+                file_writer << iter << "\n";
+        }
+        file_writer.close();
+        delete alias_tree;
+
+        new_count = active_count - alias_count; // De-alias
+        cout << "Number of alias addresses: " << alias_count << endl;
+        cout << "Number of seed addresses: " << new_count << endl;
     }
 }
