@@ -187,6 +187,13 @@ void get_aliasfile_all(vector<string>& aliases) {
     }
 }
 
+void get_region_hitlist_all(vector<string>& hitlists) {    
+    query_file_all("hitlist_country", OUTPUT, hitlists);
+    for (auto& hitlist : hitlists) {
+        hitlist = OUTPUT + string("/") + hitlist;
+    }
+}
+
 string get_asfile(string scope) {
     string file_as;
     file_as = DOWNLOAD + string("/") + scope + string("_")  + query_file(scope, DOWNLOAD) + string(".json");

@@ -17,3 +17,5 @@ void get_countryfile_all(std::vector<std::string>& countries);
 std::string get_asfile(std::string scope);
 
 void get_aliasfile_all(std::vector<std::string>& aliases);
+
+void get_region_hitlist_all(std::vector<std::string>& hitlists);

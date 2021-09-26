@@ -53,21 +53,49 @@ void hitlist_analysis(string seedset, string region_limit) {
 
     string line;
     int line_count = 0;
+    unordered_map<string, set<string>> prefix_map, region_prefix_map;
     ifstream infile;
     infile.open(seedset);
     while (getline(infile, line)) {
         if (!line.empty() && line[line.size() - 1] == '\r')
             line.erase(remove(line.begin(), line.end(), '\r'), line.end());
         int* result = (int*) tree->get(AF_INET6, line.c_str());
-        if (result)
+        if (result) {
             counter[*result].second++;
+            prefix_map[counter[*result].first].insert(seed2vec(line).substr(0, 8));
+        }            
         line_count++;
     }
     infile.close();
+    cout << "Gasser's Hitlist: " << endl;
     for (auto i = 0; i < counter.size(); ++i) {
-        cout << "Region: " << counter[i].first << ", Number: " << counter[i].second << ", Ratio: " << counter[i].second * 1.0 / line_count << endl;
+        cout << "Region: " << counter[i].first << ", Number: " << counter[i].second << ", Ratio: " \
+        << counter[i].second * 1.0 / line_count << ", Number of /32 prefixes: " << prefix_map[counter[i].first].size() << endl;
     }    
     delete tree;
+
+    vector<string> hitlists;
+    get_region_hitlist_all(hitlists);
+    /* Analyze the number of prefixes in each country */
+    for (auto& hitlist : hitlists) {
+        string region = hitlist.substr(25, 2);
+        infile.open(hitlist);
+        while (getline(infile, line)) {
+            if (!line.empty() && line[line.size() - 1] == '\r')
+                line.erase(remove(line.begin(), line.end(), '\r'), line.end());
+            region_prefix_map[region].insert(seed2vec(line).substr(0, 8));
+            prefix_map[region].insert(seed2vec(line).substr(0, 8));          
+        }
+        infile.close();
+    }
+    cout << "Our region-level seedsets: " << endl;
+    for (auto iter = region_prefix_map.begin(); iter != region_prefix_map.end(); ++iter) {
+        cout << "Region: " << iter->first << ", Number of /32 prefixes: " << iter->second.size() << endl;
+    }
+    cout << "Aggregate prefix statistics: " << endl;
+    for (auto iter = prefix_map.begin(); iter != prefix_map.end(); ++iter) {
+        cout << "Region: " << iter->first << ", Number of /32 prefixes: " << iter->second.size() << endl;
+    }   
 }
 
 void alias_analysis(string alias_file) {
