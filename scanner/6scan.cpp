@@ -335,7 +335,7 @@ int main(int argc, char **argv)
                 set<string> scanned_subspace;
                 sort(node_priority.begin(), node_priority.end(), Node_Active_Cmp());
                 for(auto& node : node_priority) {
-                    if (node->parent->dim_num == DIMENSION - 1 && scanned_subspace.find(node->parent->subspace) == scanned_subspace.end()) {
+                    if ((node->parent->dim_num >= DIMENSION - 1 && node->parent->dim_num <= DIMENSION + 1) && scanned_subspace.find(node->parent->subspace) == scanned_subspace.end()) {
                         scanned_subspace.insert(node->parent->subspace);
                         target_generation_6tree(iplist, node->parent->subspace, node->parent, 0);
                         if (iplist->targets.size())

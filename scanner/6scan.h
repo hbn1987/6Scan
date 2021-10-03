@@ -134,7 +134,7 @@ std::string get_alias(std::string line, int mask);
 #define OUTPUT "./output" // Output folder
 #define RATE 100000 // Probing rate
 #define TTL 128
-#define BUDGET 10000000 // Budget number
+#define BUDGET 100000000 // Budget number
 
 #define Alias_Threshold 0.9
 #define DIMENSION int(log(BUDGET)/log(16))
