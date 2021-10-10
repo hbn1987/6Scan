@@ -36,7 +36,7 @@ void ScanConfig::parse_opts(int argc, char **argv) {
 
     params["Program"] = val_t("6Scan", true);
 
-    while (-1 != (c = getopt_long(argc, argv, "a:A:C:D:E:G:hHI:l:L:M:p:Pr:R:s:t:X:", long_options, &opt_index))) {
+    while (-1 != (c = getopt_long(argc, argv, "a:A:C:D:E:F:G:hHI:l:L:M:p:Pr:R:s:t:X:", long_options, &opt_index))) {
         switch (c) {
         case 'a':
             probesrc = optarg;
@@ -51,6 +51,9 @@ void ScanConfig::parse_opts(int argc, char **argv) {
             break;
         case 'D':
             download = optarg;
+            break;
+        case 'F':
+            seedfile = optarg;
             break;
         case 'G':
             dstmac = read_mac(optarg);
@@ -137,7 +140,11 @@ void ScanConfig::parse_opts(int argc, char **argv) {
     }
 
     if (hitlist) {
-        if (strcmp(level, "alias") != 0) {
+        if (region_limit) {
+            string type_str = Tr_Type_String[type];
+            string seedset = get_seedset(type_str);
+            hitlist_region_seeds(seedset, string(region_limit), type_str);
+        } else if (strcmp(level, "alias") != 0) {
             string type_str = Tr_Type_String[type];
             string seedset = get_seedset(type_str);
             hitlist_analysis(seedset, string(level));
@@ -174,10 +181,13 @@ void ScanConfig::parse_opts(int argc, char **argv) {
 
     if (strategy and not alias) {
         string result_file;
-        if (NULL == region_limit)
-            result_file = "./output/raw_" + string(search_strategy_str[strategy]) + "_" + string(Tr_Type_String[type]) + "_" + scan_time;
-        else
+        if (region_limit)
             result_file = "./output/raw_" + string(region_limit) + "_" + string(search_strategy_str[strategy]) + "_" + string(Tr_Type_String[type]) + "_" + scan_time;
+        else if (seedfile) {
+            int index = string(seedfile).find_last_of('_');
+            result_file = "./output/raw_" + string(seedfile).substr(9, index - 8) + string(search_strategy_str[strategy]) + "_" + scan_time;
+        } else
+            result_file = "./output/raw_" + string(search_strategy_str[strategy]) + "_" + string(Tr_Type_String[type]) + "_" + scan_time;
         snprintf(output, UINT8_MAX, "%s", result_file.c_str());
     }
 

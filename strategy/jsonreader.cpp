@@ -140,3 +140,55 @@ void alias_analysis(string alias_file) {
     }    
     delete tree;
 }
+
+void hitlist_region_seeds(string seedset, string region_limit, string type_str) {
+    vector<string> prefixes;
+    string country = get_countryfile(region_limit);
+
+    Patricia *tree = new Patricia(128);    
+
+    int country_code = 1;
+
+    /* Build the region tree */
+    readJson(country, prefixes);
+    for (auto& it : prefixes){            
+        tree->add(AF_INET6, it.c_str(), country_code);
+    }
+
+    string outfile = "./output/Gasser_" + region_limit + "_" + seedset.substr(15);
+    ofstream file_writer(outfile, ios_base::out);
+    unordered_set<string> country_seed;
+    
+    string line;
+    ifstream infile;
+    infile.open(seedset);
+    while (getline(infile, line)) {
+        if (!line.empty() && line[line.size() - 1] == '\r')
+            line.erase(remove(line.begin(), line.end(), '\r'), line.end());
+        int* result = (int*) tree->get(AF_INET6, line.c_str());
+        if (result) {
+            country_seed.insert(line);
+            file_writer << line << "\n";
+        }            
+    }
+    infile.close();
+    file_writer.close();
+    delete tree;
+
+    country = get_region_hitlist(region_limit, type_str);
+
+    infile.open(country);
+    while (getline(infile, line)) {
+        if (!line.empty() && line[line.size() - 1] == '\r')
+            line.erase(remove(line.begin(), line.end(), '\r'), line.end());
+        country_seed.insert(line);
+    }
+    infile.close();
+
+    outfile = "./output/Mixed_" + region_limit + "_" + seedset.substr(15);
+    ofstream file_writer1(outfile, ios_base::out);
+    for (auto& iter : country_seed){
+        file_writer1 << iter << "\n";
+    }
+    file_writer1.close();
+}

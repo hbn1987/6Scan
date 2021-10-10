@@ -230,7 +230,11 @@ int main(int argc, char **argv)
         /* IPv6 scanning with different strategies */
         if (config.strategy) {
             string type = Tr_Type_String[config.type];
-            string seedset = get_seedset(type, config.region_limit);
+            string seedset;
+            if (config.seedfile)
+                seedset = config.seedfile;
+            else
+                seedset = get_seedset(type, config.region_limit);
             iplist->setkey(config.seed);
 
             /* Scanning with 6Scan strategy */

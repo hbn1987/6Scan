@@ -187,6 +187,12 @@ void get_aliasfile_all(vector<string>& aliases) {
     }
 }
 
+string get_region_hitlist(string scope, string type_str) {
+    string file_country;
+    file_country = OUTPUT + string("/hitlist_") + scope + string("_") + type_str + string("_")  + query_file(string("hitlist_") + scope + "_" + type_str, OUTPUT);
+    return file_country;
+}
+
 void get_region_hitlist_all(vector<string>& hitlists) {    
     query_file_all("hitlist_country", OUTPUT, hitlists);
     for (auto& hitlist : hitlists) {
