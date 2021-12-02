@@ -1,3 +1,6 @@
+/****************************************************************************
+ * Copyright (c) 2021 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
+ ***************************************************************************/
 #include "strategy.h"
 
 Random::Random(uint32_t permsize_) {
@@ -297,7 +300,12 @@ void target_generation_heuristic(IPList6* iplist, std::unordered_map<std::string
 }
 
 void target_generation_alias(IPList6* iplist, std::string line) {
+
     int pos = line.find("/");
-    line = line.substr(0, pos) + "1234/128"; // 1234 acts as a random number
+    int num = count(line.begin(), line.end(),':');
+    if (num < 8)
+        line = line.substr(0, pos) + "1234/128"; // 1234 acts as a random number
+    else 
+        line = line.substr(0, pos - 1) + "1234/128";
     iplist->subnet6(line, iplist->targets);
 }

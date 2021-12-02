@@ -1,7 +1,7 @@
 /*
  * From Dave Plonka's Net-Patricia-1.22
  *
- * Includes oftware developed by the University of Michigan,
+ * Includes software developed by the University of Michigan,
  * Merit Network, Inc., and their contributors.
  */
 #include <assert.h> /* assert */
@@ -1014,9 +1014,8 @@ void Patricia::populate(int family, std::ifstream& infile, bool alias) {
 
     std::string network;
     uint32_t asn;
-    getline(infile, line);
     while (getline(infile, line)){
-        if (alias) {
+        if (alias && isdigit(line[0])) {
             if (parsePrefix(line, &network)) {
                 add(family, network.c_str(), 0);
                 //std::cout << " Add aliased prefix: " << network << std::endl;

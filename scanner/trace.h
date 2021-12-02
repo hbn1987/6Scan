@@ -1,3 +1,6 @@
+/****************************************************************************
+ Copyright (c) 2016-2019 Robert Beverly <rbeverly@cmand.org> all rights reserved.
+ ***************************************************************************/
 struct scanpayload {
     uint32_t id;
     uint32_t fingerprint;

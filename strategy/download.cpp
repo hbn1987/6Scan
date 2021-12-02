@@ -1,3 +1,6 @@
+/****************************************************************************
+ * Copyright (c) 2021 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
+ ***************************************************************************/
 #include "strategy.h"
 #include <curl/curl.h>
 #include <curl/easy.h>

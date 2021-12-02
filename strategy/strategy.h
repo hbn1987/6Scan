@@ -1,3 +1,6 @@
+/****************************************************************************
+ * Copyright (c) 2021 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
+ ***************************************************************************/
 #ifndef _STRATEGY_H_
 #define _STRATEGY_H_
 

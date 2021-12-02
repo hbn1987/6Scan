@@ -1,3 +1,9 @@
+/****************************************************************************
+ Copyright (c) 2016-2019 Robert Beverly <rbeverly@cmand.org> all rights reserved.
+ ***************************************************************************/
+/****************************************************************************
+ * Copyright (c) 2021 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
+ ***************************************************************************/
 typedef std::pair<std::string, bool> val_t;
 typedef std::map<std::string, val_t> params_t;
 

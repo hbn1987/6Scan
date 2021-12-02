@@ -52,6 +52,7 @@ make
 # Pre-scan the latest local hitlist to make the seedset using ICMPv6 packet.
 ./6scan -A country_cn -t ICMP6 -I [interface e.g., enp2s0f0]
 # Active search and alias resolution of Chinese IPv6 address resources with ICMPv6 packet.
+
 ./6scan -t ICMP6 -I [interface e.g., enp2s0f0] -s 6Scan
 # IPv6 Internet-wide scanning with 6Scan strategy using the latest local ICMPv6 seedset.
 ./6scan -t UDP6 -I [interface e.g., enp2s0f0] -s 6Hit
@@ -61,16 +62,17 @@ make
 ./6scan -t UDP6 -I [interface e.g., eth0] -s 6Scan -F [seedfile e.g., Gasser_country_in_ICMP6_yyyymmdd]
 # Specifies the seedset for scanning using 6Scan strategy.
 
-./6scan -C [Active address file e.g., ./output/raw_6Scan_ICMP6_yyyymmdd] 
-# Classify the active address in the file of raw_6Scan_ICMP6_yyyymmdd.
-./6scan -H -t ICMP6 -L country
-# Analyze the regional distribution of addresses that respond to ICMPv6 packets in the Gasser's hitlist(seedset).
-./6scan -H -t ICMP6 -l country_cn
-# Get the Chinese seeds from Gasser's hitlist and our heuristic search strategy.
-./6scan -H -L alias
-# Compare the alias prefixes we obtained with Gasser's alias prefix list.
 ./6scan -R [Reginal hitlist file e.g., ./output/hitlist_country_in_ICMP6_yyyymmdd]
 # Remove the alias addresses in the reginal hitlist file.
+./6scan -H -t ICMP6 -L country
+# Analyze the regional distribution of addresses that respond to ICMPv6 packets in the Gasser's hitlist(seedset).
+./6scan -H -L alias
+# Compare the alias prefixes we obtained with Gasser's alias prefix list.
+
+./6scan -H -t ICMP6 -l country_cn
+# Get the Chinese seeds from Gasser's hitlist and our heuristic search strategy (i.e., mixed seedset).
+./6scan -C [Active address file e.g., ./output/raw_6Scan_ICMP6_yyyymmdd] 
+# Classify the active address in the file of raw_6Scan_ICMP6_yyyymmdd.
 ```
 
 ## Output

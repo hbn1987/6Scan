@@ -1,3 +1,6 @@
+/****************************************************************************
+ Copyright (c) 2016-2019 Robert Beverly <rbeverly@cmand.org> all rights reserved.
+ ***************************************************************************/
 #include "6scan.h"
 
 Traceroute::Traceroute(ScanConfig *_config, Stats *_stats) : config(_config), stats(_stats)

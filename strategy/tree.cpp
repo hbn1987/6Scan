@@ -1,3 +1,6 @@
+/****************************************************************************
+ * Copyright (c) 2021 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
+ ***************************************************************************/
 #include "strategy.h"
 
 void init_subspace(struct SpaceTreeNode *node, std::vector<std::string>& active_seeds)

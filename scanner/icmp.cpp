@@ -1,3 +1,6 @@
+/****************************************************************************
+ Copyright (c) 2016-2019 Robert Beverly <rbeverly@cmand.org> all rights reserved.
+ ***************************************************************************/
 #include "6scan.h"
 
 ICMP::ICMP() :
@@ -361,6 +364,10 @@ void ICMP6::write(FILE ** out, Stats* stats) {
                 uint64_t index = ntohl(qpayload->fingerprint);
                 if (index < stats->nodelist.size())
                     stats->nodelist[index]->active++;
+                else {
+                    warn("Returning error regional identification %lu", index);
+                    stats->baddst++;
+                }
             }
             break;
     }

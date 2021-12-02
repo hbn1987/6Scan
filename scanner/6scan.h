@@ -1,3 +1,9 @@
+/****************************************************************************
+ Copyright (c) 2016-2019 Robert Beverly <rbeverly@cmand.org> all rights reserved.
+ ***************************************************************************/
+/****************************************************************************
+ * Copyright (c) 2021 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
+ ***************************************************************************/
 #if HAVE_CONFIG_H
     #include "config.h"
 #endif
@@ -132,7 +138,7 @@ std::string get_alias(std::string line, int mask);
 /* 6Scan parameters */
 #define DOWNLOAD "./download" // Hitlist and alias prefixes
 #define OUTPUT "./output" // Output folder
-#define RATE 100000 // Probing rate
+#define RATE 105000 // Probing rate
 #define TTL 128
 #define BUDGET 10000000 // Budget number
 

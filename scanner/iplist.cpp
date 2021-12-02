@@ -1,3 +1,6 @@
+/****************************************************************************
+ Copyright (c) 2016-2019 Robert Beverly <rbeverly@cmand.org> all rights reserved.
+ ***************************************************************************/
 #include "6scan.h"
 
 static uint32_t NETMASKS[] = {
@@ -109,7 +112,7 @@ void IPList6::subnet6(string s, vector<struct in6_addr>& targets) {
     if (2 == sscanf(s.c_str(), "%[a-fA-F0-9:]/%hhu", p, &m)) {
         //cout << "Got IPv6 address: " << p << " prefix length: " << int (m) << endl;
         if (inet_pton(AF_INET6, p, &start) != 1) {
-            fatal("Error parsing IPv6 address: %s", p);
+            warn("Error parsing IPv6 address: %s", p);
         }
         if (m < 96) {
             fatal("IPv6 Prefix must be /96 or larger!");

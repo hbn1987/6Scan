@@ -1,3 +1,6 @@
+/****************************************************************************
+ Copyright (c) 2016-2019 Robert Beverly <rbeverly@cmand.org> all rights reserved.
+ ***************************************************************************/
 #ifdef _LINUX
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>

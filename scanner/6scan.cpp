@@ -1,3 +1,9 @@
+/****************************************************************************
+ Copyright (c) 2016-2019 Robert Beverly <rbeverly@cmand.org> all rights reserved.
+ ***************************************************************************/
+/****************************************************************************
+ * Copyright (c) 2021 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
+ ***************************************************************************/
 #include "6scan.h"
 
 template < class TYPE >
@@ -181,6 +187,8 @@ int main(int argc, char **argv)
             while (stats->mask <= 112) {
                 for (auto& it : stats->prefixes) {
                     stats->prefix_map.insert(pair<string, int>{it.substr(0, stats->mask/4), 0});
+                    if (stats->prefix_map.size() >= 30000)
+                        break;
                 }
 
                 target_generation_heuristic(iplist, stats->prefix_map, stats->mask);
@@ -424,6 +432,7 @@ int main(int argc, char **argv)
         }
         if(config.strategy and not config.alias)
             stats->dump(config.out);
+
         delete iplist;
         delete trace;
         delete stats;
@@ -602,23 +611,28 @@ int main(int argc, char **argv)
 
         others_count = new_count - small_integer - randomized_count - embedded_IPv4 - EUI64_count;
 
-        /* Output the results */
-        fprintf(config.out, "%-40s    %s\n", "# Discovered new addresses", "IID allocation schemes");
+        /* Output the results with classification*/
+        // fprintf(config.out, "%-40s    %s\n", "# Discovered new addresses", "IID allocation schemes");
+        // for (auto iter = results.begin(); iter != results.end(); ++iter) {
+        //     fprintf(config.out, "%-40s    %s\n", iter->first.c_str(), iter->second.c_str());
+        // }
+        // for (auto iter : information) {
+        //     fprintf(config.out, "%s\n", iter.c_str());
+        // }
+        // fprintf(config.out, "# Received ratio: %2.2f%%\n", (float) received * 100 / BUDGET);
+        // fprintf(config.out, "# Alias addresses %" PRId64 "\n", alias_count);
+        // fprintf(config.out, "# Discovered new addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", new_count, (float) new_count * 100 / BUDGET);
+        // fprintf(config.out, "# IID allocation schemas: Small-integer %" \
+        // PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
+        // PRId64 " (%2.2f%%), Others %" PRId64 " (%2.2f%%).\n", small_integer, (float) small_integer * 100 / new_count, \
+        // randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
+        // EUI64_count, (float) EUI64_count * 100 / new_count, others_count, (float) others_count * 100 / new_count);
+
+        /* Output the results without classification*/
         for (auto iter = results.begin(); iter != results.end(); ++iter) {
-            fprintf(config.out, "%-40s    %s\n", iter->first.c_str(), iter->second.c_str());
+            fprintf(config.out, "%s\n", iter->first.c_str());
         }
-        for (auto iter : information) {
-            fprintf(config.out, "%s\n", iter.c_str());
-        }
-        fprintf(config.out, "# Received ratio: %2.2f%%\n", (float) received * 100 / BUDGET);
-        fprintf(config.out, "# Alias addresses %" PRId64 "\n", alias_count);
-        fprintf(config.out, "# Discovered new addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", new_count, (float) new_count * 100 / BUDGET);
-        fprintf(config.out, "# IID allocation schemas: Small-integer %" \
-        PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
-        PRId64 " (%2.2f%%), Others %" PRId64 " (%2.2f%%).\n", small_integer, (float) small_integer * 100 / new_count, \
-        randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
-        EUI64_count, (float) EUI64_count * 100 / new_count, others_count, (float) others_count * 100 / new_count);
-        
+
         fprintf(stdout, "# Received ratio: %2.2f%%\n", (float) received * 100 / BUDGET);
         fprintf(stdout, "# Alias addresses %" PRId64 "\n", alias_count);
         fprintf(stdout, "# Discovered new addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", new_count, (float) new_count * 100 / BUDGET);
