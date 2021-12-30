@@ -9,7 +9,8 @@ Efficient network scanner which could scan the IPv6 network using various search
 ## Require
 
 ```shell
-apt-get install libcurl-dev, libjsoncpp-dev
+apt-get install libcurl4-openssl-dev, libjsoncpp-dev
+apt-get install autoconf, zlib1g-dev
 ```
 
 ## Build
