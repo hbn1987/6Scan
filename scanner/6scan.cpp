@@ -106,7 +106,7 @@ int sane(ScanConfig * config)
         fatal("*** IPv6 requires specifying an interface!");
     if (config->pre_scan and not config->type)
         fatal("*** Pre-scan must specify the type of package!");
-    if (not config->alias_range and config->pre_scan and config->ipv6 and not config->strategy)
+    if (not config->alias_range and not config->pre_scan and config->ipv6 and not config->strategy)
         fatal("*** IPv6 scanning must specify the search strategy!");
     if (config->pre_scan and config->strategy)
         fatal("*** Cannot specify pre-scan and regular scan at the same time!");

@@ -138,7 +138,7 @@ std::string get_alias(std::string line, int mask);
 /* 6Scan parameters */
 #define DOWNLOAD "./download" // Hitlist and alias prefixes
 #define OUTPUT "./output" // Output folder
-#define RATE 105000 // Probing rate
+#define RATE 10000 // Probing rate
 #define TTL 128
 #define BUDGET 10000000 // Budget number
 
