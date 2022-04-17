@@ -1,11 +1,13 @@
 /****************************************************************************
  Copyright (c) 2016-2019 Robert Beverly <rbeverly@cmand.org> all rights reserved.
+ Copyright (c) 2021-2022 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
  ***************************************************************************/
+
 #include "6scan.h"
 
 ICMP::ICMP() :
    rtt(0), ttl(0), type(0), code(0), length(0), quote_p(0), sport(0), dport(0), ipid(0),
-   probesize(0), replysize(0), replyttl(0), replytos(0)
+   probesize(0), replysize(0), replyttl(0), replytos(0), type_str(NULL), fingerprint(0)
 {
     gettimeofday(&tv, NULL);
     mpls_stack = NULL;
@@ -42,8 +44,6 @@ ICMP4::ICMP4(struct ip *ip, struct icmp *icmp, uint32_t elapsed): ICMP()
         if (quote->ip_p == IPPROTO_TCP) {
             struct tcphdr *tcp = (struct tcphdr *) (ptr + 8 + (quote->ip_hl << 2));
             rtt = elapsed - ntohl(tcp->th_seq);
-//            if (elapsed < ntohl(tcp->th_seq))
-//                cout << "** RTT decode, elapsed: " << elapsed << " encoded: " << ntohl(tcp->th_seq) << endl;
             sport = ntohs(tcp->th_sport);
             dport = ntohs(tcp->th_dport);
         }
@@ -66,10 +66,6 @@ ICMP4::ICMP4(struct ip *ip, struct icmp *icmp, uint32_t elapsed): ICMP()
                 timestamp = (payloadlen-2) << 16;
                 rtt = elapsed - timestamp;
             }
-//            if (elapsed < timestamp) {
-//                cout << "** RTT decode, elapsed: " << elapsed << " encoded: " << timestamp << endl;
-//                sport = dport = 0;
-//            }
         }
 
         /* Original probe was ICMP */
@@ -83,10 +79,6 @@ ICMP4::ICMP4(struct ip *ip, struct icmp *icmp, uint32_t elapsed): ICMP()
 
         /* According to Malone PAM 2007, 2% of replies have bad IP dst. */
         uint16_t sum = in_cksum((unsigned short *)&(quote->ip_dst), 4);
-//        if (sport != sum) {
-//            cout << "** IP dst in ICMP reply quote invalid!" << endl;
-//            sport = dport = 0;
-//        }
 
         /* Finally, does this ICMP packet have an extension (RFC4884)? */
         length = (ntohl(icmp->icmp_void) & 0x00FF0000) >> 16;
@@ -146,7 +138,7 @@ ICMP6::ICMP6(struct ip6_hdr *ip, struct icmp6_hdr *icmp, uint32_t elapsed) : ICM
 
     /* Ethernet
      * IPv6 hdr
-     * ICMP6 hdr                struct icmp6_hdr *icmp;         <- ptr
+     * ICMP6 hdr                struct icmp6_hdr *icmp; <-ptr
      *  IPv6 hdr                struct ip6_hdr *icmpip;
      *  Ext hdr                 struct ip6_ext *eh; (if present)
      *  Probe transport hdr     struct tcphdr,udphdr,icmp6_hdr;
@@ -160,7 +152,8 @@ ICMP6::ICMP6(struct ip6_hdr *ip, struct icmp6_hdr *icmp, uint32_t elapsed) : ICM
     quote_p = quote->ip6_nxt;
     int offset = 0;
 
-    if (icmp->icmp6_type == ICMP6_ECHO_REPLY) {
+    /* ICMP6 echo replies only quote the 6scan payload, not the full packet! */
+    if (type == ICMP6_ECHO_REPLY) {
         qpayload = (struct scanpayload *) (ptr + sizeof(struct icmp6_hdr));
     } else {
         // handle hop-by-hop (0), dest (60) and frag (44) extension headers
@@ -192,12 +185,12 @@ ICMP6::ICMP6(struct ip6_hdr *ip, struct icmp6_hdr *icmp, uint32_t elapsed) : ICM
     uint32_t diff = qpayload->diff;
     if (elapsed >= diff)
         rtt = elapsed - diff;
-//    else
-//        cout << "RTT decode, elapsed: " << elapsed << " encoded: " << diff << endl;
-
-    /* ICMP6 echo replies only quote the 6scan payload, not the full packet! */
-    if (((type == ICMP6_TIME_EXCEEDED) and (code == ICMP6_TIME_EXCEED_TRANSIT)) or
-        (type == ICMP6_DST_UNREACH)) {
+    
+    if (type == ICMP6_TIME_EXCEEDED) {
+        if (is_scan)
+            type_str = (char*) "ICMP6_TimeExceeded_withPayload";
+        else 
+            type_str = (char*) "ICMP6_TimeExceeded_noPayload";
         probesize = ntohs(quote->ip6_plen);
         if (quote_p == IPPROTO_TCP) {
             struct tcphdr *tcp = (struct tcphdr *) (ptr + offset);
@@ -213,11 +206,39 @@ ICMP6::ICMP6(struct ip6_hdr *ip, struct icmp6_hdr *icmp, uint32_t elapsed) : ICM
             dport = ntohs(icmp6->icmp6_seq);
         }
         uint16_t sum = in_cksum((unsigned short *)&(quote->ip6_dst), 16);
-        if (sport != sum) {
-//            cout << "IP6 dst in ICMP6 reply quote invalid!" << endl;
+        /* IP6 dst in ICMP6 reply quote invalid! */
+        if (sport != sum)            
             sport = dport = 0;
+    } else if (type == ICMP6_DST_UNREACH) {
+        if (is_scan)
+            type_str = (char*) "ICMP6_DstUnreach_withPayload";
+        else 
+            type_str = (char*) "ICMP6_DstUNreach_noPayload";
+        probesize = ntohs(quote->ip6_plen);
+        if (quote_p == IPPROTO_TCP) {
+            struct tcphdr *tcp = (struct tcphdr *) (ptr + offset);
+            sport = ntohs(tcp->th_sport);
+            dport = ntohs(tcp->th_dport);
+        } else if (quote_p == IPPROTO_UDP) {
+            struct udphdr *udp = (struct udphdr *) (ptr + offset);
+            sport = ntohs(udp->uh_sport);
+            dport = ntohs(udp->uh_dport);
+        } else if (quote_p == IPPROTO_ICMPV6) {
+            struct icmp6_hdr *icmp6 = (struct icmp6_hdr *) (ptr + offset);
+            sport = ntohs(icmp6->icmp6_id);
+            dport = ntohs(icmp6->icmp6_seq);
         }
+        uint16_t sum = in_cksum((unsigned short *)&(quote->ip6_dst), 16);
+        /* IP6 dst in ICMP6 reply quote invalid! */
+        if (sport != sum)            
+            sport = dport = 0;
+    } else {
+        if (is_scan)
+            type_str = (char*) "ICMP6_EchoReply_withPayload";
+        else
+            type_str = (char*) "ICMP6_EchoReply_noPayload";
     }
+
 }
 
 uint32_t ICMP4::quoteDst() {
@@ -294,12 +315,6 @@ void
 ICMP4::insert_ip_set(Stats * stats) {
     char src[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &ip_src, src, INET_ADDRSTRLEN);
-//    char dst[INET_ADDRSTRLEN] = "no-quote";
-//    uint16_t sum = 0;
-//    if (quote) {
-//        inet_ntop(AF_INET, &(quote->ip_dst), dst, INET_ADDRSTRLEN);
-//        sum = in_cksum((unsigned short *)&(quote->ip_dst), 4);
-//    }
     stats->IPv4.insert(src);
 }
 
@@ -313,9 +328,9 @@ ICMP6::print() {
         inet_ntop(AF_INET6, &(quote->ip6_dst), dst, INET6_ADDRSTRLEN);
         sum = in_cksum((unsigned short *)&(quote->ip6_dst), 16);
     }
-    printf(">> ICMP6 response:\n");
-    ICMP::print(src, dst, sum);
-    ICMP::printterse(src);
+    printf("ICMP6 response from: %s type: %s\n", src, type_str);
+    // ICMP::print(src, dst, sum);
+    // ICMP::printterse(src);
 }
 
 /* trgt, hop*/
@@ -324,6 +339,13 @@ void ICMP::write(FILE ** out, char *src, char *target) {
         return;
     //fprintf(*out, "%s", target);
     fprintf(*out, "%s\n", src);
+}
+
+void ICMP::write_probetype(FILE ** out, char *src, char *target) {
+    if (*out == NULL)
+        return;
+    //fprintf(*out, "%s", target);
+    fprintf(*out, "%s, %s\n", src, type_str);
 }
 
 void ICMP4::write(FILE ** out, Stats* stats) {
@@ -338,12 +360,11 @@ void ICMP4::write(FILE ** out, Stats* stats) {
         stats->IPv4.insert(src);
 }
 
-void ICMP6::write(FILE ** out, Stats* stats) {
+void ICMP6::write(FILE ** out, Stats* stats, bool probe_type) {
     char src[INET6_ADDRSTRLEN];
     char target[INET6_ADDRSTRLEN];
     inet_ntop(AF_INET6, &ip_src, src, INET6_ADDRSTRLEN);
-    if (((type == ICMP6_TIME_EXCEEDED) and (code == ICMP6_TIME_EXCEED_TRANSIT)) or
-    (type == ICMP6_DST_UNREACH)) {
+    if ((type == ICMP6_TIME_EXCEEDED) or (type == ICMP6_DST_UNREACH)) {
         inet_ntop(AF_INET6, &(quote->ip6_dst.s6_addr), target, INET6_ADDRSTRLEN);
     }
     /* In the case of an ECHO REPLY, the quote does not contain the invoking
@@ -356,11 +377,16 @@ void ICMP6::write(FILE ** out, Stats* stats) {
     else {
         inet_ntop(AF_INET6, &ip_src, target, INET6_ADDRSTRLEN);
     }
-    ICMP::write(out, src, target);
-    switch (stats->strategy) {        
-        case Scan6:
-        case Hit6:
-            if (strcmp(src, target) == 0) {
+    
+    if (probe_type)
+        ICMP::write_probetype(out, src, target);
+    else
+        ICMP::write(out, src, target);
+
+    if (is_scan) {
+        switch (stats->strategy) {        
+            case Scan6:
+            case Hit6:
                 uint64_t index = ntohl(qpayload->fingerprint);
                 if (index < stats->nodelist.size())
                     stats->nodelist[index]->active++;
@@ -368,17 +394,16 @@ void ICMP6::write(FILE ** out, Stats* stats) {
                     warn("Returning error regional identification %lu", index);
                     stats->baddst++;
                 }
-            }
-            break;
+                break;
+        }
     }
 }
 
-void ICMP6::write2seeds(FILE ** out, Stats* stats) { // Pre-scan and Heuristic use this function
+void ICMP6::write2seeds(FILE ** out, Stats* stats, bool probe_type) { // Pre-scan and Heuristic use this function
     char src[INET6_ADDRSTRLEN];
     char target[INET6_ADDRSTRLEN];
     inet_ntop(AF_INET6, &ip_src, src, INET6_ADDRSTRLEN);
-    if (((type == ICMP6_TIME_EXCEEDED) and (code == ICMP6_TIME_EXCEED_TRANSIT)) or
-    (type == ICMP6_DST_UNREACH)) {
+    if ((type == ICMP6_TIME_EXCEEDED) or (type == ICMP6_DST_UNREACH)) {
         inet_ntop(AF_INET6, &(quote->ip6_dst.s6_addr), target, INET6_ADDRSTRLEN);
     }
     /* In the case of an ECHO REPLY, the quote does not contain the invoking
@@ -391,7 +416,7 @@ void ICMP6::write2seeds(FILE ** out, Stats* stats) { // Pre-scan and Heuristic u
     else {
         inet_ntop(AF_INET6, &ip_src, target, INET6_ADDRSTRLEN);
     }
-    if (strcmp(src, target) == 0) {        
+    if (strcmp(src, target) == 0) {      
         if (stats->strategy == Heuristic) {                        
             string addr = seed2vec(src);            
             string prefix = addr.substr(0, stats->mask/4);
@@ -403,7 +428,10 @@ void ICMP6::write2seeds(FILE ** out, Stats* stats) { // Pre-scan and Heuristic u
                 ICMP::write(out, src, target);
             }
         } else { // Pre-scan
-            ICMP::write(out, src, target);
+            if (probe_type)
+                ICMP::write_probetype(out, src, target);
+            else
+                ICMP::write(out, src, target);
         }
     }
 }

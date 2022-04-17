@@ -642,6 +642,15 @@ int main(int argc, char **argv)
         randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
         EUI64_count, (float) EUI64_count * 100 / new_count, others_count, (float) others_count * 100 / new_count);
 
+        fprintf(config.out, "# Received ratio: %2.2f%%\n", (float) received * 100 / BUDGET);
+        fprintf(config.out, "# Alias addresses %" PRId64 "\n", alias_count);
+        fprintf(config.out, "# Discovered new addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", new_count, (float) new_count * 100 / BUDGET);
+        fprintf(config.out, "# IID allocation schemas: Small-integer %" \
+        PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
+        PRId64 " (%2.2f%%), Others %" PRId64 " (%2.2f%%).\n", small_integer, (float) small_integer * 100 / new_count, \
+        randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
+        EUI64_count, (float) EUI64_count * 100 / new_count, others_count, (float) others_count * 100 / new_count);
+
         results.clear();
         delete iplist;
         delete trace;

@@ -28,6 +28,7 @@ class ICMP {
     uint8_t  getInstance() { return instance; }
     void print(char *, char *, int);
     void write(FILE **, char *, char *);
+    void write_probetype(FILE ** out, char *src, char *target);
     char *getMPLS();
     bool is_scan;
 
@@ -49,6 +50,7 @@ class ICMP {
     struct timeval tv;
     mpls_label_t *mpls_stack;
     uint32_t fingerprint;
+    char *type_str;
 };
 
 class ICMP4 : public ICMP {
@@ -71,8 +73,8 @@ class ICMP6 : public ICMP {
     struct in6_addr *getSrc6() { return &ip_src; }
     struct in6_addr quoteDst6();
     void print();
-    void write(FILE **, Stats *);
-    void write2seeds(FILE **, Stats *);
+    void write(FILE **, Stats *, bool);
+    void write2seeds(FILE **, Stats *, bool);
     struct scanpayload *qpayload = NULL;     /* Quoted ICMPv6 payload */
 
     private:

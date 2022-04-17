@@ -37,6 +37,7 @@ make
 -A [country-xx/as-xxxx] # Active search and alias resolution within a region using heuristic algorithm.
 -C [Active address file e.g., ./output/raw_ICMP6_yyyymmdd] # Address classification.
 -H [country/as] # Set the regional level for data analysis.
+-d # output with the probe type
 ```
 
 ### Example

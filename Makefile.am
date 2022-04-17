@@ -4,6 +4,8 @@ bin_PROGRAMS = 6scan
   scanner/6scan.cpp \
   scanner/6config.cpp \
   scanner/icmp.cpp \
+  scanner/tcp6.cpp \
+  scanner/udp6.cpp \
   scanner/iplist.cpp \
   scanner/listener.cpp \
   scanner/listener6.cpp \
@@ -30,6 +32,8 @@ include_HEADERS = \
   scanner/6scan.h \
   scanner/6config.h \
   scanner/icmp.h \
+  scanner/tcp6.h \
+  scanner/udp6.h \
   scanner/mac.h \
   scanner/iplist.h \
   scanner/stats.h \

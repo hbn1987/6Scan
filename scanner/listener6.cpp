@@ -16,7 +16,10 @@ void *listener6(void *args) {
     uint32_t elapsed = 0;
     struct ip6_hdr *ip = NULL;                /* IPv6 hdr */
     struct icmp6_hdr *ippayload = NULL;       /* ICMP6 hdr */
+    struct tcphdr *tcpheader = NULL;
+    struct udphdr *udpheader = NULL;
     int rcvsock;                              /* receive (icmp) socket file descriptor */
+    struct scanpayload *payload = NULL;
 
     /* block until main thread says we're ready. */
     trace->lock();
@@ -51,21 +54,48 @@ void *listener6(void *args) {
             fatal("%s %s", __func__, strerror(errno));
         }
         ip = (struct ip6_hdr *)(buf + ETH_HDRLEN);
+
         if (ip->ip6_nxt == IPPROTO_ICMPV6) {
             ippayload = (struct icmp6_hdr *)&buf[ETH_HDRLEN + sizeof(struct ip6_hdr)];
             elapsed = trace->elapsed();
-            if ( (ippayload->icmp6_type == ICMP6_TIME_EXCEEDED) or
+            if ((ippayload->icmp6_type == ICMP6_TIME_EXCEEDED) or
                  (ippayload->icmp6_type == ICMP6_DST_UNREACH) or
-                 (ippayload->icmp6_type == ICMP6_ECHO_REPLY) ) {
-                ICMP *icmp = new ICMP6(ip, ippayload, elapsed);
-                if (icmp->is_scan) {
-                    //icmp->print();
-                    if (trace->config->pre_scan or trace->config->alias)
-                        icmp->write2seeds(&(trace->config->out), trace->stats);
-                    else
-                        icmp->write(&(trace->config->out), trace->stats);
-                }
+                 (ippayload->icmp6_type == ICMP6_ECHO_REPLY)) {
+                ICMP6 *icmp = new ICMP6(ip, ippayload, elapsed);
+                // icmp->print();
+                if (trace->config->pre_scan or trace->config->alias)
+                    icmp->write2seeds(&(trace->config->out), trace->stats, trace->config->probe_type);
+                else
+                    icmp->write(&(trace->config->out), trace->stats, trace->config->probe_type);
                 delete icmp;
+            }
+        } else if (ip->ip6_nxt == IPPROTO_UDP) {
+            char src[INET6_ADDRSTRLEN], hostaddr[INET6_ADDRSTRLEN];
+            inet_ntop(AF_INET6, &ip->ip6_src, src, INET6_ADDRSTRLEN);
+            inet_ntop(AF_INET6, &trace->source6.sin6_addr, hostaddr, INET6_ADDRSTRLEN);
+            if (strcmp(src, hostaddr) != 0 ) {
+                udpheader = (struct udphdr *)&buf[ETH_HDRLEN + sizeof(struct ip6_hdr)];
+                UDP6 *udp = new UDP6(ip, udpheader);
+                // udp->print();
+                if (trace->config->pre_scan or trace->config->alias)
+                    udp->write2seeds(&(trace->config->out), trace->stats, trace->config->probe_type);
+                else
+                    udp->write(&(trace->config->out), trace->stats, trace->config->probe_type);
+                delete udp;
+            }
+        } else if (ip->ip6_nxt == IPPROTO_TCP) {
+            char src[INET6_ADDRSTRLEN], hostaddr[INET6_ADDRSTRLEN];
+            inet_ntop(AF_INET6, &ip->ip6_src, src, INET6_ADDRSTRLEN);
+            inet_ntop(AF_INET6, &trace->source6.sin6_addr, hostaddr, INET6_ADDRSTRLEN);
+            if (strcmp(src, hostaddr) != 0 ) {
+                tcpheader = (struct tcphdr *)&buf[ETH_HDRLEN + sizeof(struct ip6_hdr)];
+                TCP6 *tcp = new TCP6(ip, tcpheader);
+                // tcp->print();
+                if (trace->config->pre_scan or trace->config->alias)
+                    tcp->write2seeds(&(trace->config->out), trace->stats, trace->config->probe_type);
+                else
+                    tcp->write(&(trace->config->out), trace->stats, trace->config->probe_type);
+                delete tcp;
             }
         }
     }

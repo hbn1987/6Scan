@@ -42,7 +42,7 @@ void ScanConfig::parse_opts(int argc, char **argv) {
 
     params["Program"] = val_t("6Scan", true);
 
-    while (-1 != (c = getopt_long(argc, argv, "a:A:C:D:E:F:G:hHI:l:L:M:p:Pr:R:s:t:X:", long_options, &opt_index))) {
+    while (-1 != (c = getopt_long(argc, argv, "a:A:C:D:dE:F:G:hHI:l:L:M:p:Pr:R:s:t:X:", long_options, &opt_index))) {
         switch (c) {
         case 'a':
             probesrc = optarg;
@@ -54,6 +54,9 @@ void ScanConfig::parse_opts(int argc, char **argv) {
             break;
         case 'C':
             classification = optarg;
+            break;
+        case 'd':
+            probe_type = true;
             break;
         case 'D':
             download = optarg;
@@ -170,6 +173,8 @@ void ScanConfig::parse_opts(int argc, char **argv) {
 
     if (pre_scan) {
         string seed_file = "./output/seeds_" + string(Tr_Type_String[type]) + "_" + scan_time;
+        if (probe_type)
+            seed_file += "_probetype";
         snprintf(output, UINT8_MAX, "%s", seed_file.c_str());
     }
 
@@ -192,8 +197,11 @@ void ScanConfig::parse_opts(int argc, char **argv) {
         else if (seedfile) {
             int index = string(seedfile).find_last_of('_');
             result_file = "./output/raw_" + string(seedfile).substr(9, index - 8) + string(search_strategy_str[strategy]) + "_" + scan_time;
-        } else
+        } else if (probe_type)
+            result_file = "./output/raw_" + string(search_strategy_str[strategy]) + "_" + string(Tr_Type_String[type]) + "_" + scan_time + "_probetype";
+        else
             result_file = "./output/raw_" + string(search_strategy_str[strategy]) + "_" + string(Tr_Type_String[type]) + "_" + scan_time;
+        
         snprintf(output, UINT8_MAX, "%s", result_file.c_str());
     }
 
@@ -262,9 +270,7 @@ void ScanConfig::set(string key, string val, bool isset) {
 
 void ScanConfig::usage(char *prog) {
     cout << "Usage: " << prog << " [OPTIONS] [targets]" << endl
-    << "  -t, --type              Probe type: ICMP, ICMP_REPLY, TCP_SYN, TCP_ACK, UDP," << endl
-    << "                                      ICMP6, UDP6, TCP6_SYN, TCP6_ACK" << endl 
-    << "                                      (default: TCP_ACK)" << endl
+    << "  -t, --type              Probe type: ICMP6, UDP6, TCP6_SYN, TCP6_ACK" << endl 
     << "  -r, --rate              Scan rate in pps (default: 10)" << endl
     << "  -a, --srcaddr           Source address of probes (default: auto)" << endl
     << "  -p, --port              Transport dst port (default: 80)" << endl

@@ -70,6 +70,7 @@ class Traceroute6 : public Traceroute {
     void probePrint(struct in6_addr, int);
     void probe(void *, struct in6_addr, int);
     void change_fingerprint(uint64_t);
+    struct sockaddr_in6 source6;
 
     private:
     void make_transport(int);
@@ -80,7 +81,6 @@ class Traceroute6 : public Traceroute {
     int pcount;
     uint8_t tc = 0; /* traffic class which we always set to 0 */
     uint32_t flow = 0; /* flow label which we always set to 0 */
-    struct sockaddr_in6 source6;
     struct scanpayload *payload;
     char addrstr[INET6_ADDRSTRLEN];
 };
