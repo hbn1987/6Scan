@@ -6,7 +6,6 @@ class TCP6 {
     TCP6(struct ip6_hdr *ip, struct tcphdr *tcpheader);
     void print();
     void write(FILE ** out, Stats* stats, bool probe_type);
-    void write2seeds(FILE ** out, Stats* stats, bool probe_type);
     bool is_scan;
     uint8_t flags;
     std::string type_str;

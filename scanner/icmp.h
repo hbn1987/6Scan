@@ -14,7 +14,6 @@ class ICMP {
     ICMP();
     virtual void print() {};
     virtual void write(FILE **, Stats *) {};
-    virtual void write2seeds(FILE **, Stats *) {};
     virtual uint32_t getSrc() { return 0; };
     virtual struct in6_addr *getSrc6() { return NULL; };
     virtual uint32_t quoteDst() { return 0; };
@@ -50,7 +49,7 @@ class ICMP {
     struct timeval tv;
     mpls_label_t *mpls_stack;
     uint32_t fingerprint;
-    char *type_str;
+    std::string type_str;
 };
 
 class ICMP4 : public ICMP {
@@ -74,7 +73,6 @@ class ICMP6 : public ICMP {
     struct in6_addr quoteDst6();
     void print();
     void write(FILE **, Stats *, bool);
-    void write2seeds(FILE **, Stats *, bool);
     struct scanpayload *qpayload = NULL;     /* Quoted ICMPv6 payload */
 
     private:

@@ -63,10 +63,7 @@ void *listener6(void *args) {
                  (ippayload->icmp6_type == ICMP6_ECHO_REPLY)) {
                 ICMP6 *icmp = new ICMP6(ip, ippayload, elapsed);
                 // icmp->print();
-                if (trace->config->pre_scan or trace->config->alias)
-                    icmp->write2seeds(&(trace->config->out), trace->stats, trace->config->probe_type);
-                else
-                    icmp->write(&(trace->config->out), trace->stats, trace->config->probe_type);
+                icmp->write(&(trace->config->out), trace->stats, trace->config->probe_type);
                 delete icmp;
             }
         } else if (ip->ip6_nxt == IPPROTO_UDP) {
@@ -77,10 +74,7 @@ void *listener6(void *args) {
                 udpheader = (struct udphdr *)&buf[ETH_HDRLEN + sizeof(struct ip6_hdr)];
                 UDP6 *udp = new UDP6(ip, udpheader);
                 // udp->print();
-                if (trace->config->pre_scan or trace->config->alias)
-                    udp->write2seeds(&(trace->config->out), trace->stats, trace->config->probe_type);
-                else
-                    udp->write(&(trace->config->out), trace->stats, trace->config->probe_type);
+                udp->write(&(trace->config->out), trace->stats, trace->config->probe_type);
                 delete udp;
             }
         } else if (ip->ip6_nxt == IPPROTO_TCP) {
@@ -91,10 +85,7 @@ void *listener6(void *args) {
                 tcpheader = (struct tcphdr *)&buf[ETH_HDRLEN + sizeof(struct ip6_hdr)];
                 TCP6 *tcp = new TCP6(ip, tcpheader);
                 // tcp->print();
-                if (trace->config->pre_scan or trace->config->alias)
-                    tcp->write2seeds(&(trace->config->out), trace->stats, trace->config->probe_type);
-                else
-                    tcp->write(&(trace->config->out), trace->stats, trace->config->probe_type);
+                tcp->write(&(trace->config->out), trace->stats, trace->config->probe_type);
                 delete tcp;
             }
         }

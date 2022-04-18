@@ -6,7 +6,6 @@ class UDP6 {
     UDP6(struct ip6_hdr *ip, struct udphdr *udpheader);
     void print();
     void write(FILE ** out, Stats* stats, bool probe_type);
-    void write2seeds(FILE ** out, Stats* stats, bool probe_type);
     bool is_scan;
     uint8_t flags;
     std::string type_str;
