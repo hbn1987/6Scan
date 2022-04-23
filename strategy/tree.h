@@ -38,7 +38,3 @@ struct Node_Active_Cmp {
         return p1->active > p2->active;
     }
 };
-
-void tree_generation(Node_List&, std::vector<std::string>&);
-
-void tree_generation_6hit(Node_List&, std::vector<std::string>&);

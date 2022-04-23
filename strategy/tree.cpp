@@ -38,10 +38,10 @@ void init_subspace(struct SpaceTreeNode *node, std::vector<std::string>& active_
     delete [] dimension_flag;
 }
 
-void DHC(struct SpaceTreeNode *node, std::vector<std::string>& active_seeds, Node_List& node_list)
+void Strategy::DHC(struct SpaceTreeNode *node, std::vector<std::string>& active_seeds, Node_List& node_list)
 {
     // int node_vector_num = node->upper - node->lower + 1;
-    if (node->dim_num <= DIMENSION - 4){
+    if (node->dim_num <= config->dimension - 4){
         return ;
     }
     int var_dimen = 0;
@@ -166,7 +166,7 @@ void DHC_6hit(struct SpaceTreeNode *node, std::vector<std::string>& active_seeds
     }
 }
 
-void tree_generation(Node_List& node_list, std::vector<std::string>& active_seeds)
+void Strategy::tree_generation(Node_List& node_list, std::vector<std::string>& active_seeds)
 {
     // Space tree generation
     struct SpaceTreeNode *root = new struct SpaceTreeNode;
@@ -181,7 +181,7 @@ void tree_generation(Node_List& node_list, std::vector<std::string>& active_seed
     DHC(root, active_seeds, node_list);
 }
 
-void tree_generation_6hit(Node_List& node_list, std::vector<std::string>& active_seeds)
+void Strategy::tree_generation_6hit(Node_List& node_list, std::vector<std::string>& active_seeds)
 {
     // Space tree generation
     struct SpaceTreeNode *root = new struct SpaceTreeNode;
@@ -192,7 +192,7 @@ void tree_generation_6hit(Node_List& node_list, std::vector<std::string>& active
     root->children_num = 0;
 
     init_subspace(root, active_seeds);
-    int subspace_dim = DIMENSION - 2;
+    int subspace_dim = config->dimension - 2;
     DHC_6hit(root, active_seeds, node_list, subspace_dim);
 }
 

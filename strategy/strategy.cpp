@@ -1,9 +1,9 @@
 /****************************************************************************
- * Copyright (c) 2021 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
+ Copyright (c) 2021 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
  ***************************************************************************/
 #include "strategy.h"
 
-Random::Random(uint32_t permsize_) {
+Random::Random(uint32_t permsize_, ScanConfig* config) {
     permsize = permsize_;
     memset(key, 0, KEYLEN);
     int seed = 100;
@@ -17,16 +17,20 @@ Random::~Random() {
     cperm_destroy(perm);
 }
 
-void Random::get_random(uint32_t iter, std::vector<std::string>& rand_vec) {
+void Random::get_random(uint32_t iter, std::vector<std::string>& rand_vec, ScanConfig* config) {
     rand_vec.clear();
     for (auto i = 0; i < iter; ++i) {
         if (PERM_END == cperm_next(perm, &next))
             break;
-        rand_vec.push_back(dec2hex(next, (DIMENSION - 2)));
+        rand_vec.push_back(dec2hex(next, (config->dimension - 2)));
     }
 }
 
-void target_generation(IPList6* iplist, string subspace, int start_idx)
+Strategy::Strategy(ScanConfig* config_) {
+    config = config_;
+}
+
+void Strategy::target_generation(IPList6* iplist, string subspace, int start_idx)
 {
     if (iplist->targets.size() >= BUDGET )
         return;
@@ -59,7 +63,7 @@ void target_generation(IPList6* iplist, string subspace, int start_idx)
 }
 
 /* 6Scan strategy */
-int init_6scan(Node_List& nodelist, IPList6* iplist, string seedset) {
+int Strategy::init_6scan(Node_List& nodelist, IPList6* iplist, string seedset) {
     iplist->read_seedset(seedset);
     sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
     iplist->seeds.erase(unique(iplist->seeds.begin(), iplist->seeds.end()), iplist->seeds.end());
@@ -69,14 +73,14 @@ int init_6scan(Node_List& nodelist, IPList6* iplist, string seedset) {
 
     int index = 0;
     for (auto& node : nodelist) {
-        if (node->dim_num >= DIMENSION - 3)
+        if (node->dim_num >= config->dimension - 3)
             break;
         index++;
     }
     return index;
 }
 
-void update_active(Node_List& nodelist, int begin, int end) {
+void Strategy::update_active(Node_List& nodelist, int begin, int end) {
     for (auto i = begin; i < end; ++i) {
         if (nodelist[i]->parent)
             nodelist[i]->parent->active += nodelist[i]->active;
@@ -84,7 +88,7 @@ void update_active(Node_List& nodelist, int begin, int end) {
 }
 
 /* 6Hit strategy */
-void target_generation_6hit(IPList6* iplist, std::string subspace, std::vector<std::string> rand_vec, int size) {
+void target_generation_6hit_subsequent(IPList6* iplist, std::string subspace, std::vector<std::string> rand_vec, int size) {
     vector<int> index;
     for (auto i = 0; i < 32; ++i) {
         if (subspace[i] == '*')
@@ -103,19 +107,19 @@ void target_generation_6hit(IPList6* iplist, std::string subspace, std::vector<s
     }
 }
 
-void target_generation_6hit(IPList6* iplist, std::string subspace, std::vector<std::string> rand_vec, int ranking, int level) {
+void Strategy::target_generation_6hit(IPList6* iplist, std::string subspace, std::vector<std::string> rand_vec, int ranking, int level) {
     int rand_vec_size = rand_vec.size();
     if (ranking < level) {
-        target_generation_6hit(iplist, subspace, rand_vec, rand_vec_size);
+        target_generation_6hit_subsequent(iplist, subspace, rand_vec, rand_vec_size);
         return;
     } else if (ranking < 2 * level) {
-        target_generation_6hit(iplist, subspace, rand_vec, rand_vec_size / 2);
+        target_generation_6hit_subsequent(iplist, subspace, rand_vec, rand_vec_size / 2);
         return;
     } else if (ranking < 3 * level) {
-        target_generation_6hit(iplist, subspace, rand_vec, rand_vec_size / 3);
+        target_generation_6hit_subsequent(iplist, subspace, rand_vec, rand_vec_size / 3);
         return;
     } else {
-        target_generation_6hit(iplist, subspace, rand_vec, rand_vec_size / 4);
+        target_generation_6hit_subsequent(iplist, subspace, rand_vec, rand_vec_size / 4);
     }
 }
 
@@ -125,11 +129,11 @@ void get_prior_activity(Node_List& nodelist) {
     }
 }
 
-void partition_nodelist(Node_List& nodelist, Node_List& nodelist_small) {
+void Strategy::partition_nodelist(Node_List& nodelist, Node_List& nodelist_small) {
     sort(nodelist.begin(), nodelist.end(), Node_Dim_Cmp());
     int index = 0;
     for (auto node : nodelist) {
-        if (node->dim_num == DIMENSION - 2)
+        if (node->dim_num == config->dimension - 2)
             break;
         index++;
     }
@@ -139,7 +143,7 @@ void partition_nodelist(Node_List& nodelist, Node_List& nodelist_small) {
     }
 }
 
-void init_6hit(Node_List& nodelist, Node_List& nodelist_small, IPList6* iplist, string seedset) {
+void Strategy::init_6hit(Node_List& nodelist, Node_List& nodelist_small, IPList6* iplist, string seedset) {
     iplist->read_seedset(seedset);
     sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
     iplist->seeds.erase(unique(iplist->seeds.begin(), iplist->seeds.end()), iplist->seeds.end());
@@ -150,7 +154,7 @@ void init_6hit(Node_List& nodelist, Node_List& nodelist_small, IPList6* iplist, 
 }
 
 /* 6Tree strategy */
-void init_6tree(Node_List& nodelist, IPList6* iplist, string seedset) {
+void Strategy::init_6tree(Node_List& nodelist, IPList6* iplist, string seedset) {
     iplist->read_seedset(seedset);
     sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
     iplist->seeds.erase(unique(iplist->seeds.begin(), iplist->seeds.end()), iplist->seeds.end());
@@ -186,7 +190,7 @@ int inchild(string ip, struct SpaceTreeNode* node) {
     return 0;
 }
 
-void target_generation_6tree(IPList6* iplist, string subspace, struct SpaceTreeNode* node, int start_idx)
+void Strategy::target_generation_6tree(IPList6* iplist, string subspace, struct SpaceTreeNode* node, int start_idx)
 {
     int idx;
     for (idx = start_idx; idx < 32; idx++)
@@ -228,7 +232,7 @@ string merge(std::string odd, std::string even) {
     return cluster;
 }
 
-int get_dimension(string cluster) {
+int Strategy::get_dimension(string cluster) {
     int i = 0;
     for (auto j = 0; j < 32; ++j) {
         if (cluster[j] == '*')
@@ -237,8 +241,7 @@ int get_dimension(string cluster) {
     return i;
 }
 
-void AHC(std::vector<std::string>& even_seeds, std::vector<std::string>& odd_seeds,
-std::vector<std::string>& cluster_seeds, vector<std::string>& clusters, vector<std::string>& clusters_big)
+void Strategy::AHC(std::vector<std::string>& even_seeds, std::vector<std::string>& odd_seeds, std::vector<std::string>& cluster_seeds, vector<std::string>& clusters, vector<std::string>& clusters_big)
 {
     if (cluster_seeds.size() <= 1)
         return;
@@ -260,11 +263,11 @@ std::vector<std::string>& cluster_seeds, vector<std::string>& clusters, vector<s
     for (auto i = 0; i < even_seeds.size(); ++i) {
         string clus = merge(odd_seeds[i], even_seeds[i]);
         int dims = get_dimension(clus);
-        if (dims == DIMENSION - 3)
+        if (dims == config->dimension - 3)
             clusters.push_back(clus);
-        else if (dims < DIMENSION - 3)
+        else if (dims < config->dimension - 3)
             cluster_seeds.push_back(clus);
-        else if (dims > DIMENSION -3)
+        else if (dims > config->dimension -3)
             clusters_big.push_back(clus);
     }
 
@@ -273,7 +276,7 @@ std::vector<std::string>& cluster_seeds, vector<std::string>& clusters, vector<s
     AHC(even_seeds, odd_seeds, cluster_seeds, clusters, clusters_big);
 }
 
-void init_6gen(IPList6* iplist, string seedset, vector<string>& clusters, vector<std::string>& clusters_big) {
+void Strategy::init_6gen(IPList6* iplist, string seedset, vector<string>& clusters, vector<std::string>& clusters_big) {
     iplist->read_seedset(seedset);
     sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
 
@@ -289,7 +292,7 @@ void init_6gen(IPList6* iplist, string seedset, vector<string>& clusters, vector
 }
 
 /* Herustic strategy */
-void target_generation_heuristic(IPList6* iplist, std::unordered_map<std::string, int>& prefix_map, int mask) {
+void Strategy::target_generation_heuristic(IPList6* iplist, std::unordered_map<std::string, int>& prefix_map, int mask) {
     string add_zero((31 - mask/4 - 1), '0');
     for (auto& iter : prefix_map) {
         for (auto i = 0; i < 16; ++i) {
@@ -299,7 +302,7 @@ void target_generation_heuristic(IPList6* iplist, std::unordered_map<std::string
     }
 }
 
-void target_generation_alias(IPList6* iplist, std::string line) {
+void Strategy::target_generation_alias(IPList6* iplist, std::string line) {
 
     int pos = line.find("/");
     int num = count(line.begin(), line.end(),':');

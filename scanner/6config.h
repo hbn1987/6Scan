@@ -2,7 +2,7 @@
  Copyright (c) 2016-2019 Robert Beverly <rbeverly@cmand.org> all rights reserved.
  ***************************************************************************/
 /****************************************************************************
- * Copyright (c) 2021 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
+ Copyright (c) 2021 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
  ***************************************************************************/
 typedef std::pair<std::string, bool> val_t;
 typedef std::map<std::string, val_t> params_t;
@@ -15,7 +15,8 @@ public:
     out(NULL), pre_scan(false), alias(false), type(0), 
     strategy(0), classification(NULL), download(NULL), alias_range(NULL),
     alias_output(NULL), alias_out(NULL), region_limit(NULL), hitlist(false),
-    level(NULL), dealias(NULL), seedfile(NULL), probe_type(false){};
+    level(NULL), dealias(NULL), seedfile(NULL), probe_type(false),
+    budget(0), dimension(0){};
 
     void parse_opts(int argc, char **argv);
     void usage(char *prog);
@@ -49,4 +50,6 @@ public:
     char* dealias;
     char* seedfile;
     bool probe_type;
+    uint32_t budget;
+    uint8_t dimension;
 };

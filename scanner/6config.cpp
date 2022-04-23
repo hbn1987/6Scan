@@ -42,7 +42,7 @@ void ScanConfig::parse_opts(int argc, char **argv) {
 
     params["Program"] = val_t("6Scan", true);
 
-    while (-1 != (c = getopt_long(argc, argv, "a:A:C:D:dE:F:G:hHI:l:L:M:p:Pr:R:s:t:X:", long_options, &opt_index))) {
+    while (-1 != (c = getopt_long(argc, argv, "a:b:A:C:D:dE:F:G:hHI:l:L:M:p:Pr:R:s:t:X:", long_options, &opt_index))) {
         switch (c) {
         case 'a':
             probesrc = optarg;
@@ -51,6 +51,9 @@ void ScanConfig::parse_opts(int argc, char **argv) {
             alias = true;
             alias_range = optarg;            
             strategy = Heuristic;
+            break;
+        case 'b':
+            budget = strtol(optarg, &endptr, 10) * 1000000;
             break;
         case 'C':
             classification = optarg;
@@ -250,6 +253,11 @@ void ScanConfig::parse_opts(int argc, char **argv) {
     // Set probing rate, if not set
     if (not rate)
         rate = RATE;
+
+    if (not budget) {
+        budget = BUDGET;
+    }
+    dimension = int(log(budget)/log(16));
 
     cout << "Start running 6Scan..." << endl;
     params["Seed"] = val_t(to_string(seed), true);
