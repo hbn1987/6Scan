@@ -117,7 +117,3 @@ and the address classification results in the file that begin with results_.
 ### Alias resolution
 
 >O. Gasser et al., “Clusters in the Expanse: Understanding and Unbiasing IPv6 Hitlists,” in IMC, 2018.
-
-### Address classification
-
->Q. Hu and N. Brownlee, “How Interface ID Allocation Mechanisms are Performed in IPv6,” in CoNEXT Student Workshop, 2014.

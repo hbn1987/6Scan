@@ -30,6 +30,10 @@ Strategy::Strategy(ScanConfig* config_) {
     config = config_;
 }
 
+Strategy::~Strategy() {
+    delete config;
+}
+
 void Strategy::target_generation(IPList6* iplist, string subspace, int start_idx)
 {
     if (iplist->targets.size() >= BUDGET )

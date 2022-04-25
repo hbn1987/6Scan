@@ -95,7 +95,7 @@ void ScanConfig::parse_opts(int argc, char **argv) {
             pre_scan = true;
             break;
         case 'r':
-            rate = strtol(optarg, &endptr, 10);
+            rate = strtol(optarg, &endptr, 10) * 1000;
             break;
         case 'R':
             dealias = optarg;

@@ -25,9 +25,16 @@ class Stats {
     struct timeval middle;
     struct timeval end;
 
+    std::vector<int> budgets_list;
+
     Stats(int _strategy) {
         strategy = _strategy;
         gettimeofday(&start, NULL);
+        const int n = 10;
+        int budgets[n] = {10, 50, 100, 200, 400, 600, 800, 1000, 1250, 1500};
+        int unit = 1000000;        
+        for (int i = 0; i < n; ++i)
+            budgets_list.push_back(budgets[i] * unit);
     };
 
     ~Stats() {
@@ -57,5 +64,14 @@ class Stats {
 
     void dump_alias(FILE *alias_out, std::string alias_prefix) {
         fprintf(alias_out, "%s\n", alias_prefix.c_str());
+    }
+
+    void dump_budget(FILE *out) {
+        fprintf(out, "# Budget consumption: %" PRId64 "\n", count);
+    }
+
+    void erase_budget() {
+        std::vector<int>::iterator k = budgets_list.begin();
+        budgets_list.erase(k);
     }
 };

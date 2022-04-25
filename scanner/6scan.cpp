@@ -58,6 +58,15 @@ void loop(ScanConfig * config, TYPE * iplist, Traceroute * trace, Stats * stats)
         stats->count++;
         iteration_count++;
 
+        if (not config->pre_scan and config->strategy != Heuristic) {
+            if (stats->budgets_list.size()) {
+                if (stats->count >= stats->budgets_list[0]) {
+                    stats->dump_budget(config->out);
+                    stats->erase_budget();
+                }
+            }
+        }        
+
         /* Calculate sleep time based on scan rate */
         if (config->rate) {
             send_rate = (double)config->rate;
@@ -425,7 +434,7 @@ int main(int argc, char **argv)
         }
 
         stats->end_time();
-        cout << "Waiting " << SHUTDOWN_WAIT << "s for outstanding replies..." << endl;
+        cout << "\rWaiting " << SHUTDOWN_WAIT << "s for outstanding replies..." << endl;
         sleep(SHUTDOWN_WAIT);
         if(config.pre_scan or config.alias) {
             float t = (float) tsdiff(&stats->end, &stats->start) / 1000.0;
@@ -437,6 +446,7 @@ int main(int argc, char **argv)
         delete iplist;
         delete trace;
         delete stats;
+        delete strategy;
         cout << "End running 6Scan" << endl;
     }
 
