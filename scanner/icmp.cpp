@@ -310,7 +310,6 @@ void ICMP::write(FILE ** out, char *src, char *target) {
 void ICMP::write_probetype(FILE ** out, char *src, char *target) {
     if (*out == NULL)
         return;
-    //fprintf(*out, "%s", target);
     fprintf(*out, "%s, %s\n", src, type_str.c_str());
 }
 

@@ -27,7 +27,6 @@ class Random {
 class Strategy {
     public:
     Strategy(ScanConfig* config_);
-    ~Strategy();
 
     ScanConfig* config;
 

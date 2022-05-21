@@ -160,8 +160,12 @@ int main(int argc, char **argv)
 
         /* Pre-scan */
         if (config.pre_scan) {   
-            cout << "Start pre-scanning the latest hitlist in local" << endl;         
-            string hitlist = get_hitlist(); //Read the latest hitlist in local           
+            cout << "Start pre-scanning the latest hitlist in local" << endl;
+            string hitlist;
+            if (config.seedfile)
+                hitlist = string(config.seedfile);
+            else
+                hitlist = get_hitlist(); //Read the latest hitlist in local           
             iplist->setkey(config.seed); // Randomize permutation key
             iplist->read_hitlist(hitlist);
             cout << "Probing begins..." << endl;
@@ -446,7 +450,6 @@ int main(int argc, char **argv)
         delete iplist;
         delete trace;
         delete stats;
-        delete strategy;
         cout << "End running 6Scan" << endl;
     }
 
@@ -462,7 +465,6 @@ int main(int argc, char **argv)
         uint64_t small_integer = 0; // Small_integer addresses
         uint64_t embedded_IPv4 = 0; // Embedded IPv4 addresses
         uint64_t randomized_count = 0; // Randomized addresses
-        uint64_t others_count = 0;
 
         string line;
         unordered_map<string, string> results;
@@ -598,29 +600,8 @@ int main(int argc, char **argv)
         }
 
         /* Randomized detection */
-        cout << "Randomized addresses detection..." << endl;
-        for (auto iter = results.begin(); iter != results.end(); ++iter) {
-            if (iter->second == "other") {
-                string vec = seed2vec(iter->first);
-                string vec1 = vec.substr(16, 8);
-                string vec2 = vec.substr(24, 8);
-                bitset<32> bit1(stoll(vec1, nullptr, 16));
-                bitset<32> bit2(stoll(vec2, nullptr, 16));
-                int count_zero = 0;
-                for (auto i = 0; i < 32; ++i) {
-                    if (bit1[i] == 0)
-                        count_zero++;
-                    if (bit2[i] == 0)
-                        count_zero++;
-                }
-                if (count_zero >= 16 && count_zero <= 48) {
-                    randomized_count++;
-                    iter->second = "randomized";
-                }
-            }
-        }
 
-        others_count = new_count - small_integer - randomized_count - embedded_IPv4 - EUI64_count;
+        randomized_count = new_count - small_integer - embedded_IPv4 - EUI64_count;
 
         /* Output the results with classification*/
         // fprintf(config.out, "%-40s    %s\n", "# Discovered new addresses", "IID allocation schemes");
@@ -649,18 +630,18 @@ int main(int argc, char **argv)
         fprintf(stdout, "# Discovered new addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", new_count, (float) new_count * 100 / config.budget);
         fprintf(stdout, "# IID allocation schemas: Small-integer %" \
         PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
-        PRId64 " (%2.2f%%), Others %" PRId64 " (%2.2f%%).\n", small_integer, (float) small_integer * 100 / new_count, \
+        PRId64 " (%2.2f%%)\n", small_integer, (float) small_integer * 100 / new_count, \
         randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
-        EUI64_count, (float) EUI64_count * 100 / new_count, others_count, (float) others_count * 100 / new_count);
+        EUI64_count, (float) EUI64_count * 100 / new_count);
 
         fprintf(config.out, "# Received ratio: %2.2f%%\n", (float) received * 100 / config.budget);
         fprintf(config.out, "# Alias addresses %" PRId64 "\n", alias_count);
         fprintf(config.out, "# Discovered new addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", new_count, (float) new_count * 100 / config.budget);
         fprintf(config.out, "# IID allocation schemas: Small-integer %" \
         PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
-        PRId64 " (%2.2f%%), Others %" PRId64 " (%2.2f%%).\n", small_integer, (float) small_integer * 100 / new_count, \
+        PRId64 " (%2.2f%%)\n", small_integer, (float) small_integer * 100 / new_count, \
         randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
-        EUI64_count, (float) EUI64_count * 100 / new_count, others_count, (float) others_count * 100 / new_count);
+        EUI64_count, (float) EUI64_count * 100 / new_count);
 
         results.clear();
         delete iplist;
