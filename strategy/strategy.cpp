@@ -309,6 +309,94 @@ void Strategy::target_generation_alias(IPList6* iplist, std::string line) {
     if (num < 8)
         line = line.substr(0, pos) + "1234/128"; // 1234 acts as a random number
     else 
-        line = line.substr(0, pos - 1) + "1234/128";
+        line = line.substr(0, pos - 1) + "abcd/128";
     iplist->subnet6(line, iplist->targets);
+}
+
+/* HMap6 strategy */
+void Strategy::get_fit_nodelist(Node_List& nodelist) {
+    sort(nodelist.begin(), nodelist.end(), Node_Dim_Cmp());
+    int index1 = 0;
+    int index2 = 0;
+    for (auto node : nodelist) {
+        if (node->dim_num < config->dimension - 3)
+            index1++;
+        else if (node->dim_num == config->dimension - 3)
+            index2++;
+        else if (node->dim_num > config->dimension - 3)    
+            break;  
+    }
+    if (index1)
+        nodelist.erase(nodelist.begin(), nodelist.begin() + index1);
+    if (nodelist.size() > index2)
+        nodelist.erase(nodelist.begin() + index2, nodelist.end());
+}
+
+void Strategy::init_hmap6(IPList6* iplist, string seedset, vector<string>& ahc_clusters, vector<string>& dhc_clusters) {
+    iplist->read_seedset(seedset);
+    sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
+
+    std::vector<std::string> even_seeds, odd_seeds, cluster_seeds, clusters_big;
+
+    cluster_seeds.assign(iplist->seeds.begin(), iplist->seeds.end());
+    AHC(even_seeds, odd_seeds, cluster_seeds, ahc_clusters, clusters_big);
+
+    Node_List nodelist;
+    tree_generation_6hit(nodelist, iplist->seeds);
+    get_fit_nodelist(nodelist);
+    for (auto& node : nodelist)
+        dhc_clusters.push_back(node->subspace);
+
+    iplist->seeds.clear();
+    even_seeds.clear();
+    odd_seeds.clear();
+    cluster_seeds.clear();
+    clusters_big.clear();
+    nodelist.clear();
+}
+
+void Strategy::alias_detection(std::vector<std::string>& fit_clusters) {    
+    ifstream infile;
+    string file_name = get_aliasfile(); // Gasser's alias prefix list
+    infile.open(file_name);
+
+    Patricia *alias_tree = new Patricia(128);
+    alias_tree->populate6(infile);
+    infile.close();
+
+    if (config->region_limit) {
+        vector<string> aliases;
+        get_aliasfile_all(aliases);
+        for (auto& it : aliases) {
+            if (it.find(string(config->region_limit)) != string::npos)
+                file_name = it;
+        }
+        infile.open(file_name);
+        alias_tree->populate6(infile);
+        infile.close();
+    }
+
+    int *alias = NULL;
+    vector<string> alias_clusters;
+
+    for (auto& cluster : fit_clusters) {
+        string cluster_temp = cluster;
+        for (auto i = 0; i < 32; ++i) {
+            if (cluster_temp[i] == '*')
+                cluster_temp[i] = '0';
+        }        
+        cluster_temp = vec2colon(cluster_temp);
+    
+        alias = (int *) alias_tree->get(AF_INET6, cluster_temp.c_str());
+        if (alias)
+            alias_clusters.push_back(cluster);
+    }
+
+    if (alias_clusters.size())
+        cout << "Delete " << alias_clusters.size() << " alias prefixes..." << endl;
+    for (auto& iter : alias_clusters)
+        fit_clusters.erase(remove(begin(fit_clusters), end(fit_clusters), iter), end(fit_clusters));
+
+    alias_clusters.clear();
+    delete alias_tree;    
 }

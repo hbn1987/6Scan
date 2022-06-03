@@ -13,6 +13,8 @@ class Stats {
     int mask;
     uint64_t count = 0;       // number of probes sent
     uint64_t baddst = 0;      // checksum invalid on destination in response
+    uint64_t ahc_count = 0;
+    uint64_t dhc_count = 0;
 
     Node_List nodelist;
 

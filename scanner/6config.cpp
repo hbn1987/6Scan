@@ -109,7 +109,9 @@ void ScanConfig::parse_opts(int argc, char **argv) {
                 strategy = Tree6;
             } else if(strcmp(optarg, "6Gen") == 0) {
                 strategy = Gen6;
-            } 
+            } else if (strcmp(optarg, "HMap6") == 0) {
+                strategy = HMap6;
+            }
             break;
         case 't':
             if (strcmp(optarg, "ICMP6") == 0) {

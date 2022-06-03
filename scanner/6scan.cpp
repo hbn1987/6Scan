@@ -435,6 +435,49 @@ int main(int argc, char **argv)
                 clusters_big.clear();
                 scanned_clusters.clear();
             }
+            /* Scanning with HMap6 strategy */
+            else if (config.strategy == HMap6) {
+                cout << "Scanning with HMap6 strategy..." << endl;
+                vector<string> ahc_clusters, dhc_clusters;
+                set<string> scanned_clusters;
+                strategy->init_hmap6(iplist, seedset, ahc_clusters, dhc_clusters);   
+                stats->prepare_time();
+                /* Probing in AHC spaces */
+                strategy->alias_detection(ahc_clusters);  
+                for (vector<string>::reverse_iterator it = ahc_clusters.rbegin(); it != ahc_clusters.rend(); ++it) {
+                    if (scanned_clusters.find(*it) == scanned_clusters.end()) {
+                        scanned_clusters.insert(*it);
+                        strategy->target_generation(iplist, *it, 0);
+                        if (iplist->targets.size())
+                            loop(&config, iplist, trace, stats);
+                        iplist->targets.clear();
+                        iplist->seeded = false;
+                        if (stats->count >= BUDGET)
+                            break;
+                        stats->ahc_count++;
+                        cout << "\rProbing in AHC-subspace: " << *it << ", budget consumption: " << stats->count;
+                    }
+                }
+                cout << "\n";
+                /* Probing in DHC spaces */
+                if (stats->count < BUDGET) {
+                    strategy->alias_detection(dhc_clusters);  
+                    for (vector<string>::iterator it = dhc_clusters.begin(); it != dhc_clusters.end(); ++it) {
+                        if (scanned_clusters.find(*it) == scanned_clusters.end()) {
+                            scanned_clusters.insert(*it);
+                            strategy->target_generation(iplist, *it, 0);
+                            if (iplist->targets.size())
+                                loop(&config, iplist, trace, stats);
+                            iplist->targets.clear();
+                            iplist->seeded = false;
+                            if (stats->count >= BUDGET)
+                                break;
+                            stats->dhc_count++;
+                            cout << "\rProbing in DHC-subspace: " << *it << ", budget consumption: " << stats->count;
+                        }
+                    }
+                }
+            }
         }
 
         stats->end_time();

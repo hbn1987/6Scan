@@ -33,7 +33,7 @@ make
 -t [ICMP6/TCP6_SYN/TCP6_ACK/UDP6] # Set probe type.
 -I # Network interface to use.
 -l [country_xx/as_xxxx] # Specify the region of the seeds using 2-digit ISO-3166 country code or AS number.
--s [6Scan/6Hit/6Tree/6Gen/Edgy] # Set IPv6 searching strategy.
+-s [HMap6/6Scan/6Hit/6Tree/6Gen/Heuristic] # Set IPv6 searching strategy.
 -A [country-xx/as-xxxx] # Active search and alias resolution within a region using heuristic algorithm.
 -C [Active address file e.g., ./output/raw_ICMP6_yyyymmdd] # Address classification.
 -H [country/as] # Set the regional level for data analysis.
@@ -96,7 +96,7 @@ and the address classification results in the file that begin with results_.
 |Hit active addresses|hit active addresses|
 |Discovered new addresses|found active addresses after removing the seeds and the aliased addresses|
 |Time cost|time cost of the preparation and scanning time|
-|Address classification|IID allocation schemas i.e., Alias, Small-integer, Randomized, Embedded-IPv4, EUI-64, and Other|
+|Address classification|IID allocation schemas i.e., Alias, Small-integer, Embedded-IPv4, EUI-64, and Other|
 
 ## Reference
 
