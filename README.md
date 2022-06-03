@@ -81,6 +81,17 @@ make
 # Classify the active address in the file of raw_6Scan_ICMP6_yyyymmdd.
 ```
 
+### Distributed-scan
+
+```shell
+# Step 1: Dispatch the seeds and alias list
+python3 scheduling/seeds_dispatch.py
+# Step 2: Pre-scan the seeds and ping-like scanning
+python3 scheduling/ssh_runner.py
+# Step 3: Data pullback
+python3 scheduling/data_pullback.py
+```
+
 ## Output
 
 6Scan outputs the collected active addresses, the scanning information in the file that begin with raw_\
