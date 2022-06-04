@@ -474,7 +474,6 @@ int main(int argc, char **argv)
                     }              
                 }
                 cout << "\n";
-                /* Probing in DHC spaces */
             }
         }
 

@@ -31,7 +31,7 @@ class Stats {
         strategy = _strategy;
         gettimeofday(&start, NULL);
         const int n = 10;
-        int budgets[n] = {10, 50, 100, 500, 1000, 1500, 2000, 3000, 4000};
+        int budgets[n] = {10, 50, 100, 500, 1000, 1500, 2000, 2500, 3000, 4000};
         int unit = 1000000;        
         for (int i = 0; i < n; ++i)
             budgets_list.push_back(budgets[i] * unit);
