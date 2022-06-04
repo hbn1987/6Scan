@@ -42,15 +42,18 @@ class Strategy {
     void target_generation_alias(IPList6* iplist, std::string line);
     int get_dimension(std::string cluster);
     void init_hmap6(IPList6* iplist, std::string seedset, std::vector<std::string>& ahc_clusters, std::vector<std::string>& dhc_clusters);
-    void alias_detection(std::vector<std::string>& fit_clusters);
+    void get_fit_cluster(std::vector<std::string>& ahc_clusters, std::vector<std::string>& dhc_clusters, \
+    std::set<std::string>& iter_ahc_clusters, std::set<std::string>& iter_dhc_clusters, int dim);
+    void alias_detection(std::set<std::string>& fit_clusters);
 
     private:
     void partition_nodelist(Node_List& nodelist, Node_List& nodelist_small);
     void AHC(std::vector<std::string>& even_seeds, std::vector<std::string>& odd_seeds, std::vector<std::string>& cluster_seeds, std::vector<std::string>& clusters, std::vector<std::string>& clusters_big);
+    void AHC_d(std::vector<std::string>& even_seeds, std::vector<std::string>& odd_seeds, std::vector<std::string>& cluster_seeds, std::vector<std::string>& clusters);
     void tree_generation(Node_List&, std::vector<std::string>&);
     void tree_generation_6hit(Node_List&, std::vector<std::string>&);
+    void tree_generation_hmap6(Node_List&, std::vector<std::string>&);
     void DHC(struct SpaceTreeNode *node, std::vector<std::string>& active_seeds, Node_List& node_list);
-    void get_fit_nodelist(Node_List& nodelist);
 };
 
 std::string get_scan_time();

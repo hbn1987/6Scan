@@ -196,6 +196,21 @@ void Strategy::tree_generation_6hit(Node_List& node_list, std::vector<std::strin
     DHC_6hit(root, active_seeds, node_list, subspace_dim);
 }
 
+void Strategy::tree_generation_hmap6(Node_List& node_list, std::vector<std::string>& active_seeds)
+{
+    // Space tree generation
+    struct SpaceTreeNode *root = new struct SpaceTreeNode;
+    root->lower = 0;
+    root->upper = active_seeds.size() - 1;
+    root->parent = NULL;
+    root->children = NULL;
+    root->children_num = 0;
+
+    init_subspace(root, active_seeds);
+    int subspace_dim = config->dimension;
+    DHC_6hit(root, active_seeds, node_list, subspace_dim);
+}
+
 void release_tree(struct SpaceTreeNode *node)
 {
     int children_num = node->children_num;

@@ -438,45 +438,43 @@ int main(int argc, char **argv)
             /* Scanning with HMap6 strategy */
             else if (config.strategy == HMap6) {
                 cout << "Scanning with HMap6 strategy..." << endl;
+                int dim;
+                cout << "Enter the dimensions you want to expand the scan from the seeds:" << endl;
+                cin >> dim;
+                config.dimension = dim;
                 vector<string> ahc_clusters, dhc_clusters;
-                set<string> scanned_clusters;
-                strategy->init_hmap6(iplist, seedset, ahc_clusters, dhc_clusters);   
+                strategy->init_hmap6(iplist, seedset, ahc_clusters, dhc_clusters);                
                 stats->prepare_time();
-                /* Probing in AHC spaces */
-                strategy->alias_detection(ahc_clusters);  
-                for (vector<string>::reverse_iterator it = ahc_clusters.rbegin(); it != ahc_clusters.rend(); ++it) {
-                    if (scanned_clusters.find(*it) == scanned_clusters.end()) {
-                        scanned_clusters.insert(*it);
-                        strategy->target_generation(iplist, *it, 0);
-                        if (iplist->targets.size())
-                            loop(&config, iplist, trace, stats);
-                        iplist->targets.clear();
-                        iplist->seeded = false;
-                        if (stats->count >= BUDGET)
-                            break;
-                        stats->ahc_count++;
-                        cout << "\rProbing in AHC-subspace: " << *it << ", budget consumption: " << stats->count;
-                    }
-                }
-                cout << "\n";
-                /* Probing in DHC spaces */
-                if (stats->count < BUDGET) {
-                    strategy->alias_detection(dhc_clusters);  
-                    for (vector<string>::iterator it = dhc_clusters.begin(); it != dhc_clusters.end(); ++it) {
-                        if (scanned_clusters.find(*it) == scanned_clusters.end()) {
-                            scanned_clusters.insert(*it);
-                            strategy->target_generation(iplist, *it, 0);
+
+                set<string> iter_ahc_clusters, iter_dhc_clusters, scan_clusters;
+                char yorn;
+                for (int i = 1; i <= dim; ++i) {
+                    scan_clusters.clear();
+                    iter_ahc_clusters.clear();
+                    iter_dhc_clusters.clear(); 
+                    strategy->get_fit_cluster(ahc_clusters, dhc_clusters, iter_ahc_clusters, iter_dhc_clusters, i);
+                    cout << "Number of DHC-subspaces with " << i << " variable dimension(s): " << iter_dhc_clusters.size() << \
+                    "; number of AHC-subspaces with " << i << " variable dimension(s): " << iter_ahc_clusters.size() << endl;
+                    set_union(iter_ahc_clusters.begin(), iter_ahc_clusters.end(), iter_dhc_clusters.begin(), iter_dhc_clusters.end(), inserter(scan_clusters, scan_clusters.begin()));  
+                    strategy->alias_detection(scan_clusters);  
+                    cout << "Number of subspaces with " << i << " variable dimension(s): " << scan_clusters.size() << \
+                    ", this will consume a budget of " << scan_clusters.size() * pow(16, i) / 1000000 << "M, whether to continue (y/n)?" << endl;
+                    cin >> yorn;         
+                    if (yorn == 'n')
+                        continue;
+                    else if (yorn == 'y') { 
+                        for (auto it : scan_clusters) {                         
+                            strategy->target_generation(iplist, it, 0);
                             if (iplist->targets.size())
                                 loop(&config, iplist, trace, stats);
                             iplist->targets.clear();
                             iplist->seeded = false;
-                            if (stats->count >= BUDGET)
-                                break;
-                            stats->dhc_count++;
-                            cout << "\rProbing in DHC-subspace: " << *it << ", budget consumption: " << stats->count;
+                            cout << "\rProbing in subspace: " << it << ", budget consumption: " << stats->count;
                         }
-                    }
+                    }              
                 }
+                cout << "\n";
+                /* Probing in DHC spaces */
             }
         }
 
@@ -645,23 +643,6 @@ int main(int argc, char **argv)
         /* Randomized detection */
 
         randomized_count = new_count - small_integer - embedded_IPv4 - EUI64_count;
-
-        /* Output the results with classification*/
-        // fprintf(config.out, "%-40s    %s\n", "# Discovered new addresses", "IID allocation schemes");
-        // for (auto iter = results.begin(); iter != results.end(); ++iter) {
-        //     fprintf(config.out, "%-40s    %s\n", iter->first.c_str(), iter->second.c_str());
-        // }
-        // for (auto iter : information) {
-        //     fprintf(config.out, "%s\n", iter.c_str());
-        // }
-        // fprintf(config.out, "# Received ratio: %2.2f%%\n", (float) received * 100 / config.budget);
-        // fprintf(config.out, "# Alias addresses %" PRId64 "\n", alias_count);
-        // fprintf(config.out, "# Discovered new addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", new_count, (float) new_count * 100 / config.budget);
-        // fprintf(config.out, "# IID allocation schemas: Small-integer %" \
-        // PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
-        // PRId64 " (%2.2f%%), Others %" PRId64 " (%2.2f%%).\n", small_integer, (float) small_integer * 100 / new_count, \
-        // randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
-        // EUI64_count, (float) EUI64_count * 100 / new_count, others_count, (float) others_count * 100 / new_count);
 
         /* Output the results without classification*/
         for (auto iter = results.begin(); iter != results.end(); ++iter) {

@@ -314,36 +314,67 @@ void Strategy::target_generation_alias(IPList6* iplist, std::string line) {
 }
 
 /* HMap6 strategy */
-void Strategy::get_fit_nodelist(Node_List& nodelist) {
-    sort(nodelist.begin(), nodelist.end(), Node_Dim_Cmp());
-    int index1 = 0;
-    int index2 = 0;
-    for (auto node : nodelist) {
-        if (node->dim_num < config->dimension - 3)
-            index1++;
-        else if (node->dim_num == config->dimension - 3)
-            index2++;
-        else if (node->dim_num > config->dimension - 3)    
-            break;  
+void Strategy::AHC_d(std::vector<std::string>& even_seeds, std::vector<std::string>& odd_seeds, std::vector<std::string>& cluster_seeds, vector<std::string>& clusters)
+{
+    if (cluster_seeds.size() <= 1)
+        return;
+
+    if (cluster_seeds.size() > 1 && cluster_seeds.size() % 2 != 0) {
+        cluster_seeds[cluster_seeds.size() - 2] = merge(cluster_seeds[cluster_seeds.size() - 2],
+        cluster_seeds[cluster_seeds.size() - 1]);
+        cluster_seeds.pop_back();
     }
-    if (index1)
-        nodelist.erase(nodelist.begin(), nodelist.begin() + index1);
-    if (nodelist.size() > index2)
-        nodelist.erase(nodelist.begin() + index2, nodelist.end());
+
+    for (auto i = 0; i < cluster_seeds.size(); ++i) {
+        if ( i % 2 == 0)
+            even_seeds.push_back(cluster_seeds[i]);
+        else
+            odd_seeds.push_back(cluster_seeds[i]);
+    }
+    cluster_seeds.clear();
+
+    for (auto i = 0; i < even_seeds.size(); ++i) {
+        string clus = merge(odd_seeds[i], even_seeds[i]);
+        int dims = get_dimension(clus);
+        if (dims > 0 and dims <= config->dimension)
+            clusters.push_back(clus);
+        if (dims < config->dimension)
+            cluster_seeds.push_back(clus);
+    }
+
+    even_seeds.clear();
+    odd_seeds.clear();
+    AHC_d(even_seeds, odd_seeds, cluster_seeds, clusters);
+}
+
+void Strategy::get_fit_cluster(vector<string>& ahc_clusters, vector<string>& dhc_clusters, set<string>& iter_ahc_clusters, set<string>& iter_dhc_clusters, int dim) {
+    vector<string>::iterator iter;
+    for (iter = ahc_clusters.begin(); iter != ahc_clusters.end(); ++iter) {
+        int clu_dim = get_dimension(*iter);
+        if (clu_dim == dim) {
+            iter_ahc_clusters.insert(*iter);
+        }
+    }
+
+    for (iter = dhc_clusters.begin(); iter != dhc_clusters.end(); ++iter) {
+        int clu_dim = get_dimension(*iter);
+        if (clu_dim == dim) {
+            iter_dhc_clusters.insert(*iter);
+        }
+    }
 }
 
 void Strategy::init_hmap6(IPList6* iplist, string seedset, vector<string>& ahc_clusters, vector<string>& dhc_clusters) {
     iplist->read_seedset(seedset);
     sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
 
-    std::vector<std::string> even_seeds, odd_seeds, cluster_seeds, clusters_big;
+    std::vector<std::string> even_seeds, odd_seeds, cluster_seeds;
 
     cluster_seeds.assign(iplist->seeds.begin(), iplist->seeds.end());
-    AHC(even_seeds, odd_seeds, cluster_seeds, ahc_clusters, clusters_big);
+    AHC_d(even_seeds, odd_seeds, cluster_seeds, ahc_clusters);
 
     Node_List nodelist;
-    tree_generation_6hit(nodelist, iplist->seeds);
-    get_fit_nodelist(nodelist);
+    tree_generation_hmap6(nodelist, iplist->seeds);
     for (auto& node : nodelist)
         dhc_clusters.push_back(node->subspace);
 
@@ -351,11 +382,10 @@ void Strategy::init_hmap6(IPList6* iplist, string seedset, vector<string>& ahc_c
     even_seeds.clear();
     odd_seeds.clear();
     cluster_seeds.clear();
-    clusters_big.clear();
     nodelist.clear();
 }
 
-void Strategy::alias_detection(std::vector<std::string>& fit_clusters) {    
+void Strategy::alias_detection(set<std::string>& fit_clusters) {    
     ifstream infile;
     string file_name = get_aliasfile(); // Gasser's alias prefix list
     infile.open(file_name);
@@ -395,7 +425,7 @@ void Strategy::alias_detection(std::vector<std::string>& fit_clusters) {
     if (alias_clusters.size())
         cout << "Delete " << alias_clusters.size() << " alias prefixes..." << endl;
     for (auto& iter : alias_clusters)
-        fit_clusters.erase(remove(begin(fit_clusters), end(fit_clusters), iter), end(fit_clusters));
+        fit_clusters.erase(iter);
 
     alias_clusters.clear();
     delete alias_tree;    

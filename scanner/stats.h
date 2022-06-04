@@ -13,8 +13,6 @@ class Stats {
     int mask;
     uint64_t count = 0;       // number of probes sent
     uint64_t baddst = 0;      // checksum invalid on destination in response
-    uint64_t ahc_count = 0;
-    uint64_t dhc_count = 0;
 
     Node_List nodelist;
 
@@ -33,7 +31,7 @@ class Stats {
         strategy = _strategy;
         gettimeofday(&start, NULL);
         const int n = 10;
-        int budgets[n] = {10, 50, 100, 200, 400, 600, 800, 1000, 1250, 1500};
+        int budgets[n] = {10, 50, 100, 500, 1000, 1500, 2000, 3000, 4000};
         int unit = 1000000;        
         for (int i = 0; i < n; ++i)
             budgets_list.push_back(budgets[i] * unit);
