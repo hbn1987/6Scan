@@ -250,7 +250,7 @@ int main(int argc, char **argv)
         }
 
         /* IPv6 scanning with different strategies */
-        if (config.strategy) {
+        if (config.strategy and not config.alias) {
             string type = Tr_Type_String[config.type];
             string seedset;
             if (config.seedfile)

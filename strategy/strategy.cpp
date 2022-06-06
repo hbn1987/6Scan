@@ -309,7 +309,7 @@ void Strategy::target_generation_alias(IPList6* iplist, std::string line) {
     if (num < 8)
         line = line.substr(0, pos) + "1234/128"; // 1234 acts as a random number
     else 
-        line = line.substr(0, pos - 1) + "abcd/128";
+        line = line.substr(0, pos - 1) + "1234/128";
     iplist->subnet6(line, iplist->targets);
 }
 

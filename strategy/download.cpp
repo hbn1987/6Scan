@@ -126,8 +126,11 @@ string query_file(string query_name, string dir)
             last_time = (time > last_time) ? time : last_time;
         }
     }
-    if (last_time == 0)
-        fatal("There is no relevant data locally, please download first!");
+    if (last_time == 0) {
+        string error = "There is no file " + query_name + " please download first!";
+        cout << error <<endl;
+        exit(-1);
+    }
     return to_string(last_time);
 }
 
@@ -139,8 +142,11 @@ void query_file_all(string query_name, string dir, vector<string>& file_names) {
             file_names.push_back(temp_file_names[i]);
         }
     }
-    if (file_names.size() == 0)
-        fatal("There is no relevant data locally, please download first!");
+    if (file_names.size() == 0) {
+        string error = "There is no file " + query_name + " please download first!";
+        cout << error <<endl;
+        exit(-1);
+    }
 }
 
 string get_hitlist() {

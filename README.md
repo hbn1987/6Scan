@@ -1,6 +1,6 @@
 # 6Scan
 
-Towards Efficient Internet-wide Scanning in IPv6 Network
+Towards Efficient Internet-wide Scanning in IPv6 Network.
 
 ## Description
 
@@ -37,7 +37,7 @@ make
 -A [country-xx/as-xxxx] # Active search and alias resolution within a region using heuristic algorithm.
 -C [Active address file e.g., ./output/raw_ICMP6_yyyymmdd] # Address classification.
 -H [country/as] # Set the regional level for data analysis.
--d # Output with the probe type
+-d # Output with the probe type.
 -r # Probing rate, 100Kpps by default.
 -b # Probe budget, 10M by default.
 ```
