@@ -66,14 +66,16 @@ def legal(dizhi):
             label = 0
 
     if label == 0:
-        print("Error")
+        print("Error IP:", dizhi)
     return label
 
 def iptrans(line):
     line = line.strip()
     if legal(line):
         out = bu0(line)
-    return out
+        return out
+    else:
+        return ''
 
 def iplisttrans(ipl):
     addrs = []
@@ -126,7 +128,7 @@ def genaddr(lenth):
 
 def APD(filename): # Discover missed alias-prefix from results
     lines = open(filename).readlines()
-    lines = [iptrans(line[:-1]) for line in lines if line[0] != '#']
+    lines = [iptrans(line[:-1]) for line in lines if line[0] != '#' and legal(line[:-1])]
     
     prefixes = list()
     ips=list()
@@ -139,13 +141,18 @@ def APD(filename): # Discover missed alias-prefix from results
             prefix_dict[line[:lent]] += 1
         prefix_tuple=zip(prefix_dict.values(),prefix_dict.keys())
         prefix_list=list(sorted(prefix_tuple, reverse=True))
-        if len(prefix_list) < 3:
-            prefixes.append(prefix_list[0][1])
-            continue
-        if prefix_list[0][0] > prefix_list[1][0] + prefix_list[2][0]:
-            prefixes.append(prefix_list[0][1])
-        else:
-            break
+        prefixes.append(prefix_list[0][1])
+        if len(prefix_list) >= 2:
+            prefixes.append(prefix_list[1][1])
+        if len(prefix_list) >= 3:
+            prefixes.append(prefix_list[2][1])
+        # if len(prefix_list) < 3:
+        #     prefixes.append(prefix_list[0][1])
+        #     continue
+        # if prefix_list[0][0] > prefix_list[1][0] + prefix_list[2][0]:
+        #     prefixes.append(prefix_list[0][1])
+        # else:
+        #     break
     
     print("begin pinging the prefixes:")
     print(prefixes)
@@ -189,11 +196,8 @@ def APD(filename): # Discover missed alias-prefix from results
         alias.append(li)
     if len(alias):
         print(alias)  
-        alias_file = filename.replace("hitlist", "alias") 
-        alias_old = open(alias_file).readlines()
+        alias_file = filename.replace("hitlist", "aliased") 
         alias = [line+"\n" for line in alias]
-        alias.extend(alias_old)
-        alias = list(set(alias))
         f=open(alias_file,"w")
         f.writelines(alias)
         f.close() 
@@ -296,7 +300,8 @@ def alias_gasser_unfile(filename):
     f.writelines(alias)
     f.close() 
 if __name__ == "__main__":
-    file_list = ["Raw/6Scan_all_AS12322"]
-    for filename in file_list:
-        print("APD:",filename)
-        APD(filename)
+    alias_unfile("download/aliased_prefixes_20220609")
+    # file_list = ['output_202206/hitlist_country_US_ICMP6_202268', 'output_202206/hitlist_country_SC_ICMP6_202268', 'output_202206/hitlist_country_SG_ICMP6_202268',
+    # 'output_202206/hitlist_country_ID_ICMP6_202268', 'output_202206/hitlist_country_NL_ICMP6_202269']
+    # for f in file_list:
+    #     APD(f)

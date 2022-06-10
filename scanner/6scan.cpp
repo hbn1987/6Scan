@@ -150,7 +150,6 @@ int main(int argc, char **argv)
                 fatal("unable to auto-interpret MAC addresses; use -M, -G");
             }
         }
-
         /* Init IPv6 scanning engine */
         IPList6 *iplist = new IPList6();
         Stats *stats = new Stats(config.strategy);
@@ -160,12 +159,12 @@ int main(int argc, char **argv)
 
         /* Pre-scan */
         if (config.pre_scan) {   
-            cout << "Start pre-scanning the latest hitlist in local" << endl;
             string hitlist;
             if (config.seedfile)
                 hitlist = string(config.seedfile);
             else
-                hitlist = get_hitlist(); //Read the latest hitlist in local           
+                hitlist = get_hitlist(); //Read the latest hitlist in local   
+            cout << "Start pre-scanning the hitlist file: " << hitlist << endl;        
             iplist->setkey(config.seed); // Randomize permutation key
             iplist->read_hitlist(hitlist);
             cout << "Probing begins..." << endl;
@@ -220,7 +219,7 @@ int main(int argc, char **argv)
                 cout << "\rCandicate alias-prefix resolution with mask of " << stats->mask << " ...";
                 unordered_map<string, int>::iterator it = stats->prefix_map.begin();
                 while (it != stats->prefix_map.end()) {
-                    if (it->second > 12) {
+                    if (it->second > 10) {
                         for (auto i = 0; i < stats->prefixes.size(); ++i) { // Radical deletion of possible alias prefixes
                             if (stats->prefixes[i].find(it->first) != string::npos)
                                 stats->prefixes.erase(stats->prefixes.begin() + i);
@@ -480,11 +479,10 @@ int main(int argc, char **argv)
         stats->end_time();
         cout << "\rWaiting " << SHUTDOWN_WAIT << "s for outstanding replies..." << endl;
         sleep(SHUTDOWN_WAIT);
-        if(config.pre_scan or config.alias) {
+        if(config.pre_scan) {
             float t = (float) tsdiff(&stats->end, &stats->start) / 1000.0;
             cout << "Time cost: " << t << "s, Probing rate: " << (float) stats->count / t << "pps" << endl;
-        }
-        if(config.strategy and not config.alias)
+        } else if(config.strategy)
             stats->dump(config.out);
 
         delete iplist;
@@ -645,7 +643,8 @@ int main(int argc, char **argv)
 
         /* Output the results without classification*/
         for (auto iter = results.begin(); iter != results.end(); ++iter) {
-            fprintf(config.out, "%s\n", iter->first.c_str());
+            if (iter->second != "alias")
+                fprintf(config.out, "%s\n", iter->first.c_str());
         }
 
         fprintf(stdout, "# Received ratio: %2.2f%%\n", (float) received * 100 / config.budget);
