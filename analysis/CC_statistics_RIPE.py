@@ -26,7 +26,7 @@ def RIPE_geoid(file_name):
 
 if __name__ == "__main__":
     
-    file_name = "./output/hitlist_total_202269"
+    file_name = './output/seeds_TCP6_ACK_2022610'
     cc_data, unknow_list, total = RIPE_geoid(file_name)    
 
     cc_data = sorted(cc_data.items(), key=lambda x: x[1], reverse=True)

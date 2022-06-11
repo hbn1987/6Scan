@@ -40,7 +40,7 @@ def legal(dizhi):
     return label
 
 if __name__ == "__main__":
-    filename = './output/seeds_ICMP6_2022610'
+    filename = './output/seeds_TCP6_ACK_2022610'
     lines = open(filename).readlines()
     lines = [line for line in lines if legal(line[:-1])]
     lines = list(set(lines))

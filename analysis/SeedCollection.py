@@ -123,14 +123,13 @@ def RIPE_geoid(file_name):
 if __name__ == "__main__":
     # alias_statistics()
     # hitlist_alias_alert()
-    budget_statistics()
+    # budget_statistics()
     # ASN_statistics_seed()
     # ASN_statistics_result()
     
-    # file_name = "./output/hitlist_heuristic_202269"
-    # file_name = "./output/hitlist_Gasser_ICMP6_2022610"
-    # top10, total = RIPE_geoid(file_name)  
-    # print("Total seeds:", total/1000000, 'M')  
-    # for k, v in top10.items():
-    #     print(k, 'number of seeds:', round(len(v)/1000,2), 'K, ratio:', round(len(v)/total*100, 2), '%')
-    # ASN_statistics(top10)
+    file_name = './output/seeds_TCP6_ACK_2022610'
+    top10, total = RIPE_geoid(file_name)  
+    print("Total seeds:", total/1000000, 'M')  
+    for k, v in top10.items():
+        print(k, 'number of seeds:', round(len(v)/1000,2), 'K, ratio:', round(len(v)/total*100, 2), '%')
+    ASN_statistics(top10)
