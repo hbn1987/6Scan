@@ -208,6 +208,15 @@ void ScanConfig::parse_opts(int argc, char **argv) {
             result_file = "./output/raw_" + string(search_strategy_str[strategy]) + "_" + string(Tr_Type_String[type]) + "_" + scan_time;
         
         snprintf(output, UINT8_MAX, "%s", result_file.c_str());
+
+        if (strategy == HMap6) {
+            string space_file = "./output/subspace_" + string(search_strategy_str[strategy]) + "_" + string(Tr_Type_String[type]) + "_" + scan_time;
+            space_output = (char*) malloc(strlen(space_file.c_str()) + 1);
+            strcpy(space_output, space_file.c_str());
+            space_out = fopen(space_output, "w+");
+            if (space_out == NULL)
+                fatal("%s: cannot open %s: %s", __func__, space_output, strerror(errno));
+        }
     }
 
     if (classification) {

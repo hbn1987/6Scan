@@ -62,12 +62,16 @@ class Stats {
         fprintf(stdout, "# Time cost: Total %2.2fs, Preparation %2.2fs, Scanning %2.2fs\n", t, m, t-m);
     };
 
+    void dump_budget(FILE *out) {
+        fprintf(out, "# Budget consumption: %" PRId64 "\n", count);
+    }
+
     void dump_alias(FILE *alias_out, std::string alias_prefix) {
         fprintf(alias_out, "%s\n", alias_prefix.c_str());
     }
 
-    void dump_budget(FILE *out) {
-        fprintf(out, "# Budget consumption: %" PRId64 "\n", count);
+    void dump_space(FILE *space_out, std::string space, std::string hc) {
+        fprintf(space_out, "%s, %s\n", space.c_str(), hc.c_str());
     }
 
     void erase_budget() {

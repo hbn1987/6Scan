@@ -470,6 +470,11 @@ int main(int argc, char **argv)
                             iplist->seeded = false;
                             cout << "\rProbing in subspace: " << it << ", budget consumption: " << stats->count;
                         }
+
+                        for (auto it : iter_ahc_clusters)
+                            stats->dump_space(config.space_out, it, "ahc");
+                        for (auto it : iter_dhc_clusters)
+                            stats->dump_space(config.space_out, it, "dhc");                        
                     }              
                 }
                 cout << "\n";
