@@ -2,6 +2,7 @@ import pandas as pd
 import pytricia
 import requests
 import json
+from iso3166 import countries
 
 def RIPE_geoid(file_name):
     data = pd.read_csv('./analysis/data/RIPE-Country-IPv6.csv')
@@ -26,11 +27,11 @@ def RIPE_geoid(file_name):
 
 if __name__ == "__main__":
     
-    file_name = './output/seeds_TCP6_ACK_2022610'
+    file_name = './output/EUI64'
     cc_data, unknow_list, total = RIPE_geoid(file_name)    
 
     cc_data = sorted(cc_data.items(), key=lambda x: x[1], reverse=True)
     cc_data_top = dict([cc_data[i] for i in range(10)])
     print("Total country:", len(cc_data))
     for k, v in cc_data_top.items():
-        print(k, v, v/total)
+        print(countries.get(k).name, v, round(v/total*100,2), '%')

@@ -11,7 +11,6 @@ HitRate.py # Hit rate analysis.
 Legal_IP.py # Delete invalid IP addresses.
 non-Target_analysis.py # Non-Target reply analysis.
 ProbeType.py # Analyze the percentage of each type of returned probes.
-RawSplit.py # Split the original result file by budget.
 SeedCollection.py # Statistical results of seed collection.
 data # IP2ASN, Maxmind, and IEEE OUI database.
 ```

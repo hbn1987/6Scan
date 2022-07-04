@@ -352,6 +352,8 @@ void Strategy::get_fit_cluster(vector<string>& ahc_clusters, vector<string>& dhc
     for (iter = ahc_clusters.begin(); iter != ahc_clusters.end(); ++iter) {
         int clu_dim = get_dimension(*iter);
         if (clu_dim == dim) {
+            if ((*iter).find('*') >= 20)
+                continue;
             iter_ahc_clusters.insert(*iter);
         }
     }
@@ -359,6 +361,8 @@ void Strategy::get_fit_cluster(vector<string>& ahc_clusters, vector<string>& dhc
     for (iter = dhc_clusters.begin(); iter != dhc_clusters.end(); ++iter) {
         int clu_dim = get_dimension(*iter);
         if (clu_dim == dim) {
+            if ((*iter).find('*') >= 20)
+                continue;
             iter_dhc_clusters.insert(*iter);
         }
     }

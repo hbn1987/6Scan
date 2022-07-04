@@ -127,7 +127,7 @@ if __name__ == "__main__":
     # ASN_statistics_seed()
     # ASN_statistics_result()
     
-    file_name = './output/seeds_TCP6_ACK_2022610'
+    file_name = './output/hitlist_heuristic_ICMP6_202269_sub80'
     top10, total = RIPE_geoid(file_name)  
     print("Total seeds:", total/1000000, 'M')  
     for k, v in top10.items():

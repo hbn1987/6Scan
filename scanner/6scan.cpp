@@ -103,8 +103,8 @@ void loop(ScanConfig * config, TYPE * iplist, Traceroute * trace, Stats * stats)
         }
         count = iteration_count;
         /* Quit if we've exceeded probe budget */
-        if (stats->count >= config->budget)
-            break;
+        // if (stats->count >= config->budget)
+        //     break;
     }
 }
 
@@ -197,7 +197,7 @@ int main(int argc, char **argv)
                 it = seed2vec(it.substr(0, pos));
             }
 
-            while (stats->mask <= 112) {
+            while (stats->mask <= 80) {
                 for (auto& it : stats->prefixes) {
                     stats->prefix_map.insert(pair<string, int>{it.substr(0, stats->mask/4), 0});
                     if (stats->prefix_map.size() >= 30000)
@@ -464,15 +464,18 @@ int main(int argc, char **argv)
                     else if (yorn == 'y') { 
                         for (auto it : scan_clusters) {                         
                             strategy->target_generation(iplist, it, 0);
-                            if (iplist->targets.size())
+                            if (iplist->targets.size()) {
                                 loop(&config, iplist, trace, stats);
+                            }
                             iplist->targets.clear();
                             iplist->seeded = false;
                             cout << "\rProbing in subspace: " << it << ", budget consumption: " << stats->count;
                         }
-
+                    } else if (yorn == 's') {
+                        strategy->alias_detection(iter_ahc_clusters);
                         for (auto it : iter_ahc_clusters)
                             stats->dump_space(config.space_out, it, "ahc");
+                        strategy->alias_detection(iter_dhc_clusters);
                         for (auto it : iter_dhc_clusters)
                             stats->dump_space(config.space_out, it, "dhc");                        
                     }              
@@ -530,57 +533,57 @@ int main(int argc, char **argv)
         active_count = results.size();
 
         /* Remove the seed addresses */
-        cout << "Removing the seed addresses..." << endl;
+        // cout << "Removing the seed addresses..." << endl;
         string file_name;
-        if (config.type) { // If no type is specified, the entire hitlist is excluded
-            string type = Tr_Type_String[config.type - 1];
-            file_name = get_seedset(type, config.region_limit);
-        } else {
-            file_name = get_hitlist();
-        }
+        // if (config.type) { // If no type is specified, the entire hitlist is excluded
+        //     string type = Tr_Type_String[config.type - 1];
+        //     file_name = get_seedset(type, config.region_limit);
+        // } else {
+        //     file_name = get_hitlist();
+        // }
         
-        string seed;
-        infile.open(file_name);
-        while (getline(infile, seed)) {
-            if (!seed.empty() && seed[seed.size() - 1] == '\r')
-                seed.erase( remove(seed.begin(), seed.end(), '\r'), seed.end());
-            if (results.find(seed) != results.end())
-                results.erase(seed);
-        }
-        infile.close();
+        // string seed;
+        // infile.open(file_name);
+        // while (getline(infile, seed)) {
+        //     if (!seed.empty() && seed[seed.size() - 1] == '\r')
+        //         seed.erase( remove(seed.begin(), seed.end(), '\r'), seed.end());
+        //     if (results.find(seed) != results.end())
+        //         results.erase(seed);
+        // }
+        // infile.close();
         new_count = results.size();
 
         /* Alias resolution */
-        cout << "Aliased addresses resolution..." << endl;
-        Patricia *alias_tree = new Patricia(128);
-        file_name = get_aliasfile(); // Gasser's alias prefix list
-        infile.open(file_name);
-        alias_tree->populate6(infile);
-        infile.close();
+        // cout << "Aliased addresses resolution..." << endl;
+        // Patricia *alias_tree = new Patricia(128);
+        // file_name = get_aliasfile(); // Gasser's alias prefix list
+        // infile.open(file_name);
+        // alias_tree->populate6(infile);
+        // infile.close();
 
-        if (config.region_limit) {
-            vector<string> aliases;
-            get_aliasfile_all(aliases);
-            for (auto& it : aliases) {
-                if (it.find(string(config.region_limit)) != string::npos)
-                    file_name = it;
-            }
-            infile.open(file_name);
-            alias_tree->populate6(infile);
-            infile.close();
-        }
+        // if (config.region_limit) {
+        //     vector<string> aliases;
+        //     get_aliasfile_all(aliases);
+        //     for (auto& it : aliases) {
+        //         if (it.find(string(config.region_limit)) != string::npos)
+        //             file_name = it;
+        //     }
+        //     infile.open(file_name);
+        //     alias_tree->populate6(infile);
+        //     infile.close();
+        // }
 
-        int *alias = NULL;
-        for (auto iter = results.begin(); iter != results.end(); ++iter) {
-            alias = (int *) alias_tree->get(AF_INET6, iter->first.c_str());
-            if (alias) {
-                alias_count++;
-                iter->second = "alias";
-            }
-        }
-        delete alias_tree;
+        // int *alias = NULL;
+        // for (auto iter = results.begin(); iter != results.end(); ++iter) {
+        //     alias = (int *) alias_tree->get(AF_INET6, iter->first.c_str());
+        //     if (alias) {
+        //         alias_count++;
+        //         iter->second = "alias";
+        //     }
+        // }
+        // delete alias_tree;
 
-        new_count = new_count - alias_count; // De-alias
+        // new_count = new_count - alias_count; // De-alias
 
         /* Small-integer and EUI-64 detection */
         cout << "Small-integer and EUI-64 detection..." << endl;
@@ -661,14 +664,14 @@ int main(int argc, char **argv)
         randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
         EUI64_count, (float) EUI64_count * 100 / new_count);
 
-        fprintf(config.out, "# Received ratio: %2.2f%%\n", (float) received * 100 / config.budget);
-        fprintf(config.out, "# Alias addresses %" PRId64 "\n", alias_count);
-        fprintf(config.out, "# Discovered new addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", new_count, (float) new_count * 100 / config.budget);
-        fprintf(config.out, "# IID allocation schemas: Small-integer %" \
-        PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
-        PRId64 " (%2.2f%%)\n", small_integer, (float) small_integer * 100 / new_count, \
-        randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
-        EUI64_count, (float) EUI64_count * 100 / new_count);
+        // fprintf(config.out, "# Received ratio: %2.2f%%\n", (float) received * 100 / config.budget);
+        // fprintf(config.out, "# Alias addresses %" PRId64 "\n", alias_count);
+        // fprintf(config.out, "# Discovered new addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", new_count, (float) new_count * 100 / config.budget);
+        // fprintf(config.out, "# IID allocation schemas: Small-integer %" \
+        // PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
+        // PRId64 " (%2.2f%%)\n", small_integer, (float) small_integer * 100 / new_count, \
+        // randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
+        // EUI64_count, (float) EUI64_count * 100 / new_count);
 
         results.clear();
         delete iplist;

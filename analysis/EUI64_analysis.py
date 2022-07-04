@@ -92,7 +92,7 @@ def retrans(lines):
         colons.append(lout)
     return colons
 
-def OUI_extract(OUI_manufacturer, OUI_file = './analysis/OUI'):
+def OUI_extract(OUI_manufacturer, OUI_file = './analysis/data/OUI'):
     with open(OUI_file) as f:
         lines = f.read().splitlines()
         for line in lines:
@@ -102,8 +102,8 @@ def OUI_extract(OUI_manufacturer, OUI_file = './analysis/OUI'):
                 OUI_manufacturer[line[:6]] = line[index:]  
 
 def extract():
-    seed_file = './output/seeds_ICMP6_2022418'
-    address_file = './Raw/6Scan_all'
+    seed_file = './output/hitlist_Gasser_total_2022610_sub80'
+    address_file = 'output/hitlist_HMap6_total_2022610_sub76'
     EUI64_IPs = set()
     
     with open(seed_file) as f:
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     #     print(k, v)
     oui_data = dict()
     total = 0
-    file_name = "./output_202205/EUI64"
+    file_name = "./output/EUI64"
     with open(file_name) as f:
         ips = f.read().splitlines()
         total = len(ips)
@@ -168,6 +168,6 @@ if __name__ == "__main__":
             new += '0'
         new_k = new + k[2:]
         if new_k in OUI_manufacturer.keys():
-            print(new_k, OUI_manufacturer[new_k], v, v/total)
+            print(new_k, OUI_manufacturer[new_k], v, round(v/total*100, 2), '%')
         else:
-            print(new_k, 'Unknown vendor', v, v/total)
+            print(new_k, 'Unknown vendor', v, round(v/total*100,2), '%')

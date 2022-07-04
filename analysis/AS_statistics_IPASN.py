@@ -5,7 +5,7 @@
 import pyasn
 import pandas as pd
 
-asndb = pyasn.pyasn('./analysis/ipasn_20211128.dat')
+asndb = pyasn.pyasn('./analysis/data/ipasn_20211128.dat')
 
 
 # files = ["../output/seeds_ICMP6_2021622", "../output/results_6Scan_ICMP6_2021622", "../output/results_6Hit_ICMP6_2021629", \
@@ -46,7 +46,12 @@ def AS_detection(ASN = 47610):
             f.write("%s\n" % ip)
     f.close()
 
-files = ["output_202205/EUI64"]
+ASname_dict = dict()
+data = pd.read_csv('./analysis/data/GeoLite2-ASN-Blocks-IPv6.csv')
+for _, line in data.iterrows():
+    ASname_dict[line["autonomous_system_number"]] = line["autonomous_system_organization"]
+
+files = ["output/EUI64"]
 
 file_list = []
 ASN_list = []
@@ -74,9 +79,12 @@ for i in range(len(files)):
     asn_data = sorted(asn_data.items(), key=lambda x: x[1], reverse=True)
     asn_data_top = dict([asn_data[i] for i in range(10)])
     asn_data_top["Other"] = len(seeds) - sum(asn_data_top.values())
+
+    print("AS Num:", len(asn_data) - 1, "IP Num:", len(seeds))
     for k, v in asn_data_top.items():
-        asn_data_top[k] = round(v / len(seeds), 4)
-    print(asn_data_top, "AS Num:", len(asn_data) - 1, "IP Num:", len(seeds))
+        if k != 'Other':
+            print(ASname_dict[int(k[2:])], k[2:], round(v/len(seeds)*100, 2), '%')
+    
 
     # if files_name[i].find("C_") == -1: # skip the seedset
     #     file_list.extend([files_name[i]]*len(asn_data_top))
