@@ -92,7 +92,8 @@ def retrans(lines):
         colons.append(lout)
     return colons
 
-def OUI_extract(OUI_manufacturer, OUI_file = './analysis/data/OUI'):
+def OUI_extract(OUI_file = './analysis/data/OUI'):
+    OUI_manufacturer = dict()
     with open(OUI_file) as f:
         lines = f.read().splitlines()
         for line in lines:
@@ -100,74 +101,36 @@ def OUI_extract(OUI_manufacturer, OUI_file = './analysis/data/OUI'):
                 # print(line)
                 index = line.find('\t') + 1
                 OUI_manufacturer[line[:6]] = line[index:]  
+    return OUI_manufacturer
 
-def extract():
-    seed_file = './output/hitlist_Gasser_total_2022610_sub80'
-    address_file = 'output/hitlist_HMap6_total_2022610_sub76'
-    EUI64_IPs = set()
-    
-    with open(seed_file) as f:
+def extract(filename):  
+    total = 0 
+    dict_eui = dict()
+    with open(filename) as f:
         lines = f.read().splitlines()
         for line in lines:
-            IP = iptrans(line)
-            index = IP.find("fffe")
-            if index == 22:
-                EUI64_IPs.add(IP)
-    fromseed = len(EUI64_IPs)
-    print("EUI64 address number (from seeds):", fromseed)
-
-    with open(address_file) as f:
-        lines = f.read().splitlines()
-        for line in lines:
-            IP = iptrans(line)
-            index = IP.find("fffe")
-            if index == 22:
-                EUI64_IPs.add(IP)
-    
-    print("EUI64 address number (from 6Scan):", len(EUI64_IPs) - fromseed)
-    print("EUI64 address number (total):", len(EUI64_IPs))
-    
-    new_file = './output/EUI64'
-    lines = retrans(list(EUI64_IPs))
-    f = open(new_file, "w")
-    f.writelines(lines)
-    f.close() 
+            index_eui = line.find("ieee-derived")
+            if index_eui > 0:
+                key = line.strip()[-8:]
+                key = key.replace('-', '').upper()
+                if key not in dict_eui.keys():
+                    dict_eui[key] = 0
+                dict_eui[key] += 1
+    f.close()
+    return dict_eui 
     
 if __name__ == "__main__":
-    # extract()
-    OUI_manufacturer = dict()
-    OUI_extract(OUI_manufacturer)
+    filename = './AS47610_20221111'
+    oui_data = extract(filename)
+    OUI_manufacturer = OUI_extract()
     # for k , v in OUI_manufacturer.items():
     #     print(k, v)
-    oui_data = dict()
-    total = 0
-    file_name = "./output/EUI64"
-    with open(file_name) as f:
-        ips = f.read().splitlines()
-        total = len(ips)
-        ips = iplisttrans(ips)
-        ouis = [ip[16:22].upper() for ip in ips]
-        for oui in ouis:
-            if oui not in oui_data.keys():
-                oui_data[oui] = 0
-            oui_data[oui] += 1
-
-    print("Total OUI:", len(oui_data))
+    total = sum(list(oui_data.values()))
+    print("Total address:", total, "Total OUI:", len(oui_data))
     oui_data = sorted(oui_data.items(), key=lambda x: x[1], reverse=True)
     oui_data_top = dict([oui_data[i] for i in range(10)])
     for k, v in oui_data_top.items():
-        state_16 = k[:2]
-        state_10 = int(state_16, 16)
-        state_2 = '{:08b}'.format(state_10)
-        if state_2[6] == '0':
-            state_2_reverse = state_2[:6] + '1' + state_2[7]
+        if k in OUI_manufacturer.keys():
+            print(k, OUI_manufacturer[k], v, round(v/total*100, 2), '%')
         else:
-            state_2_reverse = state_2[:6] + '0' + state_2[7]
-        new = hex(int(state_2_reverse,2))[2:].upper()
-        if len(new) == 1:
-            new += '0'
-        new_k = new + k[2:]
-        if new_k in OUI_manufacturer.keys():
-            print(new_k, OUI_manufacturer[new_k], v, round(v/total*100, 2), '%')
-        else:
-            print(new_k, 'Unknown vendor', v, round(v/total*100,2), '%')
+            print(k, 'Unknown vendor', v, round(v/total*100,2), '%')

@@ -2,13 +2,13 @@
  Copyright (c) 2016-2019 Robert Beverly <rbeverly@cmand.org> all rights reserved.
  ***************************************************************************/
 struct scanpayload {
-    uint32_t id;
-    uint32_t fingerprint;
-    struct in6_addr target; /* v6 target address, to detect spoofed responses */
-    uint8_t instance; /* instance */
-    uint8_t ttl;      /* sent TTL */
-    uint16_t fudge;   /* make chksum constant */
-    uint32_t diff;    /* elapsed time */
+    uint32_t id; // prober ID
+    uint32_t fingerprint; // reginal ID
+    struct in6_addr target; // target address
+    uint8_t instance; // instance 
+    uint8_t ttl;      // TTL 
+    uint16_t fudge;   // make chksum constant 
+    uint32_t diff;    // RTT
 };
 
 class Traceroute {

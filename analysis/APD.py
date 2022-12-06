@@ -2,6 +2,10 @@
 import random
 from multiping import multi_ping
 import math
+import pyasn
+import pandas as pd
+
+asndb = pyasn.pyasn('./analysis/data/ipasn_20221106.dat')
 
 def bu0(dizhi):
     dizhi1 = dizhi.split(':')
@@ -133,19 +137,23 @@ def APD(filename): # Discover missed alias-prefix from results
     prefixes = list()
     ips=list()
     for lent in range(8, 29): # Traverse prefixes from 32 to 112
+        total = 0
         prefix_dict = dict()
-        
         for line in lines:
             if line[:lent] not in prefix_dict.keys():
                 prefix_dict[line[:lent]] = 0
             prefix_dict[line[:lent]] += 1
+        total = sum(list(prefix_dict.values()))
         prefix_tuple=zip(prefix_dict.values(),prefix_dict.keys())
         prefix_list=list(sorted(prefix_tuple, reverse=True))
         prefixes.append(prefix_list[0][1])
+        print(prefix_list[0][1], prefix_list[0][0], round(prefix_list[0][0]*100/total, 2), '%')
         if len(prefix_list) >= 2:
             prefixes.append(prefix_list[1][1])
+            print(prefix_list[1][1], prefix_list[1][0], round(prefix_list[1][0]*100/total, 2), '%')
         if len(prefix_list) >= 3:
             prefixes.append(prefix_list[2][1])
+            print(prefix_list[2][1], prefix_list[2][0], round(prefix_list[2][0]*100/total, 2), '%')
         # if len(prefix_list) < 3:
         #     prefixes.append(prefix_list[0][1])
         #     continue
@@ -153,7 +161,6 @@ def APD(filename): # Discover missed alias-prefix from results
         #     prefixes.append(prefix_list[0][1])
         # else:
         #     break
-    
     print("begin pinging the prefixes:")
     print(prefixes)
 
@@ -299,9 +306,55 @@ def alias_gasser_unfile(filename):
     f=open(filename,"w")
     f.writelines(alias)
     f.close() 
+
+def alias_comparision(H, G, N):
+    H_alias = open(H).readlines()
+    G_alias = open(G).readlines()
+    N_alias = open(N).readlines()
+    D = set(H_alias) - set(G_alias) - set(N_alias)
+    alias_list = list()
+    for alias in D:
+        lens = alias[alias.index('/')+1:-1]
+        if int(lens) <= 32:
+            alias_list.append(alias[:-1])
+    print('Candidate alias prefix number:', len(alias_list))
+    return alias_list
+
+def APD_prefix(alias_list):
+    ASname_dict = dict()
+    data = pd.read_csv('./analysis/data/GeoLite2-ASN-Blocks-IPv6.csv')
+    for _, line in data.iterrows():
+        ASname_dict[line["autonomous_system_number"]] = line["autonomous_system_organization"]
+    
+    asn_prefix = dict()
+    for prefix in alias_list:
+        prefix = prefix[:prefix.index('/')].replace(':','')
+        ips16=[]
+        for bit in range(0,16):
+            pre = prefix + num_to_string(bit)
+            addr = genaddr(32-len(pre))
+            ip = pre + addr
+            ips16.append(ip)
+        responses, no_responses = multi_ping(retrans(ips16), timeout=1, retry=2)
+        if len(responses) == 16:            
+            ip = list(responses.keys())[0]           
+            asn, ripe_prefix = asndb.lookup(ip)            
+            if str(asn) not in asn_prefix.keys():
+                asn_prefix[str(asn)] = list()
+            asn_prefix[str(asn)].append(prefix) 
+    asn_prefix = sorted(asn_prefix.items(), key=lambda x:len(x[1]), reverse=True)
+    asn_prefix_top = dict([asn_prefix[i] for i in range(15)])
+    for k, v in asn_prefix_top.items():        
+        print(ASname_dict[int(k)], k, v)
+
+
 if __name__ == "__main__":
-    alias_unfile("download/aliased_prefixes_20220609")
-    # file_list = ['output_202206/hitlist_country_US_ICMP6_202268', 'output_202206/hitlist_country_SC_ICMP6_202268', 'output_202206/hitlist_country_SG_ICMP6_202268',
-    # 'output_202206/hitlist_country_ID_ICMP6_202268', 'output_202206/hitlist_country_NL_ICMP6_202269']
-    # for f in file_list:
-    #     APD(f)
+    # alias_gasser_unfile("download/aliased_prefixes_20221117")
+    f = "./output_202204/6Scan_all"
+    APD(f)
+    # H = './download/aliased_prefixes_20220609'
+    # G = './download/aliased_prefixes_20220128'
+    # N = './download/aliased_prefixes_20221117'
+    # alias_list = alias_comparision(H, G, N)
+    # APD_prefix(alias_list)
+    

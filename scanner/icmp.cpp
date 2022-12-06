@@ -311,7 +311,8 @@ void ICMP::write_probetype(FILE ** out, char *src, char *target) {
     if (*out == NULL)
         return;
     // float r = rtt/1000.0;
-    fprintf(*out, "%s, %s\n", src, type_str.c_str());
+    // fprintf(*out, "%s, %s, %.2fms\n", src, type_str.c_str(), r);
+    fprintf(*out, "%s, %s, %s\n", src, type_str.c_str(), target);
 }
 
 void ICMP4::write(FILE ** out, Stats* stats) {

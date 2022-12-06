@@ -42,7 +42,7 @@ void ScanConfig::parse_opts(int argc, char **argv) {
 
     params["Program"] = val_t("6Scan", true);
 
-    while (-1 != (c = getopt_long(argc, argv, "a:b:A:C:D:dE:F:G:hHI:l:L:M:p:Pr:R:s:t:X:", long_options, &opt_index))) {
+    while (-1 != (c = getopt_long(argc, argv, "a:b:A:C:D:dE:F:G:hHI:l:L:M:p:Pr:s:t:X:", long_options, &opt_index))) {
         switch (c) {
         case 'a':
             probesrc = optarg;
@@ -96,9 +96,6 @@ void ScanConfig::parse_opts(int argc, char **argv) {
             break;
         case 'r':
             rate = strtol(optarg, &endptr, 10) * 1000 * 1.25;
-            break;
-        case 'R':
-            dealias = optarg;
             break;
         case 's':
             if (strcmp(optarg, "6Scan") == 0) {
@@ -236,24 +233,9 @@ void ScanConfig::parse_opts(int argc, char **argv) {
         }
     }
 
-    if (dealias) {
-        if (string(dealias).find("ICMP6") != string::npos)
-            type = TR_ICMP;
-        else if (string(dealias).find("TCP6") != string::npos)
-            type = TR_TCP_SYN;
-        else if(string(dealias).find("UDP6") != string::npos)
-            type = TR_UDP;
-        if (string(dealias).find("country") != string::npos) {
-            auto pos = string(dealias).find("country");
-            region_limit = (char*) malloc (10 * sizeof(char));
-            strncpy(region_limit, dealias + pos, 10);
-            region_limit[10] = '\0';       
-        }
-    } else {
-        out = fopen(output, "w+");
-        if (out == NULL)
-            fatal("%s: cannot open %s: %s", __func__, output, strerror(errno));
-    }
+    out = fopen(output, "w+");
+    if (out == NULL)
+        fatal("%s: cannot open %s: %s", __func__, output, strerror(errno));
 
     /* Set default destination port based on tracetype, if not set */
     if (not dstport) {
@@ -270,7 +252,7 @@ void ScanConfig::parse_opts(int argc, char **argv) {
     }
     dimension = int(log(budget)/log(16));
 
-    cout << "Start running 6Scan..." << endl;
+    std::cout << "Start running 6Scan..." << endl;
     params["Seed"] = val_t(to_string(seed), true);
     params["Rate"] = val_t(to_string(rate), true);
     params["Trace_Type"] = val_t(Tr_Type_String[type], true);
@@ -288,7 +270,7 @@ void ScanConfig::set(string key, string val, bool isset) {
 }
 
 void ScanConfig::usage(char *prog) {
-    cout << "Usage: " << prog << " [OPTIONS] [targets]" << endl
+    std::cout << "Usage: " << prog << " [OPTIONS] [targets]" << endl
     << "  -t, --type              Probe type: ICMP6, UDP6, TCP6_SYN, TCP6_ACK" << endl 
     << "  -r, --rate              Scan rate in pps (default: 10)" << endl
     << "  -a, --srcaddr           Source address of probes (default: auto)" << endl

@@ -7,38 +7,18 @@ import pandas as pd
 
 asndb = pyasn.pyasn('./analysis/data/ipasn_20211128.dat')
 
-
-# files = ["../output/seeds_ICMP6_2021622", "../output/results_6Scan_ICMP6_2021622", "../output/results_6Hit_ICMP6_2021629", \
-#         "../output/results_6Tree_ICMP6_2021623", "../output/results_6Gen_ICMP6_2021624"]
-# files_name = ["C_ICMPv6", "6Scan", "6Hit", "6Tree", "6Gen"]
-
-# files = ["../output/seeds_UDP6_2021624", "../output/results_6Scan_UDP6_2021624", "../output/results_6Hit_UDP6_2021626", \
-#         "../output/results_6Tree_UDP6_2021626", "../output/results_6Gen_UDP6_2021626"]
-# files_name = ["C_UDP6/53", "6Scan", "6Hit", "6Tree", "6Gen"]
-
-# files = ["../output/seeds_UDP6_2021627", "../output/results_6Scan_UDP6_2021627", "../output/results_6Hit_UDP6_2021627", \
-#         "../output/results_6Tree_UDP6_2021628", "../output/results_6Gen_UDP6_2021628"]
-# files_name = ["C_UDP6/443", "6Scan", "6Hit", "6Tree", "6Gen"]
-
-# files = ["../output/seeds_TCP6_ACK_2021629", "../output/results_6Scan_TCP6_ACK_202171", "../output/results_6Hit_TCP6_ACK_202171", \
-#         "../output/results_6Tree_TCP6_ACK_2021629", "../output/results_6Gen_TCP6_ACK_2021630"]
-# files_name = ["C_TCP6_ACK/80", "6Scan", "6Hit", "6Tree", "6Gen"]
-
-# files = ["../output/seeds_TCP6_SYN_2021628", "../output/results_6Scan_TCP6_SYN_2021630", "../output/results_6Hit_TCP6_SYN_202171", \
-#         "../output/results_6Tree_TCP6_SYN_2021629", "../output/results_6Gen_TCP6_SYN_2021630"]
-# files_name = ["C_TCP6_SYN/80", "6Scan", "6Hit", "6Tree", "6Gen"]
-def AS_detection(ASN = 47610): 
-    file_name = "./Raw/6Scan_all"
+def AS_detection(ASN, file_name): 
     as_list = list()
     others = list()
     with open(file_name) as f:
         seeds = f.read().splitlines()
         for ip in seeds:
-            asn, prefix = asndb.lookup(ip)
-            if asn == ASN:
-                as_list.append(ip)
-            else:
-                others.append(ip)
+            if ip[0] != '#':
+                asn, prefix = asndb.lookup(ip)
+                if asn == ASN:
+                    as_list.append(ip)
+                else:
+                    others.append(ip)
     print(len(as_list))
     new_file_name = file_name + '_AS' + str(ASN)
     with open(new_file_name, 'w') as f:
@@ -46,50 +26,44 @@ def AS_detection(ASN = 47610):
             f.write("%s\n" % ip)
     f.close()
 
-ASname_dict = dict()
-data = pd.read_csv('./analysis/data/GeoLite2-ASN-Blocks-IPv6.csv')
-for _, line in data.iterrows():
-    ASname_dict[line["autonomous_system_number"]] = line["autonomous_system_organization"]
+def AS_statistics(files):
+    ASname_dict = dict()
+    data = pd.read_csv('./analysis/data/GeoLite2-ASN-Blocks-IPv6.csv')
+    for _, line in data.iterrows():
+        ASname_dict[line["autonomous_system_number"]] = line["autonomous_system_organization"]
 
-files = ["output/EUI64"]
+    for i in range(len(files)):
+        asn_data = {}
+        asn_data_top = {}
+        with open(files[i]) as f:
+            seeds = f.read().splitlines()
+            print("Adreess number:", len(seeds))
+            asn_data["Unknown"] = 0
+            for ip in seeds:
+                # if ip[0] != '#':
+                #     index = ip.find(',')
+                #     ip = ip[:index]
+                asn, prefix = asndb.lookup(ip)
+                if not asn:
+                    asn_data["Unknown"] += 1  
+                    continue
+                if "AS" + str(asn) not in asn_data.keys():
+                    asn_data["AS" + str(asn)] = 0
+                asn_data["AS" + str(asn)] += 1
 
-file_list = []
-ASN_list = []
-Num_list = []
+        asn_data = sorted(asn_data.items(), key=lambda x: x[1], reverse=True)
+        asn_data_top = dict([asn_data[i] for i in range(10)])
+        asn_data_top["Other"] = len(seeds) - sum(asn_data_top.values())
 
-for i in range(len(files)):
-    asn_data = {}
-    asn_data_top = {}
-    with open(files[i]) as f:
-        seeds = f.read().splitlines()
-        print("Adreess number:", len(seeds))
-        asn_data["Unknown"] = 0
-        for ip in seeds:
-            # if ip[0] != '#':
-            #     index = ip.find(',')
-            #     ip = ip[:index]
-            asn, prefix = asndb.lookup(ip)
-            if not asn:
-                asn_data["Unknown"] += 1  
-                continue
-            if "AS" + str(asn) not in asn_data.keys():
-                asn_data["AS" + str(asn)] = 0
-            asn_data["AS" + str(asn)] += 1
+        print("AS Num:", len(asn_data) - 1, "IP Num:", len(seeds))
+        for k, v in asn_data_top.items():
+            if k != 'Other':
+                print(ASname_dict[int(k[2:])], k[2:], round(v/len(seeds)*100, 2), '%', v)
 
-    asn_data = sorted(asn_data.items(), key=lambda x: x[1], reverse=True)
-    asn_data_top = dict([asn_data[i] for i in range(10)])
-    asn_data_top["Other"] = len(seeds) - sum(asn_data_top.values())
-
-    print("AS Num:", len(asn_data) - 1, "IP Num:", len(seeds))
-    for k, v in asn_data_top.items():
-        if k != 'Other':
-            print(ASname_dict[int(k[2:])], k[2:], round(v/len(seeds)*100, 2), '%')
+if __name__ == "__main__":
+    ASN = 47610
+    file_name = './output/seeds_UDP6_2022418'
+    AS_detection(ASN, file_name)
     
-
-    # if files_name[i].find("C_") == -1: # skip the seedset
-    #     file_list.extend([files_name[i]]*len(asn_data_top))
-    #     ASN_list.extend(list(asn_data_top.keys()))
-    #     Num_list.extend(list(asn_data_top.values()))
-
-# dataframe = pd.DataFrame({'File':file_list, 'ASN':ASN_list, 'Num':Num_list})
-# dataframe.to_csv("IP2ASN.csv",index=False,sep=',')
+    # files = ["./output_202204/seeds_ICMP6_2022418","./output_202204/seeds_UDP6_2022418"]
+    # AS_statistics(files)

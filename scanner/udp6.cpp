@@ -66,7 +66,7 @@ void UDP6::write(FILE ** out, Stats* stats, bool probe_type) {
         type_str += "noPayload";
 
     if (probe_type)
-        fprintf(*out, "%s, %s\n", src, type_str.c_str());
+        fprintf(*out, "%s, %s, %s\n", src, type_str.c_str(), target);
     else
         fprintf(*out, "%s\n", src);
 }

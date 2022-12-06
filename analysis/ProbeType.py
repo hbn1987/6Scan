@@ -47,22 +47,14 @@ def probeType_analysis(file_name):
     for k, v in type_dict_frap.items():
         print(k, v, v/len(IPs))
 
-    # index = file_name.find('probetype')
-    # new_file_name = file_name[0:index-1]
-    # with open(new_file_name, 'w') as f:
-    #     for ip in IPs:
-    #         f.write("%s\n" % ip)
+    index = file_name.find('probetype')
+    new_file_name = file_name[0:index-1]
+    with open(new_file_name, 'w') as f:
+        for ip in IPs:
+            f.write("%s\n" % ip)
 
 if __name__ == "__main__":
-    file_list = ["output/seeds_ICMP6_202257_probetype", "output/seeds_ICMP6_202258_probetype", "output/seeds_ICMP6_202259_probetype", \
-                 "output/seeds_ICMP6_2022510_probetype", "output/seeds_ICMP6_2022511_probetype", "output/seeds_ICMP6_2022512_probetype", \
-                 "output/seeds_ICMP6_2022513_probetype", "output/seeds_ICMP6_2022514_probetype", "output/seeds_ICMP6_2022515_probetype"]
-    file_list = ["output/seeds_UDP6_202257_probetype", "output/seeds_UDP6_202258_probetype", "output/seeds_UDP6_202259_probetype", \
-                 "output/seeds_UDP6_2022510_probetype", "output/seeds_UDP6_2022511_probetype", "output/seeds_UDP6_2022512_probetype", \
-                 "output/seeds_UDP6_2022513_probetype", "output/seeds_UDP6_2022514_probetype", "output/seeds_UDP6_2022515_probetype"]
-    file_list = ["output/seeds_TCP6_ACK_202257_probetype", "output/seeds_TCP6_ACK_202258_probetype", "output/seeds_TCP6_ACK_202259_probetype", \
-                 "output/seeds_TCP6_ACK_2022510_probetype", "output/seeds_TCP6_ACK_2022511_probetype", "output/seeds_TCP6_ACK_2022512_probetype", \
-                 "output/seeds_TCP6_ACK_2022513_probetype", "output/seeds_TCP6_ACK_2022514_probetype", "output/seeds_TCP6_ACK_2022515_probetype"]
+    file_list = ["output/AS47610_20221111_probetype"]
     for file_name in file_list:
         print(file_name)
         probeType_analysis(file_name)

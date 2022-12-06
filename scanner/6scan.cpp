@@ -197,7 +197,7 @@ int main(int argc, char **argv)
                 it = seed2vec(it.substr(0, pos));
             }
 
-            while (stats->mask <= 80) {
+            while (stats->mask <= 112) {
                 for (auto& it : stats->prefixes) {
                     stats->prefix_map.insert(pair<string, int>{it.substr(0, stats->mask/4), 0});
                     if (stats->prefix_map.size() >= 30000)
@@ -219,7 +219,7 @@ int main(int argc, char **argv)
                 cout << "\rCandicate alias-prefix resolution with mask of " << stats->mask << " ...";
                 unordered_map<string, int>::iterator it = stats->prefix_map.begin();
                 while (it != stats->prefix_map.end()) {
-                    if (it->second > 10) {
+                    if (it->second > 13) {
                         for (auto i = 0; i < stats->prefixes.size(); ++i) { // Radical deletion of possible alias prefixes
                             if (stats->prefixes[i].find(it->first) != string::npos)
                                 stats->prefixes.erase(stats->prefixes.begin() + i);
@@ -507,10 +507,6 @@ int main(int argc, char **argv)
         uint64_t active_count = 0; // Found active addresses
         uint64_t new_count = 0; // Found new addresses
         uint64_t alias_count = 0; // Aliased addresses
-        uint64_t EUI64_count = 0; // EUI64 addresses
-        uint64_t small_integer = 0; // Small_integer addresses
-        uint64_t embedded_IPv4 = 0; // Embedded IPv4 addresses
-        uint64_t randomized_count = 0; // Randomized addresses
 
         string line;
         unordered_map<string, string> results;
@@ -554,155 +550,6 @@ int main(int argc, char **argv)
         new_count = results.size();
 
         /* Alias resolution */
-        // cout << "Aliased addresses resolution..." << endl;
-        // Patricia *alias_tree = new Patricia(128);
-        // file_name = get_aliasfile(); // Gasser's alias prefix list
-        // infile.open(file_name);
-        // alias_tree->populate6(infile);
-        // infile.close();
-
-        // if (config.region_limit) {
-        //     vector<string> aliases;
-        //     get_aliasfile_all(aliases);
-        //     for (auto& it : aliases) {
-        //         if (it.find(string(config.region_limit)) != string::npos)
-        //             file_name = it;
-        //     }
-        //     infile.open(file_name);
-        //     alias_tree->populate6(infile);
-        //     infile.close();
-        // }
-
-        // int *alias = NULL;
-        // for (auto iter = results.begin(); iter != results.end(); ++iter) {
-        //     alias = (int *) alias_tree->get(AF_INET6, iter->first.c_str());
-        //     if (alias) {
-        //         alias_count++;
-        //         iter->second = "alias";
-        //     }
-        // }
-        // delete alias_tree;
-
-        // new_count = new_count - alias_count; // De-alias
-
-        /* Small-integer and EUI-64 detection */
-        cout << "Small-integer and EUI-64 detection..." << endl;
-        string::size_type idx1, idx2;
-        for (auto iter = results.begin(); iter != results.end(); ++iter) {
-            if (iter->second == "other") {
-                idx1 = iter->first.find("::");
-                if (idx1 != string::npos) {
-                    iter->second = "small-integer";
-                }
-
-                idx1 = iter->first.find("ff:fe");
-                if (idx1 != string::npos) {
-                    idx2 = seed2vec(iter->first).find_last_of("fffe");
-                    if (idx2 == 25) {
-                        EUI64_count++;
-                        iter->second = "EUI-64";
-                    }
-                }
-            }
-        }
-
-        /* Embedded-IPv4 detection */
-        cout << "Embedded-IPv4 addresses detection..." << endl;
-        for (auto iter = results.begin(); iter != results.end(); ++iter) {
-            if (iter->second == "other") {
-                string ipv4 = get_ipv4(iter->first);
-                if (ipv4.length())
-                    iter->second = ipv4;
-            } else if (iter->second == "small-integer")
-                small_integer++;
-        }
-
-        IPList4 *iplist = new IPList4();
-        iplist->setkey(config.seed);
-        Stats *stats = new Stats(0);
-        Traceroute4 *trace = new Traceroute4(&config, stats);
-        trace->unlock();
-
-        iplist->read_result(results);
-        if (iplist->targets.size()) {
-            loop(&config, iplist, trace, stats);
-            cout << "Waiting 5's for outstanding replies..." << endl;
-            sleep(5);
-        }
-
-        for (auto iter = results.begin(); iter != results.end(); ++iter) {
-            if (isdigit((iter->second)[0])) {
-                if (stats->IPv4.find(iter->second) != stats->IPv4.end()) {
-                    embedded_IPv4++;
-                    iter->second = "embedded-IPv4";
-                    stats->IPv4.erase(iter->second);
-                }
-            }            
-        }
-        
-        for (auto iter = results.begin(); iter != results.end(); ++iter) {
-            if (isdigit((iter->second)[0]))
-                iter->second = "other";
-        }
-
-        /* Randomized detection */
-
-        randomized_count = new_count - small_integer - embedded_IPv4 - EUI64_count;
-
-        /* Output the results without classification*/
-        for (auto iter = results.begin(); iter != results.end(); ++iter) {
-            if (iter->second != "alias")
-                fprintf(config.out, "%s\n", iter->first.c_str());
-        }
-
-        fprintf(stdout, "# Received ratio: %2.2f%%\n", (float) received * 100 / config.budget);
-        fprintf(stdout, "# Alias addresses %" PRId64 "\n", alias_count);
-        fprintf(stdout, "# Discovered new addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", new_count, (float) new_count * 100 / config.budget);
-        fprintf(stdout, "# IID allocation schemas: Small-integer %" \
-        PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
-        PRId64 " (%2.2f%%)\n", small_integer, (float) small_integer * 100 / new_count, \
-        randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
-        EUI64_count, (float) EUI64_count * 100 / new_count);
-
-        // fprintf(config.out, "# Received ratio: %2.2f%%\n", (float) received * 100 / config.budget);
-        // fprintf(config.out, "# Alias addresses %" PRId64 "\n", alias_count);
-        // fprintf(config.out, "# Discovered new addresses: Number %" PRId64 ", Hit rate %2.2f%%\n", new_count, (float) new_count * 100 / config.budget);
-        // fprintf(config.out, "# IID allocation schemas: Small-integer %" \
-        // PRId64 " (%2.2f%%), Randomized %" PRId64 " (%2.2f%%), Embedded-IPv4 %" PRId64 " (%2.2f%%), EUI-64 %"
-        // PRId64 " (%2.2f%%)\n", small_integer, (float) small_integer * 100 / new_count, \
-        // randomized_count, (float) randomized_count * 100 / new_count, embedded_IPv4, (float) embedded_IPv4 * 100 / new_count, \
-        // EUI64_count, (float) EUI64_count * 100 / new_count);
-
-        results.clear();
-        delete iplist;
-        delete trace;
-        delete stats;
-        cout << "End running 6Scan" << endl;
-    }
-
-    if (config.dealias) {
-        cout << "De-alias the regional hitlist..." << endl;        
-
-        uint64_t active_count = 0; // Found active addresses
-        uint64_t new_count = 0; // Found new addresses
-        uint64_t alias_count = 0; // Aliased addresses
-
-        string line;
-        unordered_set<string> results;
-
-        ifstream infile;
-        infile.open(string(config.dealias));
-        while (getline(infile, line)) {
-            if (!line.empty() && line[line.size() - 1] == '\r')
-                line.erase( remove(line.begin(), line.end(), '\r'), line.end());
-            results.insert(line);
-        }
-        infile.close();
-        active_count = results.size();
-
-        string file_name;
-
-        /* Alias resolution */
         cout << "Aliased addresses resolution..." << endl;
         Patricia *alias_tree = new Patricia(128);
         file_name = get_aliasfile(); // Gasser's alias prefix list
@@ -710,33 +557,29 @@ int main(int argc, char **argv)
         alias_tree->populate6(infile);
         infile.close();
 
-        if (config.region_limit) {
-            vector<string> aliases;
-            get_aliasfile_all(aliases);
-            for (auto& it : aliases) {
-                if (it.find(string(config.region_limit)) != string::npos)
-                    file_name = it;
-            }
-            infile.open(file_name);
-            alias_tree->populate6(infile);
-            infile.close();
-        }
-
-        ofstream file_writer(config.dealias, ios_base::out);
-
         int *alias = NULL;
-        for (auto& iter : results) {
-            alias = (int *) alias_tree->get(AF_INET6, iter.c_str());
-            if (alias)
+        for (auto iter = results.begin(); iter != results.end(); ++iter) {
+            alias = (int *) alias_tree->get(AF_INET6, iter->first.c_str());
+            if (alias) {
                 alias_count++;
-            else
-                file_writer << iter << "\n";
+                iter->second = "alias";
+            }
         }
-        file_writer.close();
         delete alias_tree;
 
-        new_count = active_count - alias_count; // De-alias
-        cout << "Number of alias addresses: " << alias_count << endl;
-        cout << "Number of seed addresses: " << new_count << endl;
+        new_count = new_count - alias_count; // De-alias
+
+        /* Output the results without classification*/
+        for (auto iter = results.begin(); iter != results.end(); ++iter) {
+            if (iter->second != "alias")
+                fprintf(config.out, "%s\n", iter->first.c_str());
+        }
+
+        fprintf(stdout, "# Total addresses %" PRId64 "\n", active_count);
+        fprintf(stdout, "# Alias addresses %" PRId64 "\n", alias_count);
+        fprintf(stdout, "# Non-alias addresses %" PRId64 "\n", new_count);
+
+        results.clear();
+        cout << "End running 6Scan" << endl;
     }
 }

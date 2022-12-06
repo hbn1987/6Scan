@@ -94,12 +94,16 @@ def retrans(lines):
     return colons
 
 def rm_Invalid_IP(filename):
+    ip_set = set()
     lines = open(filename).readlines()
-    lines = [line for line in lines if legal(line[:-1])]
-    lines = list(set(lines))
-    print("Number:", len(lines))
+    for line in lines:
+        # if line.find(',') != -1:
+        #     line = line[:line.index(',')]
+            if legal(line.strip()):
+                ip_set.add(line)
+    print("Number:", len(ip_set))
     f = open(filename,"w")
-    f.writelines(lines)
+    f.writelines(list(ip_set))
     f.close() 
 
 def distinguish_by_reply():
@@ -146,6 +150,6 @@ def sub80(file_name):
     f_writer.close() 
 
 if __name__ == "__main__":
-    file_name = 'output_202206/hitlist_HMap6_total_2022610'
-    # rm_Invalid_IP(file_name)
-    sub80(file_name)
+    file_name = './output/hitlist_country_US_ICMP6_20221128'
+    rm_Invalid_IP(file_name)
+    # sub80(file_name)

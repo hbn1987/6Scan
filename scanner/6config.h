@@ -15,8 +15,8 @@ public:
     out(NULL), pre_scan(false), alias(false), type(0), 
     strategy(0), classification(NULL), download(NULL), alias_range(NULL),
     alias_output(NULL), alias_out(NULL), region_limit(NULL), hitlist(false),
-    level(NULL), dealias(NULL), seedfile(NULL), probe_type(false),
-    budget(0), dimension(0), space_output(NULL), space_out(NULL){};
+    level(NULL), seedfile(NULL), probe_type(false), budget(0), 
+    dimension(0), space_output(NULL), space_out(NULL){};
 
     void parse_opts(int argc, char **argv);
     void usage(char *prog);
@@ -49,7 +49,6 @@ public:
     char* classification;
     char* region_limit;
     char* level;
-    char* dealias;
     char* seedfile;
     bool probe_type;
     uint32_t budget;

@@ -59,9 +59,11 @@ def main():
                 # print(line, prefix)
                 alias_list.append(ip)
             except KeyError as e:
-                args.output.write(line + '\n')
+                pass
+                # args.output.write(line + '\n')
         else:
-            args.output.write(line + '\n')
+            pass
+            # args.output.write(line + '\n')
     print('Alias num:', len(set(alias_list)))
 
 if __name__ == "__main__":
