@@ -3,15 +3,21 @@ import time
 
 def heuristic_scan():
     json_files = os.listdir("./download")
+    hitlist_files = os.listdir("./output")
+    done_cc = list()
+    for f in hitlist_files:
+        if f.find('hitlist') != -1:
+            index = f.find('_ICMP6')
+            done_cc.append(f[index-2 : index])
     for f in json_files:
         if f.find('.json') != -1:
             index = f.find('_')
             cc = f[index+1 : index+3]
-            command = f"./6scan -A country_%s -t ICMP6 -I eth0"%cc
-            os.system(command)
-            time.sleep(3)
+            if cc not in done_cc:
+                command = f"./6scan -A country_%s -t ICMP6 -I eth0"%cc
+                os.system(command)
+                time.sleep(3)
             
-
 if __name__ == "__main__":
     heuristic_scan()
     

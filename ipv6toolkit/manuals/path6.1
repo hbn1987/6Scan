@@ -1,0 +1,227 @@
+.TH PATH6 1
+.SH NAME
+path6 \- A versatile IPv6\-based traceroute tool
+.SH SYNOPSIS
+.B path6
+.RB [\| \-d \|]
+.RB [\| \-i
+.IR INTERFACE \|]
+.RB [\| \-s
+.IR SRC_ADDR \|[/\| LEN \|]]
+.RB [\| \-S
+.IR LINK_SRC_ADDR \|]
+.RB [\| \-D
+.IR LINK_DST_ADDR \|]
+.RB [\| \-y
+.IR FRAG_SIZE \|]
+.RB [\| \-u
+.IR DST_OPT_HDR_SIZE \|]
+.RB [\| \-U
+.IR DST_OPT_U_HDR_SIZE \|]
+.RB [\| \-H
+.IR HBH_OPT_HDR_SIZE \|]
+.RB [\| \-r
+.IR LIMIT \|]
+.RB [\| \-p
+.IR PROBE_TYPE \|]
+.RB [\| \-P
+.IR PAYLOAD_SIZE \|]
+.RB [\| \-a
+.IR DST_PORT \|]
+.RB [\| \-X
+.IR TCP_FLAGS \|]
+.RB [\| \-v \|]
+.RB [\| \-h \|]
+
+
+.SH DESCRIPTION
+.B path6
+is an IPv6 traceroute tool, with full support for IPv6 Extension Headers. It is part of the SI6 Networks' IPv6 Toolkit: a security assessment suite for the IPv6 protocols.
+
+
+.SH OPTIONS
+.B path6
+takes its parameters as command-line options. Each of the options can be specified with a short name (one character preceded with the hyphen character, as e.g. "\-i") or with a long name (a string preceded with two hyphen characters, as e.g. "\-\-interface").
+
+Most of probe packet details can be specified by means of the available options. When TCP or UDP probe packets are employed, the Source Port of the probe packets is used to encode the probe packet number.
+
+The current version of the tool will only print IPv6 addresses and will not try to reverse\-map such IPv6 addresses into hostnames.
+
+.TP
+.BI \-i\  interface ,\ \-\-interface\  interface
+
+This option specifies the network interface to be used by the
+.B path6 tool. It can be used for overriding the output interface selected based on the local routing table.
+
+.TP
+.BI \-s\  SRC_ADDR ,\ \-\-src\-address\  SRC_ADDR
+
+This option specifies the IPv6 source address (or IPv6 prefix) to be used for the Source Address of the attack packets. If a prefix is specified, the Source Address is randomly selected from that prefix.
+
+
+.TP
+.BI \-d\  DST_ADDR ,\ \-\-dst\-address\  DST_ADDR
+
+This option specifies the IPv6 Destination Address of the target.
+
+.TP
+.BI \-S\  SRC_LINK_ADDR ,\ \-\-src\-link\-address\  SRC_LINK_ADDR
+
+This option can be used to override the link\-layer Source Address of the packets.
+
+
+.TP
+.BI \-D\  DST_LINK_ADDR ,\ \-\-dst\-link\-address\  DST_LINK_ADDR
+
+This option can be used to override the link\-layer Destination Address of the outgoing packets.
+
+
+.TP
+.BI \-y\  SIZE ,\ \-\-frag\-hdr\  SIZE
+
+This option specifies that the probe packets must be fragmented. The fragment size must be specified as an argument to this option.
+
+.TP
+.BI \-u\  HDR_SIZE ,\ \-\-dst\-opt\-hdr\  HDR_SIZE
+
+This option specifies that a Destination Options header is to be included in the outgoing packet(s). The extension header size must be specified as an argument to this option (the header is filled with padding options). Multiple Destination Options headers may be specified by means of multiple "\-u" options.
+
+.TP
+.BI \-U\  HDR_SIZE ,\ \-\-dst\-opt\-u\-hdr\  HDR_SIZE
+
+This option specifies a Destination Options header to be included in the "unfragmentable part" of the outgoing packet(s). The header size must be specified as an argument to this option (the header is filled with padding options). Multiple Destination Options headers may be specified by means of multiple "\-U" options. 
+
+.TP
+.BI \-H\  HDR_SIZE ,\ \-\-hbh\-opt\-hdr\  HDR_SIZE
+
+This option specifies that a Hop-by-Hop Options header is to be included in the outgoing packet(s). The header size must be specified as an argument to this option (the header is filled with padding options). Multiple Hop-by-Hop Options headers may be specified by means of multiple "\-H" options.
+
+.TP
+.BI \-f\  FLOW_LABEL ,\ \-\-flow\-LABEL\  FLOW_LABEL
+
+This option specifies the Flow Label value of the probe packets. If the special keyword 'random' is specified instead of a number, the Flow Label value of each probe packet will be set to a random value.
+
+.TP
+.BI \-m\  MODE ,\ \-\-output\-mode\  MODE
+
+This option controls how information is displayed. 'script' specifies that information is output in the following format:
+
+Hop#Address#SflowLabel#RFlowLabel#RTT
+
+where:
+
+.sp
+.RS 8
+.nf
+\+ Hop: Hops from source
+
+\+ Address: IPv6 Source Address of the system responding to the probe packet.
+
+\+ SflowLabel: Flow Label value originally set in the probe packet.
+
+\+ RflowLabel: Flow Label value seen by the system responding to the probe packet.
+
+\+ RTT: Round-Trip Time, in milliseconds.
+.fi
+.RE
+
+Each line of output corresponds to one probe packet. By default, three (3) probe packets are sent for each hop value.
+
+.B path6
+learns the Flow Label values from the IPv6 packets embedded in the payload of ICMPv6 error messages. Thus, in order for the tool to learn the received Flow Label values all the way till the destination host, probe types other than TCP should be employed (see option '\-p'). When employing TCP as the probe packet type, the final probe packet will elicit a TCP segment from the target system, rather than an ICMPv6 error message, and thus it will be impossible to learn the Flow Label value received at the target system. When TCP is employed as the probe type, the 'RflowLabel' of the response from the target system will contain the special value 0xffffffff. The value 0xffffffff is not a possible Flow Label value, since the Flow Label field is 20-bits long.
+
+.TP
+.BI \-p\  PROBE_TYPE ,\ \-\-probe\-type\  PROBE_TYPE 
+
+This option specifies the protocol to be used for the probe packets. Possible arguments are: "icmp" (for ICMPv6 Echo Request), "tcp" (for TCP), and "udp" (for UDP). If left unspecified, the probe packets default to ICMPv6 Echo Request.
+
+.TP
+.BI \-P\  PAYLOAD_SIZE ,\ \-\-payload\-size\  PAYLOAD_SIZE
+
+This option specifies the payload size of the probe packets.
+
+.TP
+.BI \-o\  SRC_PORT ,\ \-\-src\-port\  SRC_PORT
+
+This option specifies the TCP/UDP Source Port. If left unspecified, the Source Port is randomized from the range 1024\-65535.
+
+.TP
+.BI \-a\   DST_PORT ,\ \-\-dst\-port\  DST_PORT
+
+This option specifies the TCP/UDP Destination Port. If left unspecified, the Destination Port defaults to 80 for the TCP case, and a randomized value (in the range 60000\-65000) for the UDP case.
+
+
+.TP
+.BI \-X\   TCP_FLAGS ,\ \-\-tcp\-flags\  TCP_FLAGS
+
+This option is used to set specific the TCP flags. The flags are specified as "F" (FIN), "S" (SYN), "R" (RST), "P" (PSH), "A" (ACK), "U" (URG), "X" (no flags).
+
+If this option is left unspecified, the ACK bit is set on all probe packets.
+
+
+
+.TP
+.BR \-v\| ,\  \-\-verbose 
+
+This option selects the "verbosity" of the tool. If this option is left unspecified, only minimum information is printed.
+
+
+.TP
+.BR \-h\| ,\  \-\-help
+
+Print help information for the 
+.B path6
+tool. 
+
+.SH EXAMPLES
+
+The following sections illustrate typical use cases of the
+.B path6
+tool.
+
+\fBExample #1\fR
+
+# path6 \-d 2001:db8::1 \-u 8 \-p icmp
+
+Perform traceroute to 2001:db8::1 employing ICMPv6 echo request packets with a Destination Options extension header of 8 bytes.
+
+\fBExample #2\fR
+
+# path6 \-d www.example.com \-p icmp \-P 500 \-y 256
+
+Perform traceroute to the first IPv6 address mapped to by the domain name 'www.example.com', using ICMPv6 Echo Requests with a payload of 500 bytes, fragmenting the probe packets to at most 256 bytes (thus resulting in two IPv6 fragments).
+
+\fBExample #3\fR
+
+# path6 \-d 2001:db8::1 \-p tcp \-a 80
+
+Perform traceroute to the IPv6 address 2001:db8::1, employing TCP segments destined to TCP port 80 as the probe packets.
+
+\fBExample #4\fR
+
+# path6 \-d www.si6networks.com \-m script \-p udp \-r 1pps \-\-flow\-label random
+
+
+Perform traceroute to the first IPv6 address corresponding to the domain name 'www.si6networks.com'. Produce 'script' output. Use udp for the probe packets. Send at most 1 probe packets per second. Set the Flow Label of each probe packet to a different random value.
+
+
+.SH SEE ALSO
+.BR ipv6toolkit.conf (5)
+
+Gont, F., Linkova, J., Chown, T., and W. Liu, "Observations on the Dropping of Packets with IPv6 Extension Headers in the Real World", RFC 7872, DOI 10.17487/RFC7872, June 2016,
+.IR <https://www.rfc-editor.org/info/rfc7872>
+.
+
+.SH AUTHOR
+The
+.B path6
+tool and the corresponding manual pages were produced by Fernando Gont 
+.I <fgont@si6networks.com>
+for SI6 Networks 
+.IR <https://www.si6networks.com> .
+
+.SH COPYRIGHT
+Copyright (c) 2014\-2021 Fernando Gont.
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front\-Cover Texts, and no Back\-Cover Texts.  A copy of the license is available at
+.IR <http://www.gnu.org/licenses/fdl.html> .

@@ -197,7 +197,7 @@ int main(int argc, char **argv)
                 it = seed2vec(it.substr(0, pos));
             }
 
-            while (stats->mask <= 112) {
+            while (stats->mask <= 100) {
                 for (auto& it : stats->prefixes) {
                     stats->prefix_map.insert(pair<string, int>{it.substr(0, stats->mask/4), 0});
                     if (stats->prefix_map.size() >= 30000)
@@ -219,7 +219,7 @@ int main(int argc, char **argv)
                 cout << "\rCandicate alias-prefix resolution with mask of " << stats->mask << " ...";
                 unordered_map<string, int>::iterator it = stats->prefix_map.begin();
                 while (it != stats->prefix_map.end()) {
-                    if (it->second > 13) {
+                    if (it->second > 12) {
                         for (auto i = 0; i < stats->prefixes.size(); ++i) { // Radical deletion of possible alias prefixes
                             if (stats->prefixes[i].find(it->first) != string::npos)
                                 stats->prefixes.erase(stats->prefixes.begin() + i);

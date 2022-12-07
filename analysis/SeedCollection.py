@@ -62,10 +62,11 @@ def budget_statistics():
     budget_top10 = 0
     budget_sum = 0
     top10 = {'IN':0, 'US':0, 'CN':0, 'BR':0, 'JP':0, 'DE':0, 'MX':0, 'GB':0, 'VN':0, 'FR':0}
-    for filename in os.listdir('output_202206/'):
+    for filename in os.listdir('output/'):
         if filename.find('hitlist') == 0:
-            file_list.append('output_202206/' + filename)
+            file_list.append('output/' + filename)
     for filename in file_list:
+        # print(filename)
         lines = open(filename, "r").readlines()
         if (len(lines) > 3):
             line = lines[-3]
@@ -73,7 +74,7 @@ def budget_statistics():
             budget = int(line[index+1 : -1])
             budget_sum += budget
         else:
-            # print("There is no data in file:", filename) 
+            print("There is no data in file:", filename) 
             pass    
         for label in top10:
             label_fix = '_' + label + '_'
@@ -120,16 +121,16 @@ def RIPE_geoid(file_name):
     return top10, len(seeds)
 
         
-if __name__ == "__main__":
+if __name__ == "__main__":    
+    budget_statistics()
     # alias_statistics()
     # hitlist_alias_alert()
-    # budget_statistics()
-    # ASN_statistics_seed()
+    # # ASN_statistics_seed()
     # ASN_statistics_result()
     
-    file_name = './output/hitlist_heuristic_ICMP6_202269_sub80'
-    top10, total = RIPE_geoid(file_name)  
-    print("Total seeds:", total/1000000, 'M')  
-    for k, v in top10.items():
-        print(k, 'number of seeds:', round(len(v)/1000,2), 'K, ratio:', round(len(v)/total*100, 2), '%')
-    ASN_statistics(top10)
+    # file_name = './output/hitlist_heuristic_ICMP6_202269_sub80'
+    # top10, total = RIPE_geoid(file_name)  
+    # print("Total seeds:", total/1000000, 'M')  
+    # for k, v in top10.items():
+    #     print(k, 'number of seeds:', round(len(v)/1000,2), 'K, ratio:', round(len(v)/total*100, 2), '%')
+    # ASN_statistics(top10)
