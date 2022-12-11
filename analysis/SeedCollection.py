@@ -1,7 +1,10 @@
 import os
 import pyasn
-import pandas as pd
 import pytricia
+import math
+import pandas as pd
+from multiping import multi_ping
+from APD import *
 
 def alias_statistics():
 
@@ -43,45 +46,6 @@ def alias_statistics():
     print('hamp6 - gasser: large', len(set(hmap6_dict['large']) - set(gasser_dict['large'])), ', medium', \
     len(set(hmap6_dict['medium']) - set(gasser_dict['medium'])), ', small', len(set(hmap6_dict['small']) - set(gasser_dict['small'])))
 
-def hitlist_alias_alert(): 
-    file_list = list()   
-    for filename in os.listdir('output/'):
-        if filename.find('hitlist_country') == 0:
-            file_list.append('output/' + filename)
-    for filename in file_list:
-        lines = open(filename, "r").readlines()
-        lines = list(set(lines))
-        H_num = len(lines)
-
-        if H_num > 500000:
-            print("Alias alert in", filename, "which contains", H_num, "seeds from heuristic scanning" )
-
-def budget_statistics():
-    file_list = list()
-    budget = 0
-    budget_top10 = 0
-    budget_sum = 0
-    top10 = {'IN':0, 'US':0, 'CN':0, 'BR':0, 'JP':0, 'DE':0, 'MX':0, 'GB':0, 'VN':0, 'FR':0}
-    for filename in os.listdir('output/'):
-        if filename.find('hitlist') == 0:
-            file_list.append('output/' + filename)
-    for filename in file_list:
-        # print(filename)
-        lines = open(filename, "r").readlines()
-        if (len(lines) > 3):
-            line = lines[-3]
-            index = line.find(':')
-            budget = int(line[index+1 : -1])
-            budget_sum += budget
-        else:
-            print("There is no data in file:", filename) 
-            pass    
-        for label in top10:
-            label_fix = '_' + label + '_'
-            if filename.find(label_fix) != -1:
-                budget_top10 += budget
-                print(label,":",budget/1000000,'M')
-    print("top10:", budget_top10/1000000, "M, others:", (budget_sum - budget_top10)/1000000, "M, total:", budget_sum/1000000, 'M')
 
 def ASN_statistics(top10):
     asndb = pyasn.pyasn('./analysis/data/ipasn_20211128.dat')
@@ -122,9 +86,9 @@ def RIPE_geoid(file_name):
 
         
 if __name__ == "__main__":    
-    budget_statistics()
-    # alias_statistics()
-    # hitlist_alias_alert()
+    # budget_statistics()
+    hitlist_alias_alert()
+    # alias_statistics()    
     # # ASN_statistics_seed()
     # ASN_statistics_result()
     

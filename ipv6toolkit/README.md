@@ -1,12 +1,10 @@
 *******************************************************************************
-*                   SI6 Networks IPv6 IPv6 Toolkit (current)                  *
+*                   SI6 Networks IPv6 IPv6 Toolkit (addr6)                  *
 *******************************************************************************
 
 Description of each of the files and directories:
 -------------------------------------------------
 
- data:        Contains the configuration files and miscellaneous databases.
- manuals:     Contains the manual pages for the security assessment tools.
  tools:       Contains the source code for the security assessment tools.
  README.md:  This file.
 

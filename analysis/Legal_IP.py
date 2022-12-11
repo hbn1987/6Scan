@@ -150,6 +150,6 @@ def sub80(file_name):
     f_writer.close() 
 
 if __name__ == "__main__":
-    file_name = './output/hitlist_country_US_ICMP6_20221128'
+    file_name = './download/hitlist_20221207'
     rm_Invalid_IP(file_name)
     # sub80(file_name)
