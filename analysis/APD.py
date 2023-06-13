@@ -215,6 +215,9 @@ def alias_unfile(filename):
             if line[0]!='#':
                 index = line.find('/')
                 prefix_len = int(line[index+1:-1])//4
+                if prefix_len > 30:
+                    print('Error:', line)
+                    continue
                 prefix = iptrans(line[:index])[:prefix_len]
                 prefix_dict[prefix_len].add(prefix)
 
@@ -283,7 +286,7 @@ def re_APD(filename):
             ips16.append(ip)
 
         responses, no_responses = multi_ping(retrans(ips16), timeout=1, retry=2)
-        print(prefix, 'has', len(responses), 'responses')
+        print(temp[:-1], 'has', len(responses), 'responses')
 
         if len(responses) not in res_dict.keys():
             res_dict[len(responses)] = 0
@@ -312,13 +315,20 @@ def Prefix2AS(alias_list):
         temp = prefix
         prefix = prefix[:prefix.index('/')].replace(':','')     
         addr = genaddr(32-len(prefix))
-        ip = prefix + addr              
+        ip = prefix + addr
+        lout=list(ip)
+        for i in range(4,35,5):
+            lout.insert(i,":")
+        ip="".join(lout)             
         asn, ripe_prefix = asndb.lookup(ip)            
         if str(asn) not in asn_prefix.keys():
             asn_prefix[str(asn)] = list()
         asn_prefix[str(asn)].append(temp) 
     asn_prefix = sorted(asn_prefix.items(), key=lambda x:len(x[1]), reverse=True)
     asn_prefix_top = dict([asn_prefix[i] for i in range(15)])
-    for k, v in asn_prefix_top.items():        
-        print(ASname_dict[int(k)], k, v)
+    for k, v in asn_prefix_top.items(): 
+        if k != 'None':       
+            print(ASname_dict[int(k)], k, v)
+        else:
+            print('Not found the AS:', v)
     

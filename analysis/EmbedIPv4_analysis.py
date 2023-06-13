@@ -153,8 +153,24 @@ def ping_able(ipdict):
             ping_able_list += list(responses.keys())
     return ping_able_list
 
+def EmbedIPv4_analysis(filename):
+    dict32, dict64, info = extract(filename)
+    for line in info:
+        print(line)
+    ping32_list = ping_able(dict32)
+    ping64_list = ping_able(dict64)
+    print('The Active Embed-IPv4: (-32)', len(ping32_list), '(-64)', len(ping64_list), '(total)', \
+    len(ping32_list) + len(ping64_list))
+    AS_consistency(dict32)
+    AS_consistency(dict64)    
+    print('The AS-consistency Embed-IPv4: (-32)', len(dict32), '(-64)', len(dict64), '(total)', \
+    len(dict32) + len(dict64))
+    num32 = len((set(ping32_list) & set(dict32.values())))
+    num64 = len((set(ping64_list) & set(dict64.values())))
+    print('The Active and AS-consistency Embed-IPv4: (-32)', num32, '(-64)', num64, '(total)', num32+num64)
+
 if __name__ == "__main__":
-    filename = './AS12322'
+    filename = './output/AS/AS210842_analysis_sub'
     dict32, dict64, info = extract(filename)
     for line in info:
         print(line)

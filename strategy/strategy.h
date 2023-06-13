@@ -29,7 +29,8 @@ class Strategy {
     Strategy(ScanConfig* config_);
 
     ScanConfig* config;
-
+    int read_prefixes(std::string in, std::map<std::string, int>& prefix_num, IPList6* iplist, std::string seedset);
+    void target_generation_expanding(IPList6* iplist, std::string prefix, int index, int num);
     void target_generation(IPList6* iplist, std::string subspace, int start_idx);
     int init_6scan(Node_List& nodelist, IPList6* iplist, std::string seedset);
     void update_active(Node_List& nodelist, int begin, int end);

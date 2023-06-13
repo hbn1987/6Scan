@@ -155,15 +155,6 @@ string get_hitlist() {
     return file_hitlist;
 }
 
-string get_seedset(string type, char* region) {
-    string file_seedset;
-    if (NULL == region) 
-        file_seedset = OUTPUT + string("/seeds_") + type + string("_") + query_file(string("seeds_") + type, OUTPUT);
-    else
-        file_seedset = OUTPUT + string("/hitlist_") + string(region) + string("_") + type + string("_") + query_file(string("hitlist_") + string(region) + string("_") + type, OUTPUT);
-    return file_seedset;
-}
-
 string get_seedset(string type) {
     string file_seedset;
     file_seedset = OUTPUT + string("/seeds_") + type + string("_") + query_file(string("seeds_") + type, OUTPUT);

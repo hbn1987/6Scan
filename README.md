@@ -1,4 +1,4 @@
-# 6Scan
+# HMap6
 
 Towards Efficient Internet-wide Scanning in IPv6 Network.
 
@@ -72,6 +72,19 @@ make
 # Remove the alias address in the file of raw_6Scan_ICMP6_yyyymmdd.
 ```
 
+### Scan in a run
+
+```shell
+# Step 1: Heuristic seed collection
+python3 runner/1Hseed.py
+# Step 2: Organize alias prefix list 
+python3 runner/2Aliasp.py
+# Step 3: Create the seedset 
+python3 runner/3Mseed.py
+# Step 4: Evaluate the scan results 
+python3 runner/4Evalu.py
+```
+
 ### Distributed-scan
 
 ```shell
@@ -96,6 +109,7 @@ python3 scheduling/data_pullback.py
 ### Search strategy
 
 >B. Hou, Z. Cai, K. Wu, T. Yang, and T. Zhou, “Search in the Expanse: Towards Active and Global IPv6 Hitlists,” in INFOCOM, 2023. \
+>B. Hou, Z. Cai, K. Wu, T. Yang, and T. Zhou, “6Scan: A High-Efficiency Dynamic Internet-wide IPv6 Scanner with Regional Encoding,” IEEE/ACM Transections on Networking, 2023. \
 >B. Hou, Z. Cai, K. Wu, J. Su, and Y. Xiong, “6Hit: A Reinforcement Learning-based Approach to Target Generation for Internet-wide IPv6 Scanning,” in INFOCOM, 2021. \
 >Z. Liu, Y. Xiong, X. Liu, W. Xie, and P. Zhu, “6Tree: Efficient Dynamic Discovery of Active Addresses in the IPv6 Address Space,” Computer Networks, 2019. \
 >A. Murdock, F. Li, P. Bramsen, Z. Durumeric, and V. Paxson, “Target Generation for Internet-Wide IPv6 Scanning,” in IMC, 2017.

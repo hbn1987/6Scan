@@ -30,8 +30,7 @@ Strategy::Strategy(ScanConfig* config_) {
     config = config_;
 }
 
-void Strategy::target_generation(IPList6* iplist, string subspace, int start_idx)
-{
+void Strategy::target_generation(IPList6* iplist, string subspace, int start_idx) {
     if (iplist->targets.size() >= BUDGET )
         return;
     int idx;
@@ -62,11 +61,66 @@ void Strategy::target_generation(IPList6* iplist, string subspace, int start_idx
     }
 }
 
+/* Expanding seeds */
+int Strategy::read_prefixes(string in, std::map<string, int>& prefix_num, IPList6* iplist, std::string seedset) {
+    ifstream inlist;
+    inlist.open(in);
+    string line;
+    while (getline(inlist, line)) {
+        if (!line.empty() && line[line.size() - 1] == '\r')
+            line.erase( remove(line.begin(), line.end(), '\r'), line.end() );
+        int index = line.find("::/32");
+        string mid = "";
+        if (index - 5 > 0)
+            mid = line.substr(5, index-5);
+        switch (mid.length()) {
+        case 0:
+            mid = "0000";
+            break;
+        case 1:
+            mid = "000" + mid;
+            break;
+        case 2:
+            mid = "00" + mid;
+            break;
+        case 3:
+            mid = "0" + mid;
+            break;
+        }         
+        string prefix = line.substr(0, 4) + mid; 
+        prefix_num[prefix] = 0;
+    }
+    inlist.close();
+    cout << "The number of /32 prefixes: " << prefix_num.size() << endl;
+
+    iplist->read_seedset(seedset);
+    sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
+    for (auto& seed : iplist->seeds) {
+        string key = seed.substr(0, 8);
+        prefix_num[key] += 1;
+        seed = seed.substr(8);
+    }
+    vector<int> num_vec;
+    for (auto i = prefix_num.begin(); i != prefix_num.end(); ++i) {
+        if (i->second > 0) 
+            num_vec.push_back(i->second);
+    }
+    sort(num_vec.begin(), num_vec.end());
+    int ranking = ceil(num_vec.size() * 0.9);
+    return num_vec[ranking];
+}
+
+void Strategy::target_generation_expanding(IPList6* iplist, std::string prefix, int index, int num) {
+    for (auto i = 0; i < num; ++i) {
+            string ip = vec2colon(prefix + iplist->seeds[index + i]) + "/128";
+            iplist->subnet6(ip, iplist->targets);
+    }
+}
+
 /* 6Scan strategy */
 int Strategy::init_6scan(Node_List& nodelist, IPList6* iplist, string seedset) {
     iplist->read_seedset(seedset);
     sort(iplist->seeds.begin(), iplist->seeds.end(), str_cmp);
-    iplist->seeds.erase(unique(iplist->seeds.begin(), iplist->seeds.end()), iplist->seeds.end());
     tree_generation(nodelist, iplist->seeds);
     sort(nodelist.begin(), nodelist.end(), Node_Dim_Cmp());
     iplist->seeds.clear();
@@ -352,7 +406,7 @@ void Strategy::get_fit_cluster(vector<string>& ahc_clusters, vector<string>& dhc
     for (iter = ahc_clusters.begin(); iter != ahc_clusters.end(); ++iter) {
         int clu_dim = get_dimension(*iter);
         if (clu_dim == dim) {
-            if ((*iter).find('*') >= 20)
+            if ((*iter).find('*') >= 16)
                 continue;
             iter_ahc_clusters.insert(*iter);
         }
@@ -361,7 +415,7 @@ void Strategy::get_fit_cluster(vector<string>& ahc_clusters, vector<string>& dhc
     for (iter = dhc_clusters.begin(); iter != dhc_clusters.end(); ++iter) {
         int clu_dim = get_dimension(*iter);
         if (clu_dim == dim) {
-            if ((*iter).find('*') >= 20)
+            if ((*iter).find('*') >= 16)
                 continue;
             iter_dhc_clusters.insert(*iter);
         }

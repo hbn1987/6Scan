@@ -115,8 +115,6 @@ int sane(ScanConfig * config)
         fatal("*** IPv6 requires specifying an interface!");
     if (config->pre_scan and not config->type)
         fatal("*** Pre-scan must specify the type of package!");
-    if (not config->alias_range and not config->pre_scan and config->ipv6 and not config->strategy)
-        fatal("*** IPv6 scanning must specify the search strategy!");
     if (config->pre_scan and config->strategy)
         fatal("*** Cannot specify pre-scan and regular scan at the same time!");
     if (config->budget > pow(2, 32))
@@ -169,6 +167,36 @@ int main(int argc, char **argv)
             iplist->read_hitlist(hitlist);
             cout << "Probing begins..." << endl;
             loop(&config, iplist, trace, stats);
+        }
+
+        /* Expanding seeds */
+        if (config.exp_seed) { 
+            string type = Tr_Type_String[config.type];  
+            string seedset;
+            if (config.seedfile)
+                seedset = config.seedfile;
+            else
+                seedset = get_seedset(type);  
+            cout << "Expanding the seed file: " << seedset << endl;  
+            cout << "Reading the /32 prefixes from file: prefixes32" << endl;      
+            iplist->setkey(config.seed); // Randomize permutation key
+
+            std::map<string, int> prefix_num;
+            int threshold = strategy->read_prefixes(PREFIXES, prefix_num, iplist, seedset);
+            int index = 0, total = iplist->seeds.size(), num = config.exp_seed;
+            for (auto i = prefix_num.begin(); i != prefix_num.end(); ++i) {
+                index += i->second;
+                if (index + num > total)
+                    index = total - num;
+                if (i->second < threshold) {
+                    cout << "\rProbing in prefix: " << i->first << " using " << num << " probes";        
+                    strategy->target_generation_expanding(iplist, i->first, index, num);
+                    if (iplist->targets.size())
+                        loop(&config, iplist, trace, stats);
+                    iplist->targets.clear();
+                    iplist->seeded = false;
+                }
+            }
         }
 
         /* Active search and alias resolution within a scope using heuristic strategy*/
@@ -255,7 +283,7 @@ int main(int argc, char **argv)
             if (config.seedfile)
                 seedset = config.seedfile;
             else
-                seedset = get_seedset(type, config.region_limit);
+                seedset = get_seedset(type);
             iplist->setkey(config.seed);
 
             /* Scanning with 6Scan strategy */
@@ -404,6 +432,8 @@ int main(int argc, char **argv)
                 for (vector<string>::reverse_iterator it = clusters.rbegin(); it != clusters.rend(); ++it) {
                     if (scanned_clusters.find(*it) == scanned_clusters.end()) {
                         scanned_clusters.insert(*it);
+                        if ((*it).find('*') >= 16)
+                            continue;
                         strategy->target_generation(iplist, *it, 0);
                         if (iplist->targets.size())
                             loop(&config, iplist, trace, stats);
@@ -419,6 +449,8 @@ int main(int argc, char **argv)
                     for(vector<string>::reverse_iterator it = clusters_big.rbegin(); it != clusters_big.rend(); ++it){
                         if (strategy->get_dimension(*it) == dim && scanned_clusters.find(*it) == scanned_clusters.end()){
                             scanned_clusters.insert(*it);
+                            if ((*it).find('*') >= 16)
+                                continue;
                             strategy->target_generation(iplist, *it, 0);
                             if (iplist->targets.size())
                                 loop(&config, iplist, trace, stats);
@@ -487,9 +519,9 @@ int main(int argc, char **argv)
         stats->end_time();
         cout << "\rWaiting " << SHUTDOWN_WAIT << "s for outstanding replies..." << endl;
         sleep(SHUTDOWN_WAIT);
-        if(config.pre_scan) {
+        if(config.pre_scan or config.exp_seed) {
             float t = (float) tsdiff(&stats->end, &stats->start) / 1000.0;
-            cout << "Time cost: " << t << "s, Probing rate: " << (float) stats->count / t << "pps" << endl;
+            cout << "Budget consumption: " << (float) stats->count /1000000 << "M, Time cost: " << t << "s, Probing rate: " << (float) stats->count / t << "pps" << endl;
         } else if(config.strategy)
             stats->dump(config.out);
 
@@ -553,6 +585,7 @@ int main(int argc, char **argv)
         cout << "Aliased addresses resolution..." << endl;
         Patricia *alias_tree = new Patricia(128);
         file_name = get_aliasfile(); // Gasser's alias prefix list
+        cout << "Remove alias addresses using file " << file_name << endl;
         infile.open(file_name);
         alias_tree->populate6(infile);
         infile.close();

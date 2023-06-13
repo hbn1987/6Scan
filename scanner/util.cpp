@@ -120,7 +120,7 @@ void instanceLock(uint8_t instance) {
     }
 }
 
-string get_alias (string line, int mask) {
+string get_alias(string line, int mask) {
     int len = ceil(mask * 1.0 / 4 / 4);
 
     string res_str = "";

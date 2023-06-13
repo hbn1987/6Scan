@@ -117,20 +117,46 @@ def extract(filename):
                     dict_eui[key] = 0
                 dict_eui[key] += 1
     f.close()
-    return dict_eui 
-    
-if __name__ == "__main__":
-    filename = './AS47610_20221111'
+    return dict_eui
+
+def EUI64_analysis(filename):
     oui_data = extract(filename)
     OUI_manufacturer = OUI_extract()
     # for k , v in OUI_manufacturer.items():
     #     print(k, v)
     total = sum(list(oui_data.values()))
     print("Total address:", total, "Total OUI:", len(oui_data))
-    oui_data = sorted(oui_data.items(), key=lambda x: x[1], reverse=True)
-    oui_data_top = dict([oui_data[i] for i in range(10)])
-    for k, v in oui_data_top.items():
-        if k in OUI_manufacturer.keys():
-            print(k, OUI_manufacturer[k], v, round(v/total*100, 2), '%')
-        else:
-            print(k, 'Unknown vendor', v, round(v/total*100,2), '%')
+    mamu = dict()
+    if len(oui_data):
+        mamu['Unknown vendor'] = 0
+        for k, v in oui_data.items():
+            if k in OUI_manufacturer.keys():
+                if OUI_manufacturer[k] in mamu.keys():
+                    mamu[OUI_manufacturer[k]] += round(v/total*100, 2)
+                else:
+                    mamu[OUI_manufacturer[k]] = round(v/total*100, 2)
+            else:
+                mamu['Unknown vendor'] += round(v/total*100,2)
+
+        mamu = sorted(mamu.items(), key=lambda x: x[1], reverse=True)
+        for (k, v) in mamu[:3]:
+            print(k.replace('\t',''), round(v, 2), '%')
+        print('**********')
+            
+        oui_data = sorted(oui_data.items(), key=lambda x: x[1], reverse=True)
+        oui_data_top = dict([oui_data[i] for i in range(2)])
+        for k, v in oui_data_top.items():
+            if k in OUI_manufacturer.keys():
+                print(k, OUI_manufacturer[k], round(v/total*100, 2), '%')
+            else:
+                print(k, 'Unknown vendor', round(v/total*100,2), '%')
+
+    else:
+        print("No EUI64 addresses.")
+
+
+    
+if __name__ == "__main__":
+    filename = './output/AS/AS1136_analysis_sub'
+    EUI64_analysis(filename)
+    

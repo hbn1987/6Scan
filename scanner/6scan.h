@@ -143,6 +143,7 @@ std::string get_alias(std::string line, int mask);
 #define RATE 100000 // Probing rate
 #define TTL 128
 #define BUDGET 10000000 // Budget number
+#define PREFIXES "prefixes32"
 
 #define Alias_Threshold 0.9
 

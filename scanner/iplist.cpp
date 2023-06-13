@@ -163,8 +163,6 @@ void IPList6::read_hitlist(string in) {
     ifstream inlist;
     inlist.open(in);
     string line;
-    struct in6_addr addr;
-    getline(inlist, line); // Skip the description line
     while (getline(inlist, line)) {
         if (!line.empty() && line[line.size() - 1] == '\r')
             line.erase( remove(line.begin(), line.end(), '\r'), line.end() );

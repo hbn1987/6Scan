@@ -137,19 +137,7 @@ def distinguish_by_reply():
             src_file.close() 
             print(f, "over!")
 
-def sub80(file_name):    
-    lines = open(file_name).readlines()
-    lines = iplisttrans(lines)    
-    ip_dict = dict()
-    for line in lines:
-        ip_dict[line[:19]] = line
-    lines = [ip + '\n' for ip in retrans(ip_dict.values())]
-    new_file = file_name + '_sub76'
-    f_writer = open(new_file, "w")
-    f_writer.writelines(lines)
-    f_writer.close() 
 
 if __name__ == "__main__":
     file_name = './download/hitlist_20221207'
     rm_Invalid_IP(file_name)
-    # sub80(file_name)

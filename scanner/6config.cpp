@@ -64,6 +64,9 @@ void ScanConfig::parse_opts(int argc, char **argv) {
         case 'D':
             download = optarg;
             break;
+        case 'E':
+            exp_seed = strtol(optarg, &endptr, 10);
+            break;
         case 'F':
             seedfile = optarg;
             break;
@@ -180,7 +183,14 @@ void ScanConfig::parse_opts(int argc, char **argv) {
         snprintf(output, UINT8_MAX, "%s", seed_file.c_str());
     }
 
-    if (alias) {
+    if (exp_seed) {
+        string seed_file = "./output/exp-seeds_" + string(Tr_Type_String[type]) + "_" + scan_time;
+        if (probe_type)
+            seed_file += "_probetype";
+        snprintf(output, UINT8_MAX, "%s", seed_file.c_str());
+    }
+
+    if (alias) { // herustic search
         string hitlist_file = "./output/hitlist_" + string(alias_range) + "_" + string(Tr_Type_String[type]) + "_" + scan_time;
         string alias_file = "./output/alias_" + string(alias_range) + "_"+ string(Tr_Type_String[type]) + "_" + scan_time;
         snprintf(output, UINT8_MAX, "%s", hitlist_file.c_str());
@@ -217,20 +227,9 @@ void ScanConfig::parse_opts(int argc, char **argv) {
     }
 
     if (classification) {
-        string result_file = "./output/results_" + string(classification).substr(13);
+        int index = string(classification).find_last_of('/');
+        string result_file = "./output/non-alias_" + string(classification).substr(index + 1);
         snprintf(output, UINT8_MAX, "%s", result_file.c_str());
-        if (string(classification).find("ICMP6") != string::npos)
-            type = TR_ICMP;
-        else if (string(classification).find("TCP6") != string::npos)
-            type = TR_TCP_SYN;
-        else if(string(classification).find("UDP6") != string::npos)
-            type = TR_UDP;
-        if (string(classification).find("country") != string::npos) {
-            auto pos = string(classification).find("country");
-            region_limit = (char*) malloc (10 * sizeof(char));
-            strncpy(region_limit, classification + pos, 10);
-            region_limit[10] = '\0';       
-        }
     }
 
     out = fopen(output, "w+");
@@ -272,7 +271,7 @@ void ScanConfig::set(string key, string val, bool isset) {
 void ScanConfig::usage(char *prog) {
     std::cout << "Usage: " << prog << " [OPTIONS] [targets]" << endl
     << "  -t, --type              Probe type: ICMP6, UDP6, TCP6_SYN, TCP6_ACK" << endl 
-    << "  -r, --rate              Scan rate in pps (default: 10)" << endl
+    << "  -r, --rate              Scan rate in pps (default: 100K)" << endl
     << "  -a, --srcaddr           Source address of probes (default: auto)" << endl
     << "  -p, --port              Transport dst port (default: 80)" << endl
     << "  -I, --interface         Network interface (required for IPv6)" << endl
