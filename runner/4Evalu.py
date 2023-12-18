@@ -41,12 +41,20 @@ def APD(filename): # Discover missed alias-prefix from results
         prefix_list=list(sorted(prefix_tuple, reverse=True))
         prefixes.append(prefix_list[0][1])
         print(prefix_list[0][1], prefix_list[0][0], round(prefix_list[0][0]*100/total, 2), '%')
+        if round(prefix_list[0][0]*100/total, 2) < 0.5:
+            break
         if len(prefix_list) >= 2:
             prefixes.append(prefix_list[1][1])
             print(prefix_list[1][1], prefix_list[1][0], round(prefix_list[1][0]*100/total, 2), '%')
         if len(prefix_list) >= 3:
             prefixes.append(prefix_list[2][1])
             print(prefix_list[2][1], prefix_list[2][0], round(prefix_list[2][0]*100/total, 2), '%')
+        if len(prefix_list) >= 4:
+            prefixes.append(prefix_list[3][1])
+            print(prefix_list[3][1], prefix_list[3][0], round(prefix_list[3][0]*100/total, 2), '%')
+        if len(prefix_list) >= 5:
+            prefixes.append(prefix_list[4][1])
+            print(prefix_list[4][1], prefix_list[4][0], round(prefix_list[4][0]*100/total, 2), '%')
     print("begin pinging the prefixes:")
     print(prefixes)
 
@@ -62,7 +70,7 @@ def APD(filename): # Discover missed alias-prefix from results
     prefixlist=[]
     for ips16 in ips:
         responses, no_responses = multi_ping(retrans(ips16), timeout=1, retry=2)
-        print('# IPs:', len(ips16), '# responses:', len(responses))
+        print('# IPs:', len(ips16), '# responses:', len(responses), 'responses:', responses.keys())
         if len(responses) > 12: #16
             res=[]
             for addr, rtt in responses.items():
@@ -207,8 +215,8 @@ def re_analysis(file_name):
 def Country_distribution(filename):
     # rm_Invalid_IP(f)
     print('--------------------')
-    print(f)
-    cc_data, unknow_list, total = RIPE_geoid(f)
+    print(filename)
+    cc_data, unknow_list, total = RIPE_geoid(filename)
     LS = 0
     for k, v in cc_data.items():
         LS += np.log10(v)  
@@ -247,34 +255,34 @@ if __name__ == "__main__":
         #     file_name = 'output/raw_seeds_%s_%s_2023227'%(p,m)
         #     remove_alias(file_name)
 
-    # filename = 'output/non-alias_raw_seeds_TCP6_ACK_6Gen_20221219'
-    # APD(filename)
+    filename = './output/GlobalPeripheryAddress'
+    APD(filename)
     
     # ICMP6 probe
     # file_name = './output/subspace_HMap6_ICMP6_2023228'
-    # address_pool_file = './output/non-alias_raw_seeds_ICMP6_HMap6_20221218'
-    # hmap6_total, scan_total, tree_total, gen_total = 84.887337, 46.228755, 44.433692, 60.487467
+    # address_pool_file = './output/non-alias_raw_seeds_ICMP6_HMap6_20221220'
+    # hmap6_total, scan_total, tree_total, gen_total = 58.796337, 31.379917, 30.161435, 41.058681
     # budget = 455
 
     # UDP6 probe
     # file_name = './output/subspace_HMap6_UDP6_202336'
-    # address_pool_file = './output/non-alias_raw_seeds_UDP6_HMap6_20221218'
+    # address_pool_file = './output/non-alias_raw_seeds_UDP6_HMap6_20221220'
     # hmap6_total, scan_total, tree_total, gen_total = 4.184576, 3.542064, 3.591888, 3.916391
     # budget = 135
 
     # TCP6_ACK probe
     # file_name = './output/subspace_HMap6_TCP6_ACK_202337'
-    # address_pool_file = './output/non-alias_raw_seeds_TCP6_ACK_HMap6_20221219'
-    # hmap6_total, scan_total, tree_total, gen_total = 4.867542, 4.359037, 4.605400, 4.632192
+    # address_pool_file = './output/non-alias_raw_seeds_TCP6_ACK_HMap6_20221220'
+    # hmap6_total, scan_total, tree_total, gen_total = 3.125036, 2.843090, 3.003775, 3.021250
     # budget = 656
 
     # TCP6_SYN probe
     # file_name = './output/subspace_HMap6_TCP6_SYN_202337'
     # address_pool_file = './output/non-alias_raw_seeds_TCP6_SYN_HMap6_20221220'
-    # hmap6_total, scan_total, tree_total, gen_total = 21.916926, 16.461554, 15.437615, 19.367575
+    # hmap6_total, scan_total, tree_total, gen_total = 20.031728, 13.375118, 12.543161, 15.736279
     # budget = 117
     
-    # dhc, ahc, hc = hitrate(file_name, address_pool_file, 5, 1000)
+    # dhc, ahc, hc = hitrate(file_name, address_pool_file, 5, 10000)
     # hitrate_correction(dhc, ahc, hc, hmap6_total, scan_total, tree_total, gen_total, budget)
     # Hitrate curves are plotted in file drawing/LineChart_Hitrate.py
 
@@ -283,10 +291,9 @@ if __name__ == "__main__":
     #             'output/total_6Gen_2023223', 'output/total_seeds_extend', 'output/total_seeds_gasser']
 
     # for f in filelist:
-    #     # Country_distribution(f)
     #     print('--------------------')
-    #     print(f)
-    #     # AS_statistics(f)
+    #     Country_distribution(f)
+    #     AS_statistics(f)
     #     subprefix_analysis(f, 32)
 
     # f_prior = "output/non-alias_raw_seeds_ICMP6_HMap6_20221220"
@@ -320,18 +327,18 @@ if __name__ == "__main__":
     #         print(command)
     #         os.system(command)
 
-    for f in os.listdir(folder):
-        if f.find("analysis") != -1:
-            # print(f)
-            # file_name = folder + f  
-            # command = f"tail -n %d %s"%(10, file_name)
-            # os.system(command)  
-            # EUI64_analysis(file_name)
-            # EmbedIPv4_analysis(file_name)
-            print('--------------------')
-        elif f.find('png') != -1:
-            pass
-        else:
-            print(f)
-            file_name = folder + f 
-            draw_ent(file_name)
+    # for f in os.listdir(folder):
+    #     if f.find("analysis") != -1:
+    #         # print(f)
+    #         # file_name = folder + f  
+    #         # command = f"tail -n %d %s"%(10, file_name)
+    #         # os.system(command)  
+    #         # EUI64_analysis(file_name)
+    #         # EmbedIPv4_analysis(file_name)
+    #         print('--------------------')
+    #     elif f.find('png') != -1:
+    #         pass
+    #     else:
+    #         print(f)
+    #         file_name = folder + f 
+    #         draw_ent(file_name)

@@ -120,9 +120,26 @@ void instanceLock(uint8_t instance) {
     }
 }
 
+std::string padStringIfNeeded(const std::string& input) {
+    int originalLength = input.length();
+    int remainder = originalLength % 4;
+
+    if (remainder != 0) {
+        // 计算需要补零的个数
+        int padding = 4 - remainder;
+
+        // 在字符串前面补零
+        std::string paddedString(padding, '0');
+        return input + paddedString;
+    } else {
+        // 字符串长度已经是4的倍数，无需补零
+        return input;
+    }
+}
+
 string get_alias(string line, int mask) {
     int len = ceil(mask * 1.0 / 4 / 4);
-
+    line = padStringIfNeeded(line);
     string res_str = "";
     for (int i = 0; i < len - 1; ++i)
     {

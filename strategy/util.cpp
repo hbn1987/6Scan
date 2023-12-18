@@ -3,6 +3,9 @@
  ***************************************************************************/
 #include "strategy.h"
 #include <cmath>
+#include <random>
+#include <sstream>
+#include <iomanip>
 
 // Decimal to Hexadecimal
 string dec2hex(int dec, int len)
@@ -150,4 +153,24 @@ string get_ipv4(string ipv6) {
         return "";
     else
         return ipv4_check(ipv6.substr(idx1 + 1));
+}
+
+std::string generateRandomHexString(int numDigits) {
+    if (numDigits <= 0) {
+        std::cerr << "Invalid number of digits" << std::endl;
+        return "";
+    }
+
+    std::random_device rd;
+    std::default_random_engine generator(rd());
+    std::uniform_int_distribution<uint16_t> distribution(0x0, 0xF);
+
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0');
+
+    for (int i = 0; i < numDigits; ++i) {
+        ss << std::setw(1) << distribution(generator);
+    }
+
+    return ss.str();
 }

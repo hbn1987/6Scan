@@ -312,7 +312,7 @@ void ICMP::write_probetype(FILE ** out, char *src, char *target) {
         return;
     // float r = rtt/1000.0;
     // fprintf(*out, "%s, %s, %.2fms\n", src, type_str.c_str(), r);
-    fprintf(*out, "%s, %s, %s\n", src, type_str.c_str(), target);
+    fprintf(*out, "%s, %s, %s\n",target, src, type_str.c_str());
 }
 
 void ICMP4::write(FILE ** out, Stats* stats) {
@@ -363,9 +363,8 @@ void ICMP6::write(FILE ** out, Stats* stats, bool probe_type) {
                 unordered_map<string, int>::iterator iter = stats->prefix_map.find(prefix);
                 if (iter != stats->prefix_map.end())
                     iter->second++;
-                if (addr.substr(addr.length()-4) != "1234") { // If the address is not the pseudorandom address, write it into the hitlist
+                if (addr.substr(addr.length()-4) != "abcd" and stats->prefixes.size() <= 1000000) { // If the address is not the pseudorandom address for APD, write it into the hitlist
                     stats->prefixes.push_back(addr);
-                    ICMP::write(out, src, target);
                 }
             }
         } else

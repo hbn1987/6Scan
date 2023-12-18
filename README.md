@@ -1,10 +1,10 @@
-# HMap6
+# HScan6-(ping&TGA)
 
-Towards Efficient Internet-wide Scanning in IPv6 Network.
+Towards Efficient Internet-wide Probing in IPv6 Networks.
 
 ## Description
 
-Efficient network scanner which could scan the IPv6 network using various search strategies.
+Efficient IPv6 Scanner Integrates Heuristic Ping and Target Generation Algorithms (TGAs).
 
 ## Require
 
@@ -33,12 +33,13 @@ make
 -t [ICMP6/TCP6_SYN/TCP6_ACK/UDP6] # Set probe type.
 -I # Network interface to use.
 -l [country_xx/as_xxxx] # Specify the region of the seeds using 2-digit ISO-3166 country code or AS number.
--s [HMap6/6Scan/6Hit/6Tree/6Gen/Heuristic] # Set IPv6 searching strategy.
--A [country-xx/as-xxxx] # Active search and alias resolution within a region using heuristic algorithm.
+-s [HMap6/6Scan/6Hit/6Tree/6Gen] # Set TGA searching strategy, e.g., '-s HMap6' denotes HScan6-TGA method.
+-A [country-xx/as-xxxx] # Perform HScan6-ping in a designated region.
 -F # Specifies the seedset file.
--d # Output with the probe type.
+-d # Output with the probe type i.e., (Target, Responder, Probe).
 -r # Probing rate, 100Kpps by default.
 -b # Probe budget, 10M by default.
+-k # Specifies the probe number for each iteration in the heuristic ping.
 ```
 
 ### Example
@@ -54,19 +55,19 @@ make
 # Download all announced prefixes associated with AS 3333 from https://stat.ripe.net/docs/data_api/.
 
 ./6scan -P -t ICMP6 -I [interface e.g., eth0]
-# Pre-scan the latest local hitlist to make the seedset using ICMPv6 packet.
-./6scan -A country_CN -t ICMP6 -I [interface e.g., eth0]
-# Active search and alias resolution of Chinese IPv6 address resources with ICMPv6 packet.
+# Pre-scan the latest local hitlist to make the seedset using ICMPv6 probes.
+./6scan -A country_CN -t ICMP6 -I [interface e.g., eth0] -k 10 -d
+# Performing dynamic ping with a de-aliasing strategy on Chinese IPv6 prefixes using ICMPv6 probes, consisting of 10 probes in each subprefix, and identifying the responding probe type.
 
-./6scan -t ICMP6 -I [interface e.g., eth0] -s 6Scan
-# IPv6 Internet-wide scanning with 6Scan strategy using the latest local ICMPv6 seedset.
+./6scan -t ICMP6 -I [interface e.g., eth0] -s HMap6
+# IPv6 Internet-wide scanning with HScan6-TGA method using the latest local ICMPv6 seedset.
 ./6scan -t UDP6 -I [interface e.g., eth0] -s 6Hit
 # IPv6 Internet-wide scanning with 6Hit strategy using the latest local UDPv6 seedset.
 ./6scan -t UDP6 -I [interface e.g., eth0] -s 6Scan -F [seedfile]
 # Specifies the seedset for scanning using 6Scan strategy.
 
 ./6scan -H -t ICMP6 -l country_CN
-# Get the Chinese seeds from Gasser's hitlist and our heuristic search strategy (i.e., mixed seedset).
+# Get the Chinese seeds from Gasser et al's hitlist and our heuristic search strategy (i.e., mixed seedset).
 
 ./6scan -C [address file e.g., ./output/raw_6Scan_ICMP6_yyyymmdd] 
 # Remove the alias address in the file of raw_6Scan_ICMP6_yyyymmdd.
@@ -75,7 +76,7 @@ make
 ### Scan in a run
 
 ```shell
-# Step 1: Heuristic seed collection
+# Step 1: Heuristic seed collection (HScan6-ping)
 python3 runner/1Hseed.py
 # Step 2: Organize alias prefix list 
 python3 runner/2Aliasp.py
@@ -102,11 +103,7 @@ python3 scheduling/data_pullback.py
 
 >R. Beverly, R. Durairajan, D. Plonka, and J. P. Rohrer, “In the IP of the Beholder: Strategies for Active IPv6 Topology Discovery,” in IMC, 2018.
 
-### IPv6 hitlist
-
->O. Gasser, Q. Scheitle, S. Gebhard, and G. Carle, “Scanning the IPv6 Internet: Towards a Comprehensive Hitlist,” in TMA, 2016.
-
-### Search strategy
+### TGAs
 
 >B. Hou, Z. Cai, K. Wu, T. Yang, and T. Zhou, “Search in the Expanse: Towards Active and Global IPv6 Hitlists,” in INFOCOM, 2023. \
 >B. Hou, Z. Cai, K. Wu, T. Yang, and T. Zhou, “6Scan: A High-Efficiency Dynamic Internet-wide IPv6 Scanner with Regional Encoding,” IEEE/ACM Transections on Networking, 2023. \
@@ -114,6 +111,6 @@ python3 scheduling/data_pullback.py
 >Z. Liu, Y. Xiong, X. Liu, W. Xie, and P. Zhu, “6Tree: Efficient Dynamic Discovery of Active Addresses in the IPv6 Address Space,” Computer Networks, 2019. \
 >A. Murdock, F. Li, P. Bramsen, Z. Durumeric, and V. Paxson, “Target Generation for Internet-Wide IPv6 Scanning,” in IMC, 2017.
 
-### Alias resolution
+### Hitlists & Aliases
 
 >O. Gasser et al., “Clusters in the Expanse: Understanding and Unbiasing IPv6 Hitlists,” in IMC, 2018.

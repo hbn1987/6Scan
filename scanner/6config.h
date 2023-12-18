@@ -16,7 +16,7 @@ public:
     strategy(0), classification(NULL), download(NULL), alias_range(NULL),
     alias_output(NULL), alias_out(NULL), region_limit(NULL), hitlist(false),
     level(NULL), seedfile(NULL), probe_type(false), budget(0), 
-    dimension(0), space_output(NULL), space_out(NULL), exp_seed(0){};
+    dimension(0), space_output(NULL), space_out(NULL), exp_seed(0), probes(1){};
 
     void parse_opts(int argc, char **argv);
     void usage(char *prog);
@@ -54,4 +54,5 @@ public:
     uint32_t budget;
     uint8_t dimension;
     unsigned int exp_seed;
+    uint16_t probes;
 };

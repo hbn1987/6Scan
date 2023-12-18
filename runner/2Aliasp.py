@@ -7,7 +7,7 @@ def download():
     command = f"./6scan -D alias"
     os.system(command)
 
-def alias_unfile_multi(filename, n = 10):
+def alias_unfile_multi(filename, n = 5):
     for i in range(n):
         alias_unfile(filename)
 
@@ -66,7 +66,7 @@ def alias_comparision(G, G_H):
 
 if __name__ == "__main__":
     # download()
-    alias_unfile_multi(filename="./download/aliased_prefixes_20230222")
+    alias_unfile_multi(filename="./download/aliased_prefixes_20221212")
     # re_APD('./residue') 
     # alias_statistics(G = './download/aliased_prefixes_20221208', H = './output/alias_prefixes_20221208')
     # alias_comparision(G='./download/aliased_prefixes_20221208', G_H='./download/aliased_prefixes_20221212')

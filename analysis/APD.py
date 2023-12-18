@@ -241,8 +241,9 @@ def alias_unfile(filename):
                 for i in range(4, x*5, 5):
                     li.insert(i, ":")
                 li = "".join(li)
+                add_zero = 4 - len(li[(li.rfind(':')+1):])
                 if len(line) <= 28:
-                    ln = "::/" + str(len(line)*4)
+                    ln = '0'*add_zero + "::/" + str(len(line)*4)
                 else:
                     ln = '0'*(32-len(line))+'/'+str(len(line)*4)
                 li = li + ln

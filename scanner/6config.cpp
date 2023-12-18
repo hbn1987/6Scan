@@ -2,7 +2,7 @@
  Copyright (c) 2016-2019 Robert Beverly <rbeverly@cmand.org> all rights reserved.
  ***************************************************************************/
 /****************************************************************************
- * Copyright (c) 2021 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
+ * Copyright (c) 2023 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
  ***************************************************************************/
 #include "6scan.h"
 
@@ -14,6 +14,7 @@ static struct option long_options[] = {
     {"help", no_argument, NULL, 'h'},
     {"interface", required_argument, NULL, 'I'},
     {"dstmac", required_argument, NULL, 'G'},
+    {"probes", required_argument, NULL, 'k'},
     {"srcmac", required_argument, NULL, 'M'},
     {"port", required_argument, NULL, 'p'},
     {"pre-scan", no_argument, NULL, 'P'},
@@ -42,7 +43,7 @@ void ScanConfig::parse_opts(int argc, char **argv) {
 
     params["Program"] = val_t("6Scan", true);
 
-    while (-1 != (c = getopt_long(argc, argv, "a:b:A:C:D:dE:F:G:hHI:l:L:M:p:Pr:s:t:X:", long_options, &opt_index))) {
+    while (-1 != (c = getopt_long(argc, argv, "a:A:b:C:D:dE:F:G:hHI:k:l:L:M:p:Pr:s:t:X:", long_options, &opt_index))) {
         switch (c) {
         case 'a':
             probesrc = optarg;
@@ -81,6 +82,9 @@ void ScanConfig::parse_opts(int argc, char **argv) {
             break;
         case 'I':
             int_name = optarg;
+            break;
+        case 'k':
+            probes = strtol(optarg, &endptr, 10);
             break;
         case 'l':
             region_limit = optarg;

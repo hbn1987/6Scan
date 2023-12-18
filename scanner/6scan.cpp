@@ -189,7 +189,7 @@ int main(int argc, char **argv)
                 if (index + num > total)
                     index = total - num;
                 if (i->second < threshold) {
-                    cout << "\rProbing in prefix: " << i->first << " using " << num << " probes";        
+                    cout << "Probing in prefix: " << i->first << " using " << num << " probes" << endl;        
                     strategy->target_generation_expanding(iplist, i->first, index, num);
                     if (iplist->targets.size())
                         loop(&config, iplist, trace, stats);
@@ -199,10 +199,10 @@ int main(int argc, char **argv)
             }
         }
 
-        /* Active search and alias resolution within a scope using heuristic strategy*/
+        /* HScan6-ping using dynamic search and live de-aliasing techniques*/
         if (config.alias) {
             string scope = string(config.alias_range);   
-            cout << "Active search and alias resolution within the scope of " << scope << endl; 
+            cout << "Dynamic ping and alias resolution within the scope of " << scope << endl; 
             string scope_file;
             if (scope.find("country") != string::npos){ //Read the latest scope file in local       
                 scope_file = get_countryfile(scope);       
@@ -228,31 +228,31 @@ int main(int argc, char **argv)
             while (stats->mask <= 100) {
                 for (auto& it : stats->prefixes) {
                     stats->prefix_map.insert(pair<string, int>{it.substr(0, stats->mask/4), 0});
-                    if (stats->prefix_map.size() >= 30000)
+                    if (stats->prefix_map.size() >= 50000) // Prevent replies from taking up too much memory
                         break;
                 }
 
-                strategy->target_generation_heuristic(iplist, stats->prefix_map, stats->mask);
+                strategy->target_generation_heuristic(iplist, stats->prefix_map, stats->mask, config.probes);
                 
                 if (iplist->targets.size())
                     loop(&config, iplist, trace, stats);
                 iplist->targets.clear();
                 iplist->seeded = false;
                 sleep(1);
-                cout << "\rProbing " << stats->prefix_map.size() << " /" << stats->mask << "'s every /" << stats->mask + 4 << " subprefixes with host address of ::1, budget consumption: " << stats->count;
+                cout << "Probing " << stats->prefix_map.size() << " /" << stats->mask << "'s every /" << stats->mask + 4 << " subprefixes with low-byte pattern addresses, budget consumption: " << stats->count << endl;
                 
                 if (stats->count >= config.budget)
                     break;                
                 
-                cout << "\rCandicate alias-prefix resolution with mask of " << stats->mask << " ...";
+                cout << "Candicate alias-prefix resolution with mask of " << stats->mask << " ..." << endl;
                 unordered_map<string, int>::iterator it = stats->prefix_map.begin();
                 while (it != stats->prefix_map.end()) {
-                    if (it->second > 12) {
+                    if (it->second > 12*config.probes) { // Response rate of 0.75
                         for (auto i = 0; i < stats->prefixes.size(); ++i) { // Radical deletion of possible alias prefixes
                             if (stats->prefixes[i].find(it->first) != string::npos)
                                 stats->prefixes.erase(stats->prefixes.begin() + i);
                         }                      
-                        strategy->target_generation_alias(iplist, get_alias(it->first, stats->mask));
+                        strategy->target_generation_alias(iplist, it->first); // APD
                         it++;
                     } else {                        
                         stats->prefix_map.erase(it++);
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
                 sleep(1);
 
                 for (auto& it : stats->prefix_map) {
-                    if (it.second > 16) {                        
+                    if (it.second > 12*config.probes + 8) { // APD, a response rate of more than 8/16 is considered an alias prefix                    
                         string alias_prefix = get_alias(it.first, stats->mask);
                         stats->dump_alias(config.alias_out, alias_prefix);
                     }
@@ -300,7 +300,7 @@ int main(int argc, char **argv)
                     iplist->seeded = false;
                     if (stats->count >= config.budget)
                         break;
-                    cout << "\rProbing in subspace: " << stats->nodelist[i]->subspace << ", budget consumption: " << stats->count;                    
+                    cout << "Probing in subspace: " << stats->nodelist[i]->subspace << ", budget consumption: " << stats->count << endl;                    
                 }
 
                 strategy->update_active(stats->nodelist, 0, bound);
@@ -331,7 +331,7 @@ int main(int argc, char **argv)
                         iplist->seeded = false;
                         if (stats->count >= config.budget)
                             break;
-                        cout << "\rProbing in subspace: " << node->subspace << ", budget consumption: " << stats->count;  
+                        cout << "Probing in subspace: " << node->subspace << ", budget consumption: " << stats->count << endl;  
                     }
                     if (stats->count >= config.budget)
                         break;
@@ -352,7 +352,7 @@ int main(int argc, char **argv)
                         loop(&config, iplist, trace, stats);
                     iplist->targets.clear();
                     iplist->seeded = false;
-                    cout << "\rProbing in subspace: " << node->subspace << ", budget consumption: " << stats->count;
+                    cout << "Probing in subspace: " << node->subspace << ", budget consumption: " << stats->count << endl;
                 }
 
                 Random rand = Random(pow(16, config.dimension - 2), &config);
@@ -381,7 +381,7 @@ int main(int argc, char **argv)
                         ranking++;
                         if (stats->count >= config.budget)
                             break;
-                        cout << "\rProbing in iteration: " << i + 1 << ", within the subspace: " << node->subspace << ", budget consumption: " << stats->count;
+                        cout << "Probing in iteration: " << i + 1 << ", within the subspace: " << node->subspace << ", budget consumption: " << stats->count << endl;
                     }                               
                 }
                 /* Probing big subspace */
@@ -397,7 +397,7 @@ int main(int argc, char **argv)
                         iplist->seeded = false;
                         if (stats->count >= config.budget)
                             break;
-                        cout << "\rProbing in subspace: " << node->parent->subspace << ", budget consumption: " << stats->count;                
+                        cout << "Probing in subspace: " << node->parent->subspace << ", budget consumption: " << stats->count << endl;                
                     }
                     if (stats->count >= config.budget)
                         break;
@@ -418,7 +418,7 @@ int main(int argc, char **argv)
                     iplist->seeded = false;
                     if (stats->count >= config.budget)
                         break;
-                    cout << "\rProbing in subspace: " << node->subspace << ", budget consumption: " << stats->count;                    
+                    cout << "Probing in subspace: " << node->subspace << ", budget consumption: " << stats->count << endl;                    
                 }
             }
 
@@ -441,7 +441,7 @@ int main(int argc, char **argv)
                         iplist->seeded = false;
                         if (stats->count >= config.budget)
                             break;
-                        cout << "\rProbing in subspace: " << *it << ", budget consumption: " << stats->count;
+                        cout << "Probing in subspace: " << *it << ", budget consumption: " << stats->count << endl;
                     }
                 }
                 /* Probing big subspaces */
@@ -458,7 +458,7 @@ int main(int argc, char **argv)
                             iplist->seeded = false;
                             if (stats->count >= config.budget)
                                 break;
-                            cout << "\rProbing in subspace: " << *it << ", budget consumption: " << stats->count;
+                            cout << "Probing in subspace: " << *it << ", budget consumption: " << stats->count << endl;
                         }
                     }                
                 }
@@ -501,7 +501,7 @@ int main(int argc, char **argv)
                             }
                             iplist->targets.clear();
                             iplist->seeded = false;
-                            cout << "\rProbing in subspace: " << it << ", budget consumption: " << stats->count;
+                            cout << "Probing in subspace: " << it << ", budget consumption: " << stats->count << endl;
                         }
                     } else if (yorn == 's') {
                         strategy->alias_detection(iter_ahc_clusters);
@@ -517,7 +517,7 @@ int main(int argc, char **argv)
         }
 
         stats->end_time();
-        cout << "\rWaiting " << SHUTDOWN_WAIT << "s for outstanding replies..." << endl;
+        cout << "Waiting " << SHUTDOWN_WAIT << "s for outstanding replies..." << endl;
         sleep(SHUTDOWN_WAIT);
         if(config.pre_scan or config.exp_seed) {
             float t = (float) tsdiff(&stats->end, &stats->start) / 1000.0;

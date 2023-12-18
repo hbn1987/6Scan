@@ -55,9 +55,8 @@ void UDP6::write(FILE ** out, Stats* stats, bool probe_type) {
                 unordered_map<string, int>::iterator iter = stats->prefix_map.find(prefix);
                 if (iter != stats->prefix_map.end())
                     iter->second++;
-                if (addr.substr(addr.length()-4) != "1234") { // If the address is not the pseudorandom address, write it into the hitlist
+                if (addr.substr(addr.length()-4) != "abcd" and stats->prefixes.size() <= 1000000) { // If the address is not the pseudorandom address, write it into the hitlist
                     stats->prefixes.push_back(addr);
-                    fprintf(*out, "%s\n", src);
                 }
             }
         } else
@@ -66,7 +65,7 @@ void UDP6::write(FILE ** out, Stats* stats, bool probe_type) {
         type_str += "noPayload";
 
     if (probe_type)
-        fprintf(*out, "%s, %s, %s\n", src, type_str.c_str(), target);
+        fprintf(*out, "%s, %s, %s\n", target, src, type_str.c_str());
     else
         fprintf(*out, "%s\n", src);
 }

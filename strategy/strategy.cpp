@@ -346,25 +346,29 @@ void Strategy::init_6gen(IPList6* iplist, string seedset, vector<string>& cluste
 }
 
 /* Herustic strategy */
-void Strategy::target_generation_heuristic(IPList6* iplist, std::unordered_map<std::string, int>& prefix_map, int mask) {
-    string add_zero((31 - mask/4 - 1), '0');
+void Strategy::target_generation_heuristic(IPList6* iplist, std::unordered_map<std::string, int>& prefix_map, int mask, uint16_t k) {
+    int digits = static_cast<int>(log10(k) / log10(16)) + 1;
+    string add_zero((32 - mask/4 - 1 - digits), '0');
+
     for (auto& iter : prefix_map) {
-        for (auto i = 0; i < 16; ++i) {
-            string ip = vec2colon(iter.first + dec2hex(i, 1) + add_zero + "1") + "/128";
-            iplist->subnet6(ip, iplist->targets);
+        if (!iter.first.empty()) {
+            for (auto i = 0; i < 16; ++i) {
+                for (auto j = 1; j < k + 1; ++j ) {
+                    string ip = vec2colon(iter.first + dec2hex(i, 1) + add_zero + dec2hex(j, digits)) + "/128";
+                    iplist->subnet6(ip, iplist->targets);
+                }            
+            }
         }
     }
 }
 
-void Strategy::target_generation_alias(IPList6* iplist, std::string line) {
+void Strategy::target_generation_alias(IPList6* iplist, std::string line) { // APD
 
-    int pos = line.find("/");
-    int num = count(line.begin(), line.end(),':');
-    if (num < 8)
-        line = line.substr(0, pos) + "1234/128"; // 1234 acts as a random number
-    else 
-        line = line.substr(0, pos - 1) + "1234/128";
-    iplist->subnet6(line, iplist->targets);
+    int digits = 32 - line.length() - 1 - 4;
+    for (auto i = 0; i < 16; ++i) {            
+        string ip = vec2colon(line + dec2hex(i, 1) + generateRandomHexString(digits) + "abcd") + "/128"; // abcd acts as a random address identification
+        iplist->subnet6(ip, iplist->targets);                
+    }
 }
 
 /* HMap6 strategy */
