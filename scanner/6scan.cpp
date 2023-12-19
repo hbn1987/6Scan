@@ -154,6 +154,7 @@ int main(int argc, char **argv)
         Traceroute6 *trace = new Traceroute6(&config, stats);
         Strategy *strategy = new Strategy(&config);
         trace->unlock();
+        
 
         /* Pre-scan */
         if (config.pre_scan) {   
@@ -209,7 +210,8 @@ int main(int argc, char **argv)
             } else {
                 scope_file = get_asfile(scope);
             }
-            readJson(scope_file, stats->prefixes); 
+            vector<string> basicPrefixes;
+            readJson(scope_file, basicPrefixes); 
 
             string type = Tr_Type_String[config.type];
             iplist->setkey(config.seed);
@@ -220,43 +222,33 @@ int main(int argc, char **argv)
                 stats->mask = 48;
             }
 
-            for (auto& it : stats->prefixes) {
+            for (auto& it : basicPrefixes) {
                 int pos = it.find("/");
                 it = seed2vec(it.substr(0, pos));
             }
 
             while (stats->mask <= 100) {
-                for (auto& it : stats->prefixes) {
-                    stats->prefix_map.insert(pair<string, int>{it.substr(0, stats->mask/4), 0});
-                    if (stats->prefix_map.size() >= 50000) // Prevent replies from taking up too much memory
-                        break;
+                for (auto& it : basicPrefixes) {
+                    stats->hashMap.initInsert(it.substr(0, stats->mask/4));
                 }
-
-                strategy->target_generation_heuristic(iplist, stats->prefix_map, stats->mask, config.probes);
+                
+                strategy->target_generation_heuristic(iplist, stats->hashMap, stats->mask, config.probes);
                 
                 if (iplist->targets.size())
                     loop(&config, iplist, trace, stats);
                 iplist->targets.clear();
                 iplist->seeded = false;
                 sleep(1);
-                cout << "Probing " << stats->prefix_map.size() << " /" << stats->mask << "'s every /" << stats->mask + 4 << " subprefixes with low-byte pattern addresses, budget consumption: " << stats->count << endl;
+                cout << "Probing " << stats->hashMap.nonEmptyKeyCount() << " /" << stats->mask << "'s every /" << stats->mask + 4 << " subprefixes with low-byte pattern addresses, budget consumption: " << stats->count << endl;
                 
                 if (stats->count >= config.budget)
                     break;                
                 
-                cout << "Candicate alias-prefix resolution with mask of " << stats->mask << " ..." << endl;
-                unordered_map<string, int>::iterator it = stats->prefix_map.begin();
-                while (it != stats->prefix_map.end()) {
-                    if (it->second > 12*config.probes) { // Response rate of 0.75
-                        for (auto i = 0; i < stats->prefixes.size(); ++i) { // Radical deletion of possible alias prefixes
-                            if (stats->prefixes[i].find(it->first) != string::npos)
-                                stats->prefixes.erase(stats->prefixes.begin() + i);
-                        }                      
-                        strategy->target_generation_alias(iplist, it->first); // APD
-                        it++;
-                    } else {                        
-                        stats->prefix_map.erase(it++);
-                    }
+                vector<string> aliasCandicate;
+                aliasCandicate = stats->hashMap.traverse(Alias_Threshold*config.probes*16); // Response rate of 0.75
+                for (auto&it : aliasCandicate) {
+                    string alias_prefix = get_alias(it, stats->mask);
+                    stats->dump_alias(config.alias_out, alias_prefix);
                 }
 
                 if (iplist->targets.size())
@@ -265,13 +257,11 @@ int main(int argc, char **argv)
                 iplist->seeded = false;
                 sleep(1);
 
-                for (auto& it : stats->prefix_map) {
-                    if (it.second > 12*config.probes + 8) { // APD, a response rate of more than 8/16 is considered an alias prefix                    
-                        string alias_prefix = get_alias(it.first, stats->mask);
-                        stats->dump_alias(config.alias_out, alias_prefix);
-                    }
-                }
-                stats->prefix_map.clear();
+                vector<string> acquirePrefxies;
+                acquirePrefxies = stats->hashMap.acquiredPrefixes();
+                stats->hashMap.clear();
+                for (auto& it : acquirePrefxies)
+                    stats->hashMap.initInsert(it);
                 stats->mask += 4;
             }
         }
@@ -519,11 +509,15 @@ int main(int argc, char **argv)
         stats->end_time();
         cout << "Waiting " << SHUTDOWN_WAIT << "s for outstanding replies..." << endl;
         sleep(SHUTDOWN_WAIT);
-        if(config.pre_scan or config.exp_seed) {
+        if (config.pre_scan or config.exp_seed) {
             float t = (float) tsdiff(&stats->end, &stats->start) / 1000.0;
             cout << "Budget consumption: " << (float) stats->count /1000000 << "M, Time cost: " << t << "s, Probing rate: " << (float) stats->count / t << "pps" << endl;
-        } else if(config.strategy)
-            stats->dump(config.out);
+        } else if (config.strategy) {
+            if (config.strategy != Heuristic)
+                stats->dump(config.out);
+            else
+                stats->dumpHeuristic(config.out);
+        }
 
         delete iplist;
         delete trace;

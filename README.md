@@ -38,7 +38,7 @@ make
 -F # Specifies the seedset file.
 -d # Output with the probe type i.e., (Target, Responder, Probe).
 -r # Probing rate, 100Kpps by default.
--b # Probe budget, 10M by default.
+-b # Probe budget, 100M by default.
 -k # Specifies the probe number for each iteration in the heuristic ping.
 ```
 

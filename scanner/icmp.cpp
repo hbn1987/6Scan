@@ -343,10 +343,17 @@ void ICMP6::write(FILE ** out, Stats* stats, bool probe_type) {
     else if (type == ICMP6_ECHO_REPLY) {
         inet_ntop(AF_INET6, scan_target, target, INET6_ADDRSTRLEN);
         type_str = "ICMP6_EchoReply_";
-    } 
+    }
 
     if (is_scan) {
         type_str += "withPayload_";
+        if (stats->strategy == Heuristic) {      
+            string addr = seed2vec(target);      
+            string prefix = addr.substr(0, stats->mask/4);
+            string hexString = addr.substr(stats->mask/4, 1);
+            stats->hashMap.insert(prefix, hexString);
+        }
+
         if (strcmp(src, target) == 0) {   
             type_str += "Target";   
             if ((stats->strategy == Scan6) or (stats->strategy == Hit6)) {        
@@ -356,15 +363,6 @@ void ICMP6::write(FILE ** out, Stats* stats, bool probe_type) {
                 else {
                     warn("Returning error regional identification %lu", index);
                     stats->baddst++;
-                }
-            } else if (stats->strategy == Heuristic) {               
-                string addr = seed2vec(src);            
-                string prefix = addr.substr(0, stats->mask/4);
-                unordered_map<string, int>::iterator iter = stats->prefix_map.find(prefix);
-                if (iter != stats->prefix_map.end())
-                    iter->second++;
-                if (addr.substr(addr.length()-4) != "abcd" and stats->prefixes.size() <= 1000000) { // If the address is not the pseudorandom address for APD, write it into the hitlist
-                    stats->prefixes.push_back(addr);
                 }
             }
         } else

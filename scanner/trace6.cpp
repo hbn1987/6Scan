@@ -14,7 +14,6 @@ Traceroute6::Traceroute6(ScanConfig *_config, Stats *_stats) : Traceroute(_confi
     }
     inet_ntop(AF_INET6, &source6.sin6_addr, addrstr, INET6_ADDRSTRLEN);
     config->set("SourceIP", addrstr, true);
-
     sndsock = raw_sock6(&source6);
 
     pcount = 0;
@@ -40,7 +39,6 @@ Traceroute6::Traceroute6(ScanConfig *_config, Stats *_stats) : Traceroute(_confi
     payload->fingerprint = htonl(0);
 
     payload->instance = config->instance;
-
     pthread_create(&recv_thread, NULL, listener6, this);
     /* give listener thread time to startup */
     sleep(1);

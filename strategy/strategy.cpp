@@ -346,20 +346,18 @@ void Strategy::init_6gen(IPList6* iplist, string seedset, vector<string>& cluste
 }
 
 /* Herustic strategy */
-void Strategy::target_generation_heuristic(IPList6* iplist, std::unordered_map<std::string, int>& prefix_map, int mask, uint16_t k) {
+void Strategy::target_generation_heuristic(IPList6* iplist, FixedSizeHashMap& prefix_map, int mask, uint16_t k) {
     int digits = static_cast<int>(log10(k) / log10(16)) + 1;
     string add_zero((32 - mask/4 - 1 - digits), '0');
 
-    for (auto& iter : prefix_map) {
-        if (!iter.first.empty()) {
+    for (auto& iter : prefix_map.nonEmptyKeys()) {
             for (auto i = 0; i < 16; ++i) {
                 for (auto j = 1; j < k + 1; ++j ) {
-                    string ip = vec2colon(iter.first + dec2hex(i, 1) + add_zero + dec2hex(j, digits)) + "/128";
+                    string ip = vec2colon(iter + dec2hex(i, 1) + add_zero + dec2hex(j, digits)) + "/128";
                     iplist->subnet6(ip, iplist->targets);
                 }            
             }
         }
-    }
 }
 
 void Strategy::target_generation_alias(IPList6* iplist, std::string line) { // APD
