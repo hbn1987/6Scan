@@ -200,7 +200,7 @@ int main(int argc, char **argv)
             }
         }
 
-        /* HScan6-ping using dynamic search and live de-aliasing techniques*/
+        /* HScan6-DSA4p using dynamic search and live de-aliasing techniques*/
         if (config.alias) {
             string scope = string(config.alias_range);   
             cout << "Dynamic ping and alias resolution within the scope of " << scope << endl; 
@@ -227,19 +227,30 @@ int main(int argc, char **argv)
                 it = seed2vec(it.substr(0, pos));
             }
 
+            char pattern;
+            cout << "Please input the address pattern (low-byte or randomized) you wish to generate for the dynamic scan (l or r):" << endl;
+            cin >> pattern;
+            if (pattern != 'l' and pattern != 'r') {
+                cout << "Accept only two input types: 'l' for low-byte or 'r' for randomized." << endl;
+                exit(-1);
+            }
+
             while (stats->mask <= 100) {
                 for (auto& it : basicPrefixes) {
                     stats->hashMap.initInsert(it.substr(0, stats->mask/4));
                 }
                 
-                strategy->target_generation_heuristic(iplist, stats->hashMap, stats->mask, config.probes);
+                strategy->target_generation_heuristic(iplist, stats->hashMap, stats->mask, config.probes, pattern);
                 
                 if (iplist->targets.size())
                     loop(&config, iplist, trace, stats);
                 iplist->targets.clear();
                 iplist->seeded = false;
                 sleep(1);
-                cout << "Probing " << stats->hashMap.nonEmptyKeyCount() << " /" << stats->mask << "'s every /" << stats->mask + 4 << " subprefixes with low-byte pattern addresses, budget consumption: " << stats->count << endl;
+                if (pattern == 'l')
+                    cout << "Probing " << stats->hashMap.nonEmptyKeyCount() << " /" << stats->mask << "'s every /" << stats->mask + 4 << " subprefixes with low-byte pattern addresses, budget consumption: " << stats->count << endl;
+                else
+                    cout << "Probing " << stats->hashMap.nonEmptyKeyCount() << " /" << stats->mask << "'s every /" << stats->mask + 4 << " subprefixes with randomized pattern addresses, budget consumption: " << stats->count << endl;
                 
                 if (stats->count >= config.budget)
                     break;                

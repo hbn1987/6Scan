@@ -145,7 +145,7 @@ std::string get_alias(std::string line, int mask);
 #define BUDGET 100000000 // Budget number
 #define PREFIXES "prefixes32"
 
-#define Alias_Threshold 0.75
+#define Alias_Threshold 0.9
 
 #include "strategy/strategy.h"
 

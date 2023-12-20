@@ -1,10 +1,10 @@
-# HScan6-(ping&TGA)
+# HScan6
 
 Towards Efficient Internet-wide Probing in IPv6 Networks.
 
 ## Description
 
-Efficient IPv6 Scanner Integrates Heuristic Ping and Target Generation Algorithms (TGAs).
+Efficient IPv6 Ping Scanner Integrates Dynamic Search Algorithms (HScan6-DSA4p) and Target Generation Algorithms (HScan6-TGA).
 
 ## Require
 
@@ -34,7 +34,7 @@ make
 -I # Network interface to use.
 -l [country_xx/as_xxxx] # Specify the region of the seeds using 2-digit ISO-3166 country code or AS number.
 -s [HMap6/6Scan/6Hit/6Tree/6Gen] # Set TGA searching strategy, e.g., '-s HMap6' denotes HScan6-TGA method.
--A [country-xx/as-xxxx] # Perform HScan6-ping in a designated region.
+-A [country-xx/as-xxxx] # Perform HScan6-DSA4p in a designated region.
 -F # Specifies the seedset file.
 -d # Output with the probe type i.e., (Target, Responder, Probe).
 -r # Probing rate, 100Kpps by default.
@@ -57,7 +57,7 @@ make
 ./6scan -P -t ICMP6 -I [interface e.g., eth0]
 # Pre-scan the latest local hitlist to make the seedset using ICMPv6 probes.
 ./6scan -A country_CN -t ICMP6 -I [interface e.g., eth0] -k 10 -d
-# Performing dynamic ping with a de-aliasing strategy on Chinese IPv6 prefixes using ICMPv6 probes, consisting of 10 probes in each subprefix, and identifying the responding probe type.
+# Performing dynamic ping (HScan6-DSA4p) with a de-aliasing strategy on Chinese IPv6 prefixes using ICMPv6 probes, consisting of 10 probes in each subprefix, and identifying the responding probe type.
 
 ./6scan -t ICMP6 -I [interface e.g., eth0] -s HMap6
 # IPv6 Internet-wide scanning with HScan6-TGA method using the latest local ICMPv6 seedset.
