@@ -19,83 +19,33 @@ from analysis.EUI64_analysis import EUI64_analysis
 from analysis.EmbedIPv4_analysis import EmbedIPv4_analysis
 from analysis.Entropy import draw_ent
 
+sys.path.append(os.getcwd())
+from analysis.APD import APD
+
 def remove_alias(filename):
     command = f"./6scan -C %s"%filename
     os.system(command)
 
-def APD(filename): # Discover missed alias-prefix from results
-    lines = open(filename).readlines()
-    lines = [iptrans(line[:-1]) for line in lines if line[0] != '#' and legal(line[:-1])]
-    
-    prefixes = list()
-    ips=list()
-    for lent in range(8, 26): # Traverse prefixes from 32 to 112
-        total = 0
-        prefix_dict = dict()
-        for line in lines:
-            if line[:lent] not in prefix_dict.keys():
-                prefix_dict[line[:lent]] = 0
-            prefix_dict[line[:lent]] += 1
-        total = sum(list(prefix_dict.values()))
-        prefix_tuple=zip(prefix_dict.values(),prefix_dict.keys())
-        prefix_list=list(sorted(prefix_tuple, reverse=True))
-        prefixes.append(prefix_list[0][1])
-        print(prefix_list[0][1], prefix_list[0][0], round(prefix_list[0][0]*100/total, 2), '%')
-        if round(prefix_list[0][0]*100/total, 2) < 0.5:
-            break
-        if len(prefix_list) >= 2:
-            prefixes.append(prefix_list[1][1])
-            print(prefix_list[1][1], prefix_list[1][0], round(prefix_list[1][0]*100/total, 2), '%')
-        if len(prefix_list) >= 3:
-            prefixes.append(prefix_list[2][1])
-            print(prefix_list[2][1], prefix_list[2][0], round(prefix_list[2][0]*100/total, 2), '%')
-        if len(prefix_list) >= 4:
-            prefixes.append(prefix_list[3][1])
-            print(prefix_list[3][1], prefix_list[3][0], round(prefix_list[3][0]*100/total, 2), '%')
-        if len(prefix_list) >= 5:
-            prefixes.append(prefix_list[4][1])
-            print(prefix_list[4][1], prefix_list[4][0], round(prefix_list[4][0]*100/total, 2), '%')
-    print("begin pinging the prefixes:")
-    print(prefixes)
+def loop_remove_alias(filename, aliasfile):
+    remove_alias(filename)
+    newfile = filename + '_non-alias'
+    while(APD(newfile)):
+        command = f"cat newly_detected_alias >> {aliasfile}"
+        print(command)
+        os.system(command)  
+        remove_alias(filename)
 
-    for prefix in prefixes:
-        ips16=[]
-        for bit in range(0,16):
-            pre = prefix + num_to_string(bit)
-            addr = genaddr(32-len(pre))
-            ip = pre + addr
-            ips16.append(ip)
-        ips.append(ips16)
-
-    prefixlist=[]
-    for ips16 in ips:
-        responses, no_responses = multi_ping(retrans(ips16), timeout=1, retry=2)
-        print('# IPs:', len(ips16), '# responses:', len(responses), 'responses:', responses.keys())
-        if len(responses) > 12: #16
-            res=[]
-            for addr, rtt in responses.items():
-                # print "%s responded in %f seconds" % (addr, rtt)
-                res.append(addr)
-            nor = iplisttrans(res)
-            for lent in range(25,7,-1):
-                prefix_set = set([line[:lent] for line in nor])
-                if len(prefix_set)==1:
-                    print("alias prefix:", prefix_set)
-                    prefixlist.extend(list(prefix_set))
-                    break
-
-    alias = []
-    for line in prefixlist:
-        x=int(math.ceil(float(len(line))/4-1))
-        li=list(line)
-        for i in range(4, x*5, 5):
-            li.insert(i, ":")
-        li = "".join(li)
-        ln = "::/" + str(len(line)*4)
-        li = li + ln
-        alias.append(li)
-    if len(alias):
-        print(alias)  
+def extract_seeds_AS_anlysis(file):
+    seedset = set()
+    lines = open(file).readlines()
+    for line in lines:
+        segs = line.strip().split(',')        
+        if len(segs) == 3:
+            target = segs[0].strip()
+            src = segs[1].strip()
+            probe = segs[2].strip()               
+            seedset.add(src)
+    AS_statistics(seedset)
 
 def hitrate_correction(dhc, ahc, hc, hmap6_total, scan_total, tree_total, gen_total, budget):
     for i in range(len(dhc)):
@@ -178,6 +128,29 @@ def hitrate_correction(dhc, ahc, hc, hmap6_total, scan_total, tree_total, gen_to
     print("6Tree:", tree)
     print("6Gen:", gen)
 
+def extract_hitlists(files):
+    hitlist_set = set()
+    for filename in files:
+        print(filename)
+        if filename.find('HMap6') != -1:
+            lines = open(filename).readlines()
+            for line in lines:
+                segs = line.strip().split(',')        
+                if len(segs) == 3:
+                    target = segs[0].strip()
+                    src = segs[1].strip()
+                    probe = segs[2].strip()         
+                    hitlist_set.add(src)
+            continue
+        else:
+            lines = open(filename).readlines()
+            for line in lines:
+                hitlist_set.add(line.strip())  
+    print(f"extract {len(hitlist_set)} addresses")  
+    with open('./output/H-hitlists', 'w') as file:
+        for ip in hitlist_set:
+            file.write(ip + '\n')
+
 def re_analysis(file_name):
     top10 = {'IN':[], 'US':[], 'CN':[], 'BR':[], 'JP':[], 'DE':[], 'MX':[], 'GB':[], 'VN':[], 'FR':[], 'Others':[]}
     pyt = RIPE_geoid()
@@ -213,14 +186,14 @@ def re_analysis(file_name):
     print("Total ASes:", len(asn_union))
 
 def Country_distribution(filename):
-    # rm_Invalid_IP(f)
+    rm_Invalid_IP(filename)
     print('--------------------')
     print(filename)
     cc_data, unknow_list, total = RIPE_geoid(filename)
     LS = 0
     for k, v in cc_data.items():
         LS += np.log10(v)  
-    print("Total IPs:", total, "Total country:", len(cc_data), "LS:", LS)
+    print("Total IPs:", total, "Total country:", len(cc_data), "LS:", round(LS,2))
     cc_data = sorted(cc_data.items(), key=lambda x: x[1], reverse=True)
     cc_data_top = dict([cc_data[i] for i in range(4)])
     for k, v in cc_data_top.items():
@@ -240,9 +213,10 @@ def subprefix_analysis(file_name, lens):
 
     LS = 0
     for k, v in ip_dict.items():
-        LS += np.log10(v) 
+        # LS += np.log10(v) 
+        LS += np.log(v) / np.log(1000)
     total = sum(ip_dict.values())
-    print("Total IPs:", total, "Total /", lens*4, "prefixes:", len(ip_dict.keys()), "LS:", LS)
+    print("Total IPs:", total, "Total /", lens*4, "prefixes:", len(ip_dict.keys()), "LS:", round(LS, 2))
     ip_dict = sorted(ip_dict.items(), key=lambda x: x[1], reverse=True)
     ip_dict_top = dict([ip_dict[i] for i in range(4)])
     for k, v in ip_dict_top.items():
@@ -250,16 +224,19 @@ def subprefix_analysis(file_name, lens):
     
 
 if __name__ == "__main__":
+    # aliasfile='./download/aliased_prefixes_20231229'
     # for m in ['HMap6','6Scan','6Tree','6Gen']:
-        # for p in ['ICMP6', 'UDP6', 'TCP6_ACK', 'TCP6_SYN']:
-        #     file_name = 'output/raw_seeds_%s_%s_2023227'%(p,m)
-        #     remove_alias(file_name)
+    #     file_name = f'output/seeds_ICMP6_{m}_2024113_probetype'
+    #     print(file_name)
+    #     loop_remove_alias(file_name, aliasfile)
 
-    filename = './output/GlobalPeripheryAddress'
-    APD(filename)
+    # for m in ['HMap6','6Scan','6Tree','6Gen']:
+    #     file_name = f'output/seeds_ICMP6_{m}_2024113_probetype_non-alias'
+    #     print(file_name)
+    #     extract_seeds_AS_anlysis(file_name)
     
     # ICMP6 probe
-    # file_name = './output/subspace_HMap6_ICMP6_2023228'
+    # file_name = './output/subspace_HMap6_ICMP6_2024117'
     # address_pool_file = './output/non-alias_raw_seeds_ICMP6_HMap6_20221220'
     # hmap6_total, scan_total, tree_total, gen_total = 58.796337, 31.379917, 30.161435, 41.058681
     # budget = 455
@@ -286,15 +263,20 @@ if __name__ == "__main__":
     # hitrate_correction(dhc, ahc, hc, hmap6_total, scan_total, tree_total, gen_total, budget)
     # Hitrate curves are plotted in file drawing/LineChart_Hitrate.py
 
-    # Distribution analysis. 'Cat' all the output files of a method into one file first.
-    # filelist = ['output/total_HMap6_20221220',  'output/total_6Scan_20221220','output/total_6Tree_20221220',\
-    #             'output/total_6Gen_2023223', 'output/total_seeds_extend', 'output/total_seeds_gasser']
+    # files = ['output/seeds_ICMP6_HMap6_2024113_probetype_non-alias', 'output/seeds_ICMP6']
+    # extract_hitlists(files)
 
-    # for f in filelist:
-    #     print('--------------------')
-    #     Country_distribution(f)
-    #     AS_statistics(f)
-    #     subprefix_analysis(f, 32)
+    # aliasfile='./download/aliased_prefixes_20231229'    
+    # file_name = f'output/H-hitlists'
+    # file_name = f'output/G-hitlists'
+    # loop_remove_alias(file_name, aliasfile)
+
+    # Distribution analysis. 
+    filelist = ['output/seeds_ICMP6', 'output/H-hitlists_non-alias', 'output/G-hitlists_non-alias']
+    for f in filelist:
+        Country_distribution(f)
+        AS_statistics(f)
+        subprefix_analysis(f, 32)
 
     # f_prior = "output/non-alias_raw_seeds_ICMP6_HMap6_20221220"
     # f_later = "output/non-alias_raw_seeds_ICMP6_HMap6_2023320"

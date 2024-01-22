@@ -13,7 +13,6 @@ Traceroute6::Traceroute6(ScanConfig *_config, Stats *_stats) : Traceroute(_confi
         infer_my_ip6(&source6);
     }
     inet_ntop(AF_INET6, &source6.sin6_addr, addrstr, INET6_ADDRSTRLEN);
-    config->set("SourceIP", addrstr, true);
     sndsock = raw_sock6(&source6);
 
     pcount = 0;

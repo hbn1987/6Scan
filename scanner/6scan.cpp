@@ -148,12 +148,15 @@ int main(int argc, char **argv)
                 fatal("unable to auto-interpret MAC addresses; use -M, -G");
             }
         }
+        
+
         /* Init IPv6 scanning engine */
         IPList6 *iplist = new IPList6();
-        Stats *stats = new Stats(config.strategy);
+        Stats *stats = new Stats(&config);
         Traceroute6 *trace = new Traceroute6(&config, stats);
         Strategy *strategy = new Strategy(&config);
         trace->unlock();
+        
         
 
         /* Pre-scan */
@@ -200,80 +203,113 @@ int main(int argc, char **argv)
             }
         }
 
-        /* HScan6-DSA4p using dynamic search and live de-aliasing techniques*/
+        /* HMap-ping6 using dynamic search and live de-aliasing techniques*/
         if (config.alias) {
             string scope = string(config.alias_range);   
             cout << "Dynamic ping and alias resolution within the scope of " << scope << endl; 
             string scope_file;
-            if (scope.find("country") != string::npos){ //Read the latest scope file in local       
-                scope_file = get_countryfile(scope);       
-            } else {
-                scope_file = get_asfile(scope);
-            }
             vector<string> basicPrefixes;
-            readJson(scope_file, basicPrefixes); 
+            if (scope.find("country") != string::npos){ //Read the latest scope file in local       
+                scope_file = get_countryfile(scope);   
+                readJson(scope_file, basicPrefixes);     
+            } else {
+                // 文件路径
+                std::string filePath = "./prefixes32";
+                // 打开文件
+                std::ifstream file(filePath);
+                // 检查文件是否成功打开
+                if (!file.is_open()) {
+                    std::cerr << "无法打开文件: " << filePath << std::endl;
+                    exit(-1); // 退出程序，表示错误
+                }
+                // 逐行读取文件内容
+                std::string line;
+                while (std::getline(file, line)) {
+                    // 处理每一行内容
+                    basicPrefixes.push_back(line);
+                }
+                // 关闭文件
+                file.close();
+            }    
+            
 
             string type = Tr_Type_String[config.type];
             iplist->setkey(config.seed);
-
-            if (scope.find("country") != string::npos){ // 32-bit mask for national-level and 48-bit mask for AS level     
-                stats->mask = 32;       
-            } else {
-                stats->mask = 48;
-            }
 
             for (auto& it : basicPrefixes) {
                 int pos = it.find("/");
                 it = seed2vec(it.substr(0, pos));
             }
 
-            char pattern;
-            cout << "Please input the address pattern (low-byte or randomized) you wish to generate for the dynamic scan (l or r):" << endl;
-            cin >> pattern;
-            if (pattern != 'l' and pattern != 'r') {
-                cout << "Accept only two input types: 'l' for low-byte or 'r' for randomized." << endl;
+            string addrtype = string(config.addrtype);
+            if (addrtype != "low" and addrtype != "ran") {
+                cout << "Accept only two input types: 'low' for low-byte or 'ran' for randomized." << endl;
                 exit(-1);
             }
 
-            while (stats->mask <= 100) {
-                for (auto& it : basicPrefixes) {
-                    stats->hashMap.initInsert(it.substr(0, stats->mask/4));
-                }
-                
-                strategy->target_generation_heuristic(iplist, stats->hashMap, stats->mask, config.probes, pattern);
-                
-                if (iplist->targets.size())
-                    loop(&config, iplist, trace, stats);
-                iplist->targets.clear();
-                iplist->seeded = false;
-                sleep(1);
-                if (pattern == 'l')
-                    cout << "Probing " << stats->hashMap.nonEmptyKeyCount() << " /" << stats->mask << "'s every /" << stats->mask + 4 << " subprefixes with low-byte pattern addresses, budget consumption: " << stats->count << endl;
-                else
-                    cout << "Probing " << stats->hashMap.nonEmptyKeyCount() << " /" << stats->mask << "'s every /" << stats->mask + 4 << " subprefixes with randomized pattern addresses, budget consumption: " << stats->count << endl;
-                
-                if (stats->count >= config.budget)
-                    break;                
-                
-                vector<string> aliasCandicate;
-                aliasCandicate = stats->hashMap.traverse(Alias_Threshold*config.probes*16); // Response rate of 0.75
-                for (auto&it : aliasCandicate) {
-                    string alias_prefix = get_alias(it, stats->mask);
-                    stats->dump_alias(config.alias_out, alias_prefix);
-                }
+            int Alias_Threshold;
+            if (addrtype == "low") 
+                Alias_Threshold = 0.8;
+            else
+                Alias_Threshold = 0.9;
 
-                if (iplist->targets.size())
-                    loop(&config, iplist, trace, stats);
-                iplist->targets.clear();
-                iplist->seeded = false;
-                sleep(1);
+            const int groupSize = 5000;
 
-                vector<string> acquirePrefxies;
-                acquirePrefxies = stats->hashMap.acquiredPrefixes();
-                stats->hashMap.clear();
-                for (auto& it : acquirePrefxies)
-                    stats->hashMap.initInsert(it);
-                stats->mask += 4;
+            // 计算 vector 的大小
+            std::size_t vectorSize = basicPrefixes.size();
+
+            // 循环遍历 vector 并分组
+            for (std::size_t i = 0; i < vectorSize; i += groupSize) {
+                std::size_t end = std::min(i + groupSize, vectorSize);
+                stats->mask = 32;
+                // 当前组的元素
+                std::vector<std::string> currentGroup(basicPrefixes.begin() + i, basicPrefixes.begin() + end);
+
+                // 处理当前组的元素
+                while (stats->mask <= 100) {
+                        for (auto& it : currentGroup) {
+                        stats->hashMap.initInsert(it.substr(0, stats->mask/4));
+                    }                   
+                    
+                    strategy->target_generation_heuristic(iplist, stats->hashMap, stats->mask, config.probes, addrtype);
+                    
+                    if (iplist->targets.size())
+                        loop(&config, iplist, trace, stats);
+                    iplist->targets.clear();
+                    iplist->seeded = false;
+                    sleep(1);
+                    if (addrtype == "low")
+                        cout << "Probing " << stats->hashMap.nonEmptyKeyCount() << " /" << stats->mask << "'s every /" << stats->mask + 4 << " subprefixes with low-byte pattern addresses, budget consumption: " << stats->count << endl;
+                    else
+                        cout << "Probing " << stats->hashMap.nonEmptyKeyCount() << " /" << stats->mask << "'s every /" << stats->mask + 4 << " subprefixes with randomized pattern addresses, budget consumption: " << stats->count << endl;
+                    
+                    if (stats->count >= config.budget)
+                        break;                
+                    
+                    vector<string> aliasCandicate;
+                    aliasCandicate = stats->hashMap.traverse(Alias_Threshold*config.probes*16);
+                    
+                    // Output the candidate alias prefixes
+                    // for (auto&it : aliasCandicate) {
+                    //     if (it.length() >= 8){
+                    //         string alias_prefix = get_alias(it, stats->mask);
+                    //         stats->dump_alias(config.alias_out, alias_prefix);
+                    //     }                        
+                    // }
+
+                    // if (iplist->targets.size())
+                    //     loop(&config, iplist, trace, stats);
+                    // iplist->targets.clear();
+                    // iplist->seeded = false;
+                    // sleep(1);
+
+                    vector<string> acquirePrefxies;
+                    acquirePrefxies = stats->hashMap.acquiredPrefixes();
+                    stats->hashMap.clear();
+                    for (auto& it : acquirePrefxies)
+                        stats->hashMap.initInsert(it);
+                    stats->mask += 4;
+                }
             }
         }
 
@@ -318,7 +354,7 @@ int main(int argc, char **argv)
                     }
                     sort(node_priority.begin(), node_priority.end(), Node_Active_Cmp());
                     for (auto& node : node_priority) {
-                        if (node->active / pow(16, node->dim_num) > Alias_Threshold) {
+                        if (node->active / pow(16, node->dim_num) > 0.8) {
                             cout << "Alias alert: " << node->subspace << endl;
                             continue;
                         }
@@ -475,7 +511,7 @@ int main(int argc, char **argv)
                 cin >> dim;
                 config.dimension = dim;
                 vector<string> ahc_clusters, dhc_clusters;
-                strategy->init_hmap6(iplist, seedset, ahc_clusters, dhc_clusters);                
+                strategy->init_hmap6(iplist, seedset, ahc_clusters, dhc_clusters);        
                 stats->prepare_time();
 
                 set<string> iter_ahc_clusters, iter_dhc_clusters, scan_clusters;
@@ -538,84 +574,63 @@ int main(int argc, char **argv)
 
     /* Classify the active addresses */
     if (config.classification) {
-        cout << "Address classification..." << endl;
+        cout << "Aliased addresses resolution..." << endl;
 
         uint64_t received = 0;       // Number of probes received
-        uint64_t active_count = 0; // Found active addresses
-        uint64_t new_count = 0; // Found new addresses
+        uint64_t unique = 0; // Unique active addresses
         uint64_t alias_count = 0; // Aliased addresses
 
-        string line;
-        unordered_map<string, string> results;
-        vector<string> information;
+        ifstream infile;        
 
-        ifstream infile;
-        infile.open(string(config.classification));
-        while (getline(infile, line)) {
-            if (!line.empty() && line[line.size() - 1] == '\r')
-                line.erase( remove(line.begin(), line.end(), '\r'), line.end());
-            if (line[0] != '#') {
-                received++;
-                if (results.find(line) == results.end())
-                    results[line] = "other";
-            } else {
-                information.push_back(line);
-            }
-        }
-        infile.close();
-        active_count = results.size();
-
-        /* Remove the seed addresses */
-        // cout << "Removing the seed addresses..." << endl;
-        string file_name;
-        // if (config.type) { // If no type is specified, the entire hitlist is excluded
-        //     string type = Tr_Type_String[config.type - 1];
-        //     file_name = get_seedset(type, config.region_limit);
-        // } else {
-        //     file_name = get_hitlist();
-        // }
-        
-        // string seed;
-        // infile.open(file_name);
-        // while (getline(infile, seed)) {
-        //     if (!seed.empty() && seed[seed.size() - 1] == '\r')
-        //         seed.erase( remove(seed.begin(), seed.end(), '\r'), seed.end());
-        //     if (results.find(seed) != results.end())
-        //         results.erase(seed);
-        // }
-        // infile.close();
-        new_count = results.size();
-
-        /* Alias resolution */
-        cout << "Aliased addresses resolution..." << endl;
         Patricia *alias_tree = new Patricia(128);
-        file_name = get_aliasfile(); // Gasser's alias prefix list
+
+        string file_name = get_aliasfile(); // Get alias prefix list
         cout << "Remove alias addresses using file " << file_name << endl;
         infile.open(file_name);
         alias_tree->populate6(infile);
         infile.close();
 
         int *alias = NULL;
-        for (auto iter = results.begin(); iter != results.end(); ++iter) {
-            alias = (int *) alias_tree->get(AF_INET6, iter->first.c_str());
-            if (alias) {
-                alias_count++;
-                iter->second = "alias";
+        string line;
+        unordered_map<string, string> results;
+
+        infile.open(string(config.classification));
+        while (getline(infile, line)) {
+            if (!line.empty() && line[line.size() - 1] == '\r')
+                line.erase( remove(line.begin(), line.end(), '\r'), line.end());
+            if (line[0] != '#') {
+                std::string responder;
+                received++;
+                size_t found = line.find(',');
+                if (found != std::string::npos) {
+                    size_t startPos = line.find_first_of(",") + 1;
+                    size_t endPos = line.find(",", startPos);    
+                    responder = trim(line.substr(startPos, endPos - startPos));
+                } else {
+                    responder = line;
+                }                
+                if (results.find(responder) == results.end()){
+                    alias = (int *) alias_tree->get(AF_INET6, responder.c_str());
+                    if (alias) {
+                        alias_count++;
+                    } else {results[responder] = line;}
+                }
             }
         }
+        infile.close();       
+       
+        unique = results.size();       
         delete alias_tree;
-
-        new_count = new_count - alias_count; // De-alias
 
         /* Output the results without classification*/
         for (auto iter = results.begin(); iter != results.end(); ++iter) {
-            if (iter->second != "alias")
-                fprintf(config.out, "%s\n", iter->first.c_str());
+            // fprintf(stdout, "%s\n", iter->second.c_str());
+            fprintf(config.out, "%s\n", iter->second.c_str());
         }
 
-        fprintf(stdout, "# Total addresses %" PRId64 "\n", active_count);
+        fprintf(stdout, "# Total received replies %" PRId64 "\n", received);
         fprintf(stdout, "# Alias addresses %" PRId64 "\n", alias_count);
-        fprintf(stdout, "# Non-alias addresses %" PRId64 "\n", new_count);
+        fprintf(stdout, "# Non-alias addresses %" PRId64 "\n", unique);
 
         results.clear();
         cout << "End running 6Scan" << endl;

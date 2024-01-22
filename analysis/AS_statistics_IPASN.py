@@ -35,10 +35,10 @@ def AS_statistics(file):
 
     asn_data = {}
     asn_data_top = {}
-    with open(file) as f:
-        seeds = f.read().splitlines()
+
+    if isinstance(file, set):
         asn_data["Unknown"] = 0
-        for ip in seeds:
+        for ip in file:
             # if ip[0] != '#':
             #     index = ip.find(',')
             #     ip = ip[:index]
@@ -49,17 +49,32 @@ def AS_statistics(file):
             if "AS" + str(asn) not in asn_data.keys():
                 asn_data["AS" + str(asn)] = 0
             asn_data["AS" + str(asn)] += 1
+        seeds = file
+    else:
+        with open(file) as f:
+            seeds = f.read().splitlines()
+            asn_data["Unknown"] = 0
+            for ip in seeds:
+                if ip[0] != '#':
+                    asn, prefix = asndb.lookup(ip)
+                    if not asn:
+                        asn_data["Unknown"] += 1  
+                        continue
+                    if "AS" + str(asn) not in asn_data.keys():
+                        asn_data["AS" + str(asn)] = 0
+                    asn_data["AS" + str(asn)] += 1
 
     LS = 0
     for k, v in asn_data.items():
-        LS += np.log10(v)
+        # LS += np.log10(v) 
+        LS += np.log(v) / np.log(100)
 
-    print("IP Num:", len(seeds), "AS Num:", len(asn_data) - 1, 'LS:', LS)
+    print("IP Num:", len(seeds), "AS Num:", len(asn_data) - 1, 'LS:', round(LS,2))
     asn_data = sorted(asn_data.items(), key=lambda x: x[1], reverse=True)
     asn_data_top = dict([asn_data[i] for i in range(4)])
     asn_data_top["Other"] = len(seeds) - sum(asn_data_top.values())
     for k, v in asn_data_top.items():
-        if k != 'Other':
+        if k != 'Other' and k != 'Unknown':
             print(ASname_dict[int(k[2:])], k[2:], round(v/len(seeds)*100, 2), '%', v)
 
 def AS_similarity(file_prior, file_later):

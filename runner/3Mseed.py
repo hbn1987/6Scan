@@ -5,10 +5,13 @@ import pyasn
 import pytricia
 import pandas as pd
 import json
-import radix
+import radix # install py-radix
 import numpy as np
-
+import ipaddress
+from collections import Counter
 sys.path.append(os.getcwd())
+from analysis.APD import APD
+
 def legal(dizhi):
     dizhi1 = dizhi.split('::')
     label = 1
@@ -55,10 +58,20 @@ def download():
 def remove_alias(filename):
     command = f"./6scan -C %s"%filename
     os.system(command)
-    
+
+def loop_remove_alias(filename, aliasfile):
+    remove_alias(filename)
+    newfile = filename + '_non-alias'
+    while(APD(newfile)):
+        command = f"cat newly_detected_alias >> {aliasfile}"
+        print(command)
+        os.system(command)  
+        remove_alias(filename)
+         
 def pre_scan_gasser(filename):
-    for p in ['ICMP6','UDP6','TCP6_ACK','TCP6_SYN']:
-        command = f"./6scan -P -I eth0 -t %s -F %s -b 120"%(p, filename)
+    # for p in ['ICMP6','UDP6','TCP6_ACK','TCP6_SYN']:
+        p = 'ICMP6'
+        command = f"./6scan -P -I eno1 -t %s -F %s -b 120"%(p, filename)
         os.system(command)
         time.sleep(3)
 
@@ -68,16 +81,203 @@ def pre_scan_herustic(filename):
         os.system(command)
         time.sleep(3)
 
-def rm_Invalid_IP(filename):
-    ip_set = set()
+def count_reply_type(filename):
     lines = open(filename).readlines()
+    # 初始化计数器
+    count0 = 0
+    count1 = 0
+    count3 = 0
+    count129 = 0
+    count129s = 0
+
     for line in lines:
-        if legal(line.strip()):
-            ip_set.add(line)
-    print("Number:", len(ip_set))
-    f = open(filename,"w")
-    f.writelines(list(ip_set))
-    f.close() 
+        # 分割每行数据
+        segs = line.strip().split(',')        
+        if len(segs) == 3:
+            count0 += 1
+            target = segs[0].strip()
+            src = segs[1].strip()
+            probe = segs[2].strip()          
+            if "DstUnreach" in probe or probe == "1":
+                count1 += 1
+            if "TimeExceeded" in probe or probe == "3":
+                count3 += 1
+            if "EchoReply" in probe or probe == "129":
+                count129 += 1
+                if target == src:
+                    count129s += 1 
+
+    print(f"Total: {count0}, DstUnreach: {count1}, TimeExceeded: {count3}, EchoReply: {count129}, EchoReply(Target==Src): {count129s}, Sum: {count1+count3+count129}")
+
+def count_interfaces(filename):
+    lines = open(filename).readlines()
+    # 初始化计数器
+    count0 = 0
+    count1 = 0
+
+    for line in lines:
+        count0 += 1
+        # 查找第一个逗号的位置
+        first_comma_index = line.find(',')
+        # 查找第二个逗号的位置
+        second_comma_index = line[first_comma_index+1:].find(',')
+        second_comma_index = second_comma_index + first_comma_index + 1
+    
+        if first_comma_index != -1 and second_comma_index != -1:
+            
+            target = line[:first_comma_index].strip()
+            target = target.replace(' ', '')   
+
+            src = line[first_comma_index+1:second_comma_index].strip()
+            src = src.replace(' ', '')       
+            
+            if target != src:
+                count1 += 1
+    print(f"Total addresses: {count0}, Total interfaces: {count1}")
+
+def extract_seeds(files):
+    seedset = set()
+    for filename in files:
+        if filename.find('ping6') != -1:
+            if filename.find('low') != -1:
+                lines = open(filename).readlines()
+                for line in lines:
+                    segs = line.strip().split(',')        
+                    if len(segs) == 3:
+                        target = segs[0].strip()
+                        src = segs[1].strip()
+                        probe = segs[2].strip()          
+                        # if "DstUnreach" in probe or probe == "1":
+                        #     count1 += 1
+                        # if "TimeExceeded" in probe or probe == "3":
+                        #     count3 += 1
+                        if "EchoReply" in probe or probe == "129":
+                            seedset.add(src)
+                print(f"Extracting {len(seedset)} seeds from ping6-low scan;")
+            elif filename.find('ran') != -1:
+                lines = open(filename).readlines()
+                for line in lines:
+                    segs = line.strip().split(',')        
+                    if len(segs) == 3:
+                        target = segs[0].strip()
+                        src = segs[1].strip()
+                        probe = segs[2].strip()          
+                        if "DstUnreach" in probe or probe == "1":
+                            seedset.add(src)
+                        if "TimeExceeded" in probe or probe == "3":
+                            seedset.add(src)
+                print(f"Expanding to {len(seedset)} seeds from ping6-ran scan;")
+        elif filename.find('Houtput') != -1:
+            lines = open(filename).readlines()
+            for line in lines:
+                # 查找第一个逗号的位置
+                first_comma_index = line.find(',')
+                # 查找第二个逗号的位置
+                second_comma_index = line[first_comma_index+1:].find(',')
+                second_comma_index = second_comma_index + first_comma_index + 1
+            
+                if first_comma_index != -1 and second_comma_index != -1:                
+                    target = line[:first_comma_index].strip()
+                    target = target.replace(' ', '') 
+                    src = line[first_comma_index+1:second_comma_index].strip()
+                    src = src.replace(' ', '')                 
+                    if target != src:
+                        seedset.add(src)
+            print(f"Expanding to {len(seedset)} seeds from trace6 scan.")
+    
+    with open('./output/seeds', 'w') as file:
+        for seed in seedset:
+            file.write(seed + '\n')
+
+def extract_seeds_anlysis(files):
+    for filename in files:
+        seedset = set()
+        print(filename)
+        if filename.find('low') != -1:
+            lines = open(filename).readlines()
+            for line in lines:
+                segs = line.strip().split(',')        
+                if len(segs) == 3:
+                    target = segs[0].strip()
+                    src = segs[1].strip()
+                    probe = segs[2].strip()          
+                    # if "DstUnreach" in probe or probe == "1":
+                    #     count1 += 1
+                    # if "TimeExceeded" in probe or probe == "3":
+                    #     count3 += 1
+                    if "EchoReply" in probe or probe == "129":
+                        seedset.add(src)
+            seedset_analysis(seedset)
+            continue
+        elif filename.find('ran') != -1:
+            lines = open(filename).readlines()
+            for line in lines:
+                segs = line.strip().split(',')        
+                if len(segs) == 3:
+                    target = segs[0].strip()
+                    src = segs[1].strip()
+                    probe = segs[2].strip()          
+                    if "DstUnreach" in probe or probe == "1":
+                        seedset.add(src)
+                    if "TimeExceeded" in probe or probe == "3":
+                        seedset.add(src)
+            seedset_analysis(seedset)
+            continue
+        elif filename.find('output64') != -1:
+            lines = open(filename).readlines()
+            for line in lines:
+                # 查找第一个逗号的位置
+                first_comma_index = line.find(',')
+                # 查找第二个逗号的位置
+                second_comma_index = line[first_comma_index+1:].find(',')
+                second_comma_index = second_comma_index + first_comma_index + 1
+            
+                if first_comma_index != -1 and second_comma_index != -1:                
+                    target = line[:first_comma_index].strip()
+                    target = target.replace(' ', '') 
+                    src = line[first_comma_index+1:second_comma_index].strip()
+                    src = src.replace(' ', '')                 
+                    if target != src:
+                        seedset.add(src)
+            seedset_analysis(seedset)
+            continue
+    
+    with open('./output/seeds', 'w') as file:
+        for seed in seedset:
+            file.write(seed + '\n')
+
+def seedset_analysis(seeds):
+    cc_dict = dict()
+    asn_dict = dict()
+    pyt = RIPE_geoid()
+    asndb = pyasn.pyasn('./analysis/data/ipasn_20221212.dat')
+
+    print("Total seeds:", round(len(seeds)/1000000,2), 'M')
+    for ip in seeds:
+        geo = pyt.get(ip)
+        if geo in cc_dict.keys():
+            cc_dict[geo].append(ip)
+        else:
+            cc_dict[geo] = [ip]
+
+        asn, prefix = asndb.lookup(ip)
+        if asn:
+            if asn in asn_dict.keys():
+                asn_dict[asn].append(ip)
+            else:
+                asn_dict[asn] = [ip]
+  
+    # Output top 10 CC information
+    print('Total CC:', len(cc_dict))
+    # top10_cc = sorted(cc_dict.items(), key=lambda x: len(x[1]), reverse=True)[:10]
+    # for cc, ips in top10_cc:
+    #     print(f'Top 10 CC - {cc}: number of seeds: {len(ips)}, ratio: {round(len(ips) / len(seeds) * 100, 2)}%')    
+
+    # Output top 10 ASN information
+    print("Total ASes:", len(asn_dict))
+    # top10_asn = sorted(asn_dict.items(), key=lambda x: len(x[1]), reverse=True)[:10]
+    # for asn, ips in top10_asn:
+    #     print(f'Top 10 ASN - {asn}: number of seeds: {len(ips)}, ratio: {round(len(ips) / len(seeds) * 100, 2)}%')
 
 def RIPE_geoid():
     data = pd.read_csv('./analysis/data/RIPE-Country-IPv6.csv')
@@ -88,38 +288,39 @@ def RIPE_geoid():
     return pyt
 
 def seed_analysis(file_name):
-    top10 = {'IN':[], 'US':[], 'CN':[], 'BR':[], 'JP':[], 'DE':[], 'MX':[], 'GB':[], 'VN':[], 'FR':[], 'Others':[]}
+    cc_dict = dict()
+    asn_dict = dict()
     pyt = RIPE_geoid()
     asndb = pyasn.pyasn('./analysis/data/ipasn_20221212.dat')
 
     with open(file_name) as f:
         seeds = f.read().splitlines()
-        print("Total seeds:", len(seeds)/1000000, 'M')
-        cc_set = set()
+        print("Total seeds:", round(len(seeds)/1000000,2), 'M')
         for ip in seeds:
             geo = pyt.get(ip)
-            if geo in top10.keys():
-                top10[geo].append(ip)
+            if geo in cc_dict.keys():
+                cc_dict[geo].append(ip)
             else:
-                top10['Others'].append(ip)
-                cc_set.add(geo)
-    for k, v in top10.items():
-        print(k, 'number of seeds:', round(len(v)/1000,2), 'K, ratio:', round(len(v)/len(seeds)*100, 2), '%')
-    print('Total CC:', len(cc_set)+10)
-    asn_dict = dict()
-    for k, v in top10.items():
-        asn_set = set()
-        for ip in v:
-            if(ip[0] != '#'):
-                asn, prefix = asndb.lookup(ip)
-                if asn:
-                   asn_set.add("AS" + str(asn))
-        asn_dict[k] = asn_set
-    asn_union = set()
-    for k, v in asn_dict.items():
-        print(k, "number of ASes:", len(v))
-        asn_union |= v
-    print("Total ASes:", len(asn_union))
+                cc_dict[geo] = [ip]
+
+            asn, prefix = asndb.lookup(ip)
+            if asn:
+                if asn in asn_dict.keys():
+                    asn_dict[asn].append(ip)
+                else:
+                    asn_dict[asn] = [ip]
+  
+    # Output top 10 CC information
+    print('Total CC:', len(cc_dict))
+    top10_cc = sorted(cc_dict.items(), key=lambda x: len(x[1]), reverse=True)[:10]
+    for cc, ips in top10_cc:
+        print(f'Top 10 CC - {cc}: number of seeds: {len(ips)}, ratio: {round(len(ips) / len(seeds) * 100, 2)}%')    
+
+    # Output top 10 ASN information
+    print("Total ASes:", len(asn_dict))
+    top10_asn = sorted(asn_dict.items(), key=lambda x: len(x[1]), reverse=True)[:10]
+    for asn, ips in top10_asn:
+        print(f'Top 10 ASN - {asn}: number of seeds: {len(ips)}, ratio: {round(len(ips) / len(seeds) * 100, 2)}%')
 
 def ABCToNum(n):
     dic = {'0':0,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'a':10,'b':11,'c':12,'d':13,'e':14,'f':15}
@@ -233,19 +434,40 @@ def expanding_seeds():
 def running():
     strategy = ['6Scan', '6Tree', '6Gen']
     for s in strategy:
-        command = f"./6scan -t TCP6_SYN -I eth0 -s %s -F ./output/seeds_TCP6_SYN_20221216 -b 117"%s
+        command = f"./6scan -t ICMP6 -I eno1 -s %s -F ./output/seeds_ICMP6_20240113 -b 180 -d"%s
         print(command)
         os.system(command)
         time.sleep(3)
 
+
 if __name__ == "__main__":
     # download()
-    # remove_alias(filename)
-    # pre_scan_gasser(filename = './download/hitlist_20221207')
+    # pre_scan_gasser(filename = './download/hitlist_20231226')
     # pre_scan_herustic(filename = './output/hitlist_herustic_20221213')
-    # rm_Invalid_IP(filename = './output/seeds_TCP6_SYN_20221216')
-    # seed_analysis(file_name = './output/seeds_ICMP6_20221216')
+    
+    # filelist=['./output/hitlist-ping6-low', './output/hitlist-xmap-low','./output/hitlist-ping6-ran', './output/hitlist-xmap-ran']
+    # filelist=['./output/Houtput64', './output/Foutput64','./output/Youtput64']
+    # aliasfile='./download/aliased_prefixes_20231229'
+    # for filename in filelist:
+    #     print(filename)
+    #     loop_remove_alias(filename, aliasfile)
+    
+    filelist=['./output/hitlist-ping6-low_non-alias', './output/hitlist-xmap-low_non-alias', \
+              './output/hitlist-ping6-ran_non-alias', './output/hitlist-xmap-ran_non-alias']
+    filelist=['./output/Houtput64_non-alias', './output/Foutput64_non-alias','./output/Youtput64_non-alias']  
+    # for filename in filelist:
+    #     print(filename)
+        # count_reply_type(filename)
+        # count_interfaces(filename)
+    extract_seeds_anlysis(filelist)
+
+    # filelist=['./output/hitlist-ping6-low_non-alias','./output/hitlist-ping6-ran_non-alias','./output/Houtput64_non-alias'] 
+    # extract_seeds(filelist)
+    # seedset_analysis(filename="")
+
     # get_prefix()
     # get_missing_prefixes('./output/seeds_TCP6_SYN_20221216')
     # expanding_seeds()
-    running()
+    # running()
+    
+

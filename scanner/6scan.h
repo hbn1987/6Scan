@@ -127,6 +127,7 @@ void permseed(uint8_t *);
 void permseed(uint8_t *, uint32_t);
 uint32_t intlog(uint32_t in);
 std::string get_alias(std::string line, int mask);
+std::string trim(const std::string& str);
 
 #include "6config.h"
 #include "mac.h"
@@ -139,13 +140,12 @@ std::string get_alias(std::string line, int mask);
 
 /* 6Scan parameters */
 #define DOWNLOAD "./download" // Hitlist and alias prefixes
+#define COUNTRY  "./download/country-resource" // Country BGP prefixes 
 #define OUTPUT "./output" // Output folder
 #define RATE 100000 // Probing rate
 #define TTL 128
 #define BUDGET 100000000 // Budget number
 #define PREFIXES "prefixes32"
-
-#define Alias_Threshold 0.9
 
 #include "strategy/strategy.h"
 

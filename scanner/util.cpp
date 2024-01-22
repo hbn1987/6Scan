@@ -151,3 +151,16 @@ string get_alias(string line, int mask) {
     res_str += to_string(mask);
     return res_str;
 }
+
+// 去除字符串前后空格的函数
+std::string trim(const std::string& str) {
+    size_t first = str.find_first_not_of(' ');
+    size_t last = str.find_last_not_of(' ');
+
+    if (first == std::string::npos || last == std::string::npos) {
+        // 字符串全是空格，或者是空字符串
+        return "";
+    }
+
+    return str.substr(first, last - first + 1);
+}

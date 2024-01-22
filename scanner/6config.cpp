@@ -43,7 +43,7 @@ void ScanConfig::parse_opts(int argc, char **argv) {
 
     params["Program"] = val_t("6Scan", true);
 
-    while (-1 != (c = getopt_long(argc, argv, "a:A:b:C:D:dE:F:G:hHI:k:l:L:M:p:Pr:s:t:X:", long_options, &opt_index))) {
+    while (-1 != (c = getopt_long(argc, argv, "a:A:b:C:D:dE:F:G:hI:k:L:M:p:Pr:s:t:U:X:", long_options, &opt_index))) {
         switch (c) {
         case 'a':
             probesrc = optarg;
@@ -77,17 +77,11 @@ void ScanConfig::parse_opts(int argc, char **argv) {
         case 'h':
             usage(argv[0]);
             break;
-        case 'H':
-            hitlist = true;
-            break;
         case 'I':
             int_name = optarg;
             break;
         case 'k':
             probes = strtol(optarg, &endptr, 10);
-            break;
-        case 'l':
-            region_limit = optarg;
             break;
         case 'L':
             level = optarg;
@@ -144,6 +138,9 @@ void ScanConfig::parse_opts(int argc, char **argv) {
                 usage(argv[0]);
             }
             break;
+        case 'U':
+            addrtype = optarg;
+            break;
         case 'X':
             v6_eh = strtol(optarg, &endptr, 10);
             break;
@@ -154,22 +151,6 @@ void ScanConfig::parse_opts(int argc, char **argv) {
 
     if (download) {
         data_download(string(download));
-        exit(-1);
-    }
-
-    if (hitlist) {
-        if (region_limit) {
-            string type_str = Tr_Type_String[type];
-            string seedset = get_seedset(type_str);
-            hitlist_region_seeds(seedset, string(region_limit), type_str);
-        } else if (strcmp(level, "alias") != 0) {
-            string type_str = Tr_Type_String[type];
-            string seedset = get_seedset(type_str);
-            hitlist_analysis(seedset, string(level));
-        } else {
-            string alias_file = get_aliasfile();
-            alias_analysis(alias_file);
-        }
         exit(-1);
     }
 
@@ -196,28 +177,27 @@ void ScanConfig::parse_opts(int argc, char **argv) {
 
     if (alias) { // herustic search
         string hitlist_file = "./output/hitlist_" + string(alias_range) + "_" + string(Tr_Type_String[type]) + "_" + scan_time;
-        string alias_file = "./output/alias_" + string(alias_range) + "_"+ string(Tr_Type_String[type]) + "_" + scan_time;
         snprintf(output, UINT8_MAX, "%s", hitlist_file.c_str());
-
-        alias_output = (char *) malloc (UINT8_MAX);
-        snprintf(alias_output, UINT8_MAX, "%s", alias_file.c_str());
-        alias_out = fopen(alias_output, "w+");
-        if (alias_out == NULL)
-            fatal("%s: cannot open %s: %s", __func__, alias_output, strerror(errno));
+        
+        // string alias_file = "./output/alias_" + string(alias_range) + "_"+ string(Tr_Type_String[type]) + "_" + scan_time;
+        // alias_output = (char *) malloc (UINT8_MAX);
+        // snprintf(alias_output, UINT8_MAX, "%s", alias_file.c_str());
+        // alias_out = fopen(alias_output, "w+");
+        // if (alias_out == NULL)
+        //     fatal("%s: cannot open %s: %s", __func__, alias_output, strerror(errno));
     }
 
     if (strategy and not alias) {
         string result_file;
-        if (region_limit)
-            result_file = "./output/raw_" + string(region_limit) + "_" + string(search_strategy_str[strategy]) + "_" + string(Tr_Type_String[type]) + "_" + scan_time;
-        else if (seedfile) {
-            int index = string(seedfile).find_last_of('_');
-            result_file = "./output/raw_" + string(seedfile).substr(9, index - 8) + string(search_strategy_str[strategy]) + "_" + scan_time;
-        } else if (probe_type)
-            result_file = "./output/raw_" + string(search_strategy_str[strategy]) + "_" + string(Tr_Type_String[type]) + "_" + scan_time + "_probetype";
-        else
-            result_file = "./output/raw_" + string(search_strategy_str[strategy]) + "_" + string(Tr_Type_String[type]) + "_" + scan_time;
-        
+        if (seedfile) {
+            result_file = string(seedfile) + "_" + string(search_strategy_str[strategy]) + "_" + scan_time;
+            if (probe_type)
+                result_file += "_probetype";
+        } else {
+            result_file = "./output/" + string(search_strategy_str[strategy]) + "_" + string(Tr_Type_String[type]) + "_" + scan_time;
+            if (probe_type)
+                result_file += "_probetype";
+        }
         snprintf(output, UINT8_MAX, "%s", result_file.c_str());
 
         if (strategy == HMap6) {
@@ -232,7 +212,7 @@ void ScanConfig::parse_opts(int argc, char **argv) {
 
     if (classification) {
         int index = string(classification).find_last_of('/');
-        string result_file = "./output/non-alias_" + string(classification).substr(index + 1);
+        string result_file = "./output/" + string(classification).substr(index + 1)+ "_non-alias";
         snprintf(output, UINT8_MAX, "%s", result_file.c_str());
     }
 

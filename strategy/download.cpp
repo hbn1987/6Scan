@@ -46,6 +46,10 @@ void data_download(string type)
 {
     if (0 != access(string(DOWNLOAD).c_str(),0))
         mkdir(string(DOWNLOAD).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+    if (0 != access(string(COUNTRY).c_str(),0))
+        mkdir(string(COUNTRY).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
     string input;
     time_t now = time(0);
     tm *ltm = localtime(&now);
@@ -91,7 +95,7 @@ void data_download(string type)
         it = find(file_names.begin(), file_names.end(), filename_str);
         if (it == file_names.end()) {
             cout << "Start downloading the country resource list" << endl;
-            filename_str= DOWNLOAD + string("/") + filename_str + string(".json");
+            filename_str= COUNTRY + string("/") + filename_str + string(".json");
             filename = filename_str.c_str();
             url = "https://stat.ripe.net/data/country-resource-list/data.json?resource=" + type.substr(type.size()-2);
             download_raw_data(filename, url);
@@ -169,35 +173,8 @@ string get_aliasfile() {
 
 string get_countryfile(string scope) {
     string file_country;
-    file_country = DOWNLOAD + string("/") + scope + string("_")  + query_file(scope, DOWNLOAD) + string(".json");
+    file_country = COUNTRY + string("/") + scope + string("_")  + query_file(scope, COUNTRY) + string(".json");
     return file_country;
-}
-
-void get_countryfile_all(vector<string>& countries) {    
-    query_file_all("country", DOWNLOAD, countries);
-    for (auto& country : countries) {
-        country = DOWNLOAD + string("/") + country;
-    }
-}
-
-void get_aliasfile_all(vector<string>& aliases) {    
-    query_file_all("alias", OUTPUT, aliases);
-    for (auto& alias : aliases) {
-        alias = OUTPUT + string("/") + alias;
-    }
-}
-
-string get_region_hitlist(string scope, string type_str) {
-    string file_country;
-    file_country = OUTPUT + string("/hitlist_") + scope + string("_") + type_str + string("_")  + query_file(string("hitlist_") + scope + "_" + type_str, OUTPUT);
-    return file_country;
-}
-
-void get_region_hitlist_all(vector<string>& hitlists) {    
-    query_file_all("hitlist_country", OUTPUT, hitlists);
-    for (auto& hitlist : hitlists) {
-        hitlist = OUTPUT + string("/") + hitlist;
-    }
 }
 
 string get_asfile(string scope) {

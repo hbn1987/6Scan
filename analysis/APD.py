@@ -13,13 +13,12 @@ def bu0(dizhi):
         # 小段地址补0 如 :AB: 补成:00AB:
         if ((len(dizhi1[i]) < 4) and (len(dizhi1[i]) > 0)):
             temp = dizhi1[i]
-            # 需补0数 que0
+            # 需补0数
             que0 = 4 - len(dizhi1[i])
             temp2 = "".join('0' for i in range(0, que0))
             dizhi1[i] = temp2 + temp
 
-    # 补 ::中的0
-    # count 为补完:中0后长度
+    # 补 ::中的0, count为补完:中0后长度
     count = 0
     for i in range(0, len(dizhi1)):
         count = count + len(dizhi1[i])
@@ -41,12 +40,10 @@ def legal(dizhi):
     # 使用::不能大于2次
     if len(dizhi1) >= 3:
         label = 0
-        print(":: times >2")
     else:
         # 字符范围应为 0~9 A~F
         for i, char in enumerate(dizhi):
             if char not in ':0123456789abcdef':
-                print("char value not legal:", char)
                 label = 0
     # :不能出现在末位 同时允许::在最后
     # :不能出现在首位 同时允许::在最前
@@ -54,19 +51,16 @@ def legal(dizhi):
         label = 0
     if (dizhi[0] == ':') and (dizhi[1] != ':'):
         label = 0
-        print(": position not legal")
 
     # 不能出现 :::
     temp3 = dizhi.split(":::")
     if len(temp3) > 1:
-        print("::: not legal")
         label = 0
 
     # 每小节位数应不大于4
     dizhi2 = dizhi.split(':')
     for i in range(0, len(dizhi2)):
         if len(dizhi2[i]) >= 5:
-            print("每小节位数应不大于4")
             label = 0
 
     if label == 0:
@@ -132,14 +126,24 @@ def genaddr(lenth):
 
 def APD(filename): # Discover missed alias-prefix from results
     lines = open(filename).readlines()
-    lines = [iptrans(line[:-1]) for line in lines if line[0] != '#' and legal(line[:-1])]
+
+    responder_list = list()
+    for line in lines:
+        if line[0] != '#':
+            if line.find(',') != -1:
+                split_strings = line.split(',')
+                responder = split_strings[1].strip()
+                responder_list.append(iptrans(responder))
+            else:
+                responder = line.strip()
+                responder_list.append(iptrans(responder))
     
     prefixes = list()
     ips=list()
     for lent in range(8, 26): # Traverse prefixes from 32 to 112
         total = 0
         prefix_dict = dict()
-        for line in lines:
+        for line in responder_list:
             if line[:lent] not in prefix_dict.keys():
                 prefix_dict[line[:lent]] = 0
             prefix_dict[line[:lent]] += 1
@@ -148,6 +152,8 @@ def APD(filename): # Discover missed alias-prefix from results
         prefix_list=list(sorted(prefix_tuple, reverse=True))
         prefixes.append(prefix_list[0][1])
         print(prefix_list[0][1], prefix_list[0][0], round(prefix_list[0][0]*100/total, 2), '%')
+        if round(prefix_list[0][0]*100/total, 2) < 0.1:
+            break
         if len(prefix_list) >= 2:
             prefixes.append(prefix_list[1][1])
             print(prefix_list[1][1], prefix_list[1][0], round(prefix_list[1][0]*100/total, 2), '%')
@@ -170,7 +176,7 @@ def APD(filename): # Discover missed alias-prefix from results
     for ips16 in ips:
         responses, no_responses = multi_ping(retrans(ips16), timeout=1, retry=2)
         print('# IPs:', len(ips16), '# responses:', len(responses))
-        if len(responses) > 12: #16
+        if len(responses) > 2: #16
             res=[]
             for addr, rtt in responses.items():
                 # print "%s responded in %f seconds" % (addr, rtt)
@@ -185,75 +191,70 @@ def APD(filename): # Discover missed alias-prefix from results
 
     alias = []
     for line in prefixlist:
-        x=int(math.ceil(float(len(line))/4-1))
-        li=list(line)
-        for i in range(4, x*5, 5):
-            li.insert(i, ":")
-        li = "".join(li)
-        ln = "::/" + str(len(line)*4)
-        li = li + ln
-        alias.append(li)
+        prefixlen = len(line)*4
+        line = line + '0' * (32 - len(line))
+        lout=list(line)
+        for i in range(4,35,5):
+            lout.insert(i,":")
+        lout="".join(lout)
+        ln = "/" + str(prefixlen)
+        lout = lout + ln
+        # print(f'alias prefix: {lout}')
+        alias.append(lout)
     if len(alias):
-        print(alias)  
-        alias_file = filename.replace("hitlist", "alias") 
-        alias = [line+"\n" for line in alias]
-        f=open(alias_file,"a")
-        f.writelines(alias)
-        f.close() 
+        # 将alias中的每行文本写入文件
+        with open("newly_detected_alias", "w") as file:
+            file.writelines(line + "\n" for line in alias)
+        return 1
+    return 0
+  
 
-def alias_unfile(filename):
-    alias = [] 
-    lines = open(filename).readlines()
-    for i in range(0, len(lines), 150000):
-        lines_part = lines[i:i+150000]
-
-        prefix_dict = dict()    
-        for lent in range(7, 31):
-            prefix_dict[lent] = set()    
-            
-        for line in lines_part:
-            if line[0]!='#':
-                index = line.find('/')
-                prefix_len = int(line[index+1:-1])//4
-                if prefix_len > 30:
-                    print('Error:', line)
-                    continue
-                prefix = iptrans(line[:index])[:prefix_len]
-                prefix_dict[prefix_len].add(prefix)
-
-        prefix2remove = list()
-        for lent1 in range(30, 7, -1):
-            for prefix2detect in prefix_dict[lent1]:
-                for lent2 in range(7, lent1):
-                    for prefix_father in prefix_dict[lent2]:
-                        if prefix2detect.find(prefix_father) == 0:
-                            prefix2remove.append(prefix2detect)
-                            # print("Remove prefix:", prefix2detect, "as contains its parent prefix of:", prefix_father)
-        for prefix_redundancy in set(prefix2remove):
-            prefix_dict[len(prefix_redundancy)].remove(prefix_redundancy)
+def alias_unfile(lines):
+    alias = list()
+    prefix_dict = dict()    
+    for lent in range(7, 31):
+        prefix_dict[lent] = set()    
         
-        prefix_sum = 0   
-        for k, v in prefix_dict.items():
-            for line in v:
-                x=int(math.ceil(float(len(line))/4-1))
-                y=len(line)%4
-                li=list(line)
-                for i in range(4, x*5, 5):
-                    li.insert(i, ":")
-                li = "".join(li)
-                add_zero = 4 - len(li[(li.rfind(':')+1):])
-                if len(line) <= 28:
-                    ln = '0'*add_zero + "::/" + str(len(line)*4)
-                else:
-                    ln = '0'*(32-len(line))+'/'+str(len(line)*4)
-                li = li + ln
-                alias.append(li)
-            prefix_sum += len(v)
-        print("Reduce", len(lines_part), "prefixes to", prefix_sum)   
-    alias = [line+"\n" for line in alias]
-    f=open(filename,"w")
-    f.writelines(alias)
-    f.close() 
+    for line in lines:
+        if line[0]!='#':
+            index = line.find('/')
+            prefix_len = int(line[index+1:-1])//4
+            if prefix_len > 30:
+                print('Error:', line)
+                continue
+            prefix = iptrans(line[:index])[:prefix_len]
+            prefix_dict[prefix_len].add(prefix)
+
+    prefix2remove = list()
+    for lent1 in range(30, 7, -1):
+        for prefix2detect in prefix_dict[lent1]:
+            for lent2 in range(7, lent1):
+                for prefix_father in prefix_dict[lent2]:
+                    if prefix2detect.find(prefix_father) == 0:
+                        prefix2remove.append(prefix2detect)
+                        # print("Remove prefix:", prefix2detect, "as contains its parent prefix of:", prefix_father)
+    for prefix_redundancy in set(prefix2remove):
+        prefix_dict[len(prefix_redundancy)].remove(prefix_redundancy)
+    
+    prefix_sum = 0   
+    for k, v in prefix_dict.items():
+        for line in v:
+            x=int(math.ceil(float(len(line))/4-1))
+            y=len(line)%4
+            li=list(line)
+            for i in range(4, x*5, 5):
+                li.insert(i, ":")
+            li = "".join(li)
+            add_zero = 4 - len(li[(li.rfind(':')+1):])
+            if len(line) <= 28:
+                ln = '0'*add_zero + "::/" + str(len(line)*4)
+            else:
+                ln = '0'*(32-len(line))+'/'+str(len(line)*4)
+            li = li + ln
+            alias.append(li)
+        prefix_sum += len(v)
+    print("Reduce", len(lines), "prefixes to", prefix_sum)   
+    return alias
 
 def re_APD(filename):
     alias_list = open(filename).readlines()
@@ -299,7 +300,7 @@ def re_APD(filename):
     res_dict = sorted(res_dict.items(), key=lambda x:x[0], reverse=True)
     res_dict = dict([res_dict[i] for i in range(len(res_dict))])
     for k, v in res_dict.items():
-        print('responses:', k, 'ratio:', v*100.0/len(arrange_prefix), '%')
+        print('responses:', k, 'ratio:', round(v*100.0/len(arrange_prefix), 2), '%')
 
     f = open(filename,"w")
     f.writelines(final_arrange_prefix)

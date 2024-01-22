@@ -16,13 +16,14 @@ def RIPE_geoid(file_name):
     with open(file_name) as f:
         seeds = f.read().splitlines()
         for ip in seeds:
-            geo = pyt.get(ip)
-            if not geo:
-                unknow_list.append(ip)  
-                continue
-            if geo not in geo_data.keys():
-                geo_data[geo] = 0
-            geo_data[geo] += 1
+            if ip[0] != '#':
+                geo = pyt.get(ip)
+                if not geo:
+                    unknow_list.append(ip)  
+                    continue
+                if geo not in geo_data.keys():
+                    geo_data[geo] = 0
+                geo_data[geo] += 1
     return geo_data, unknow_list, len(seeds)
 
 if __name__ == "__main__":

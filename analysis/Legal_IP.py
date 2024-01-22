@@ -8,12 +8,12 @@ def legal(dizhi):
     # 使用::不能大于2次
     if len(dizhi1) >= 3:
         label = 0
-        print(":: times >2")
+        # print(":: times >2")
     else:
         # 字符范围应为 0~9 A~F
         for i, char in enumerate(dizhi):
             if char not in ':0123456789abcdef':
-                print("char value not legal:", char)
+                # print("char value not legal:", char)
                 label = 0
     # :不能出现在末位 同时允许::在最后
     # :不能出现在首位 同时允许::在最前
@@ -21,19 +21,19 @@ def legal(dizhi):
         label = 0
     if (dizhi[0] == ':') and (dizhi[1] != ':'):
         label = 0
-        print(": position not legal")
+        # print(": position not legal")
 
     # 不能出现 :::
     temp3 = dizhi.split(":::")
     if len(temp3) > 1:
-        print("::: not legal")
+        # print("::: not legal")
         label = 0
 
     # 每小节位数应不大于4
     dizhi2 = dizhi.split(':')
     for i in range(0, len(dizhi2)):
         if len(dizhi2[i]) >= 5:
-            print("每小节位数应不大于4")
+            # print("每小节位数应不大于4")
             label = 0
 
     if label == 0:
@@ -97,10 +97,8 @@ def rm_Invalid_IP(filename):
     ip_set = set()
     lines = open(filename).readlines()
     for line in lines:
-        # if line.find(',') != -1:
-        #     line = line[:line.index(',')]
-            if legal(line.strip()):
-                ip_set.add(line)
+        if legal(line.strip()):
+            ip_set.add(line)
     print("Number:", len(ip_set))
     f = open(filename,"w")
     f.writelines(list(ip_set))

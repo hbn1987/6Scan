@@ -40,7 +40,7 @@ class Strategy {
     void init_6tree(Node_List& nodelist, IPList6* iplist, std::string seedset);
     void target_generation_6tree(IPList6* iplist, std::string subspace, struct SpaceTreeNode* node, int start_idx);
     void init_6gen(IPList6* iplist, std::string seedset, std::vector<std::string>& clusters, std::vector<std::string>& clusters_big);
-    void target_generation_heuristic(IPList6* iplist, FixedSizeHashMap& prefix_map, int mask, uint16_t k, char p);
+    void target_generation_heuristic(IPList6* iplist, FixedSizeHashMap& prefix_map, int mask, uint16_t k, std::string p);
     void target_generation_alias(IPList6* iplist, std::string line);
     int get_dimension(std::string cluster);
     void init_hmap6(IPList6* iplist, std::string seedset, std::vector<std::string>& ahc_clusters, std::vector<std::string>& dhc_clusters);

@@ -2,14 +2,48 @@ import os
 import sys
 sys.path.append(os.getcwd())
 from analysis.APD import alias_unfile, re_APD, Prefix2AS
+import concurrent.futures
 
 def download():
     command = f"./6scan -D alias"
     os.system(command)
 
-def alias_unfile_multi(filename, n = 5):
+def alias_unfile_multi(file_path, n = 5):
     for i in range(n):
-        alias_unfile(filename)
+        process_file_parallel(file_path, lines_per_chunk=100000, max_workers=4)
+
+def process_lines(lines):
+    # 在这里执行对每个块的函数操作
+    # 例如，你可以解析块中的内容，进行计算，或者执行其他操作
+    result = [line.upper() for line in lines]  # 这里示范将每行文本变成大写
+    return result
+
+def split_file_into_line_chunks(file_path, lines_per_chunk=100000):
+    with open(file_path, 'r') as file:
+        lines = []
+        for line in file:
+            lines.append(line)
+            if len(lines) == lines_per_chunk:
+                yield lines
+                lines = []
+        if lines:  # 处理最后一块可能不满足 lines_per_chunk 的情况
+            yield lines
+
+def process_file_parallel(file_path, lines_per_chunk=100000, max_workers=4):
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # 获取文件行块生成器
+        line_chunks = split_file_into_line_chunks(file_path, lines_per_chunk)
+
+        # 提交每个行块的处理任务给线程池
+        futures = [executor.submit(alias_unfile, lines) for lines in line_chunks]
+
+        # 获取结果
+        results = [future.result() for future in concurrent.futures.as_completed(futures)]
+
+    with open(file_path, 'w') as file: 
+        for re in results:
+            for line in re:
+                file.write(line + '\n')
 
 def alias_statistics(G, H):
     gasser_lines = open(G).readlines()
@@ -66,8 +100,8 @@ def alias_comparision(G, G_H):
 
 if __name__ == "__main__":
     # download()
-    alias_unfile_multi(filename="./download/aliased_prefixes_20221212")
-    # re_APD('./residue') 
+    alias_unfile_multi(file_path="./download/aliased_prefixes_20231229")
+    # re_APD("./download/aliased_prefixes_20231227") 
     # alias_statistics(G = './download/aliased_prefixes_20221208', H = './output/alias_prefixes_20221208')
     # alias_comparision(G='./download/aliased_prefixes_20221208', G_H='./download/aliased_prefixes_20221212')
     

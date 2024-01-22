@@ -347,15 +347,14 @@ void ICMP6::write(FILE ** out, Stats* stats, bool probe_type) {
 
     if (is_scan) {
         type_str += "withPayload_";
-        if (stats->strategy == Heuristic) {      
-            string addr = seed2vec(target);      
-            string prefix = addr.substr(0, stats->mask/4);
-            string hexString = addr.substr(stats->mask/4, 1);
-            stats->hashMap.insert(prefix, hexString);
-        }
-
         if (strcmp(src, target) == 0) {   
             type_str += "Target";   
+            if (stats->strategy == Heuristic and stats->addrtype == "low") {      
+                string addr = seed2vec(target);      
+                string prefix = addr.substr(0, stats->mask/4);
+                string hexString = addr.substr(stats->mask/4, 1);
+                stats->hashMap.insert(prefix, hexString);
+            }
             if ((stats->strategy == Scan6) or (stats->strategy == Hit6)) {        
                 uint64_t index = ntohl(qpayload->fingerprint);
                 if (index < stats->nodelist.size())
@@ -365,8 +364,15 @@ void ICMP6::write(FILE ** out, Stats* stats, bool probe_type) {
                     stats->baddst++;
                 }
             }
-        } else
+        } else {
             type_str += "Src";
+            if (stats->strategy == Heuristic and stats->addrtype == "ran") { 
+                string addr = seed2vec(target);      
+                string prefix = addr.substr(0, stats->mask/4);
+                string hexString = addr.substr(stats->mask/4, 1);
+                stats->hashMap.insert(prefix, hexString);
+            }
+        }
     } else
         type_str += "noPayload";
     if (probe_type)

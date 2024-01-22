@@ -1,10 +1,10 @@
-# HScan6
+# HMap
 
-Towards Efficient Internet-wide Probing in IPv6 Networks.
+Towards Comprehensive and Efficient Internet-wide Scan in IPv6 Networks.
 
 ## Description
 
-Efficient IPv6 Ping Scanner Integrates Dynamic Search Algorithms (HScan6-DSA4p) and Target Generation Algorithms (HScan6-TGA).
+Efficient IPv6 scanner integrates ping (HMap-ping6), traceroute (HMap-trace6), and target generation algorithms (HMap-tga6).
 
 ## Require
 
@@ -32,9 +32,9 @@ make
 -P # Pre-scan the hitlist.
 -t [ICMP6/TCP6_SYN/TCP6_ACK/UDP6] # Set probe type.
 -I # Network interface to use.
--l [country_xx/as_xxxx] # Specify the region of the seeds using 2-digit ISO-3166 country code or AS number.
--s [HMap6/6Scan/6Hit/6Tree/6Gen] # Set TGA searching strategy, e.g., '-s HMap6' denotes HScan6-TGA method.
--A [country-xx/as-xxxx] # Perform HScan6-DSA4p in a designated region.
+-s [HMap6/6Scan/6Hit/6Tree/6Gen] # Set TGA searching strategy, e.g., '-s HMap6' denotes HMap-tga6 method.
+-A [country-xx/as-xxxx] # Perform HMap-ping6 in a designated region.
+-U [low/ran] # Specify the target address generation types for HMap-ping6 as "low" for low-byte and "ran" for randomized.
 -F # Specifies the seedset file.
 -d # Output with the probe type i.e., (Target, Responder, Probe).
 -r # Probing rate, 100Kpps by default.
@@ -56,18 +56,17 @@ make
 
 ./6scan -P -t ICMP6 -I [interface e.g., eth0]
 # Pre-scan the latest local hitlist to make the seedset using ICMPv6 probes.
-./6scan -A country_CN -t ICMP6 -I [interface e.g., eth0] -k 10 -d
-# Performing dynamic ping (HScan6-DSA4p) with a de-aliasing strategy on Chinese IPv6 prefixes using ICMPv6 probes, consisting of 10 probes in each subprefix, and identifying the responding probe type.
+./6scan -A country_CN -t ICMP6 -I [interface e.g., eth0] -k 10 -d -U ran -b 500
+# Performing dynamic ping (HMap-ping6) with a de-aliasing strategy on Chinese IPv6 prefixes using ICMPv6 probes, utilizing a maximum of 500 million ICMPv6 probes with randomized pattern target addresses. This comprises 10 probes in each subprefix, with an emphasis on identifying the responding probe type.
+./6scan -A global -t ICMP6 -I eno1 -k 4 -d -U low -b 500
+# Conducting dynamic ping (HMap-ping6) with a de-aliasing strategy on global IPv6 prefixes, utilizing a maximum of 500 million ICMPv6 probes with low-byte pattern target addresses. This comprises 4 probes in each subprefix, with an emphasis on identifying the responding probe type.
 
 ./6scan -t ICMP6 -I [interface e.g., eth0] -s HMap6
-# IPv6 Internet-wide scanning with HScan6-TGA method using the latest local ICMPv6 seedset.
+# IPv6 Internet-wide scanning with HMap-tga6 method using the latest local ICMPv6 seedset.
 ./6scan -t UDP6 -I [interface e.g., eth0] -s 6Hit
 # IPv6 Internet-wide scanning with 6Hit strategy using the latest local UDPv6 seedset.
 ./6scan -t UDP6 -I [interface e.g., eth0] -s 6Scan -F [seedfile]
 # Specifies the seedset for scanning using 6Scan strategy.
-
-./6scan -H -t ICMP6 -l country_CN
-# Get the Chinese seeds from Gasser et al's hitlist and our heuristic search strategy (i.e., mixed seedset).
 
 ./6scan -C [address file e.g., ./output/raw_6Scan_ICMP6_yyyymmdd] 
 # Remove the alias address in the file of raw_6Scan_ICMP6_yyyymmdd.
@@ -76,11 +75,11 @@ make
 ### Scan in a run
 
 ```shell
-# Step 1: Heuristic seed collection (HScan6-ping)
+# Step 1: Heuristic seed collection (HMap-ping6)
 python3 runner/1Hseed.py
 # Step 2: Organize alias prefix list 
 python3 runner/2Aliasp.py
-# Step 3: Create the seedset 
+# Step 3: Create the seedset
 python3 runner/3Mseed.py
 # Step 4: Evaluate the scan results 
 python3 runner/4Evalu.py

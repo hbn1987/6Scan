@@ -180,10 +180,11 @@ void IPList6::read_seedset(string in) {
     while (getline(inlist, line)) {
         if (!line.empty() && line[line.size() - 1] == '\r')
             line.erase( remove(line.begin(), line.end(), '\r'), line.end());
-        seeds.push_back(seed2vec(line));
+        if (line.compare(0, 6, "::ffff") != 0)
+            seeds.push_back(seed2vec(line));
     }
     inlist.close();
-    //cout << "The size of seedset: " << seeds.size() << endl;
+    cout << "The size of seedset: " << seeds.size() << endl;
 }
 
 uint32_t IPList4::next_address(struct in_addr *in) {

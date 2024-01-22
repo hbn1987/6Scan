@@ -133,6 +133,7 @@ class Stats {
     int mask = 32;
     uint64_t count = 0;       // number of probes sent
     uint64_t baddst = 0;      // checksum invalid on destination in response
+    std::string addrtype = "low";
 
     Node_List nodelist;
 
@@ -148,8 +149,10 @@ class Stats {
 
     std::vector<int> budgets_list;
 
-    Stats(int _strategy) {
-        strategy = _strategy;
+    Stats(ScanConfig * config) {
+        strategy = config->strategy;
+        if (config->addrtype)
+            addrtype = std::string(config->addrtype);
         gettimeofday(&start, NULL);
         const int n = 10;
         int budgets[n] = {10, 50, 100, 500, 1000, 1500, 2000, 2500, 3000, 4000};

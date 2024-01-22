@@ -345,9 +345,9 @@ void Strategy::init_6gen(IPList6* iplist, string seedset, vector<string>& cluste
     cluster_seeds.clear();
 }
 
-/* Herustic strategy (HScan6-DSA4p) */
-void Strategy::target_generation_heuristic(IPList6* iplist, FixedSizeHashMap& prefix_map, int mask, uint16_t k, char p) {
-    if (p == 'l') {
+/* Herustic strategy */
+void Strategy::target_generation_heuristic(IPList6* iplist, FixedSizeHashMap& prefix_map, int mask, uint16_t k, string p) {
+    if (p == "low") {
         int digits = static_cast<int>(log10(k) / log10(16)) + 1;
         string add_zero((32 - mask/4 - 1 - digits), '0');
         for (auto& iter : prefix_map.nonEmptyKeys()) {
@@ -459,24 +459,13 @@ void Strategy::init_hmap6(IPList6* iplist, string seedset, vector<string>& ahc_c
 
 void Strategy::alias_detection(set<std::string>& fit_clusters) {    
     ifstream infile;
-    string file_name = get_aliasfile(); // Gasser's alias prefix list
+    string file_name = get_aliasfile(); // Get alias prefix list
+    cout << "Remove alias addresses using file " << file_name << endl;
     infile.open(file_name);
 
     Patricia *alias_tree = new Patricia(128);
     alias_tree->populate6(infile);
     infile.close();
-
-    if (config->region_limit) {
-        vector<string> aliases;
-        get_aliasfile_all(aliases);
-        for (auto& it : aliases) {
-            if (it.find(string(config->region_limit)) != string::npos)
-                file_name = it;
-        }
-        infile.open(file_name);
-        alias_tree->populate6(infile);
-        infile.close();
-    }
 
     int *alias = NULL;
     vector<string> alias_clusters;

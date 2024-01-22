@@ -2,7 +2,7 @@
  Copyright (c) 2016-2019 Robert Beverly <rbeverly@cmand.org> all rights reserved.
  ***************************************************************************/
 /****************************************************************************
- Copyright (c) 2021 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
+ Copyright (c) 2021-2023 Bingnan Hou <houbingnan19@nudt.edu.cn> all rights reserved.
  ***************************************************************************/
 typedef std::pair<std::string, bool> val_t;
 typedef std::map<std::string, val_t> params_t;
@@ -14,7 +14,7 @@ public:
     srcmac(NULL), probesrc(NULL), instance(0), v6_eh(255),
     out(NULL), pre_scan(false), alias(false), type(0), 
     strategy(0), classification(NULL), download(NULL), alias_range(NULL),
-    alias_output(NULL), alias_out(NULL), region_limit(NULL), hitlist(false),
+    alias_output(NULL), alias_out(NULL), addrtype(NULL),
     level(NULL), seedfile(NULL), probe_type(false), budget(0), 
     dimension(0), space_output(NULL), space_out(NULL), exp_seed(0), probes(1){};
 
@@ -43,11 +43,9 @@ public:
     params_t params;
     bool pre_scan;
     bool alias;
-    bool hitlist;
     char* download;
     char* alias_range;
     char* classification;
-    char* region_limit;
     char* level;
     char* seedfile;
     bool probe_type;
@@ -55,4 +53,5 @@ public:
     uint8_t dimension;
     unsigned int exp_seed;
     uint16_t probes;
+    char* addrtype;
 };
