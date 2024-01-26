@@ -6,6 +6,8 @@ Towards Comprehensive and Efficient Internet-wide Scan in IPv6 Networks.
 
 Efficient IPv6 scanner integrates ping (HMap-ping6), traceroute (HMap-trace6), and target generation algorithms (HMap-tga6).
 
+Access the IPv6 hitlists gathered by HMap by visiting http://175.6.54.250/ipv6
+
 ## Require
 
 ```shell
