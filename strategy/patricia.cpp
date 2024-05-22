@@ -1032,7 +1032,7 @@ void Patricia::populate(int family, std::ifstream& infile, bool alias) {
     }
 }
 
-//int main() {
+// int main() {
 //    std::cout << "Alias resolution" << std::endl;
 //    Patricia *tree = new Patricia(128);
 //    std::ifstream infile;
@@ -1046,4 +1046,4 @@ void Patricia::populate(int family, std::ifstream& infile, bool alias) {
 //    if (alias)
 //        {std::cout << *alias << std::endl;}
 //    delete tree;
-//}
+// }

@@ -3,7 +3,6 @@
  ***************************************************************************/
 #include "strategy.h"
 #include <curl/curl.h>
-#include <curl/easy.h>
 
 bool download_raw_data(const char* filename, string url) {
     CURL* curl;
