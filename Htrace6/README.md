@@ -3,7 +3,7 @@
 Efficient Internet-wide IPv6 Topology Discovery with Dynamic Traceroute
 ___
 
-Htrace6 is an efficient tool specifically crafted for the measurement of IPv6 network topology. It builds upon the foundations laid by previous achievements [1-3] and introduces the innovative concept of dynamic probing. This novel approach significantly minimizes its impact on the Internet, thereby enabling the discovery of a larger number of router interfaces within the vast IPv6 address space in the same amount of time when compared to other available alternatives.
+Htrace6 is an efficient tool specifically crafted for the measurement of IPv6 network topology. It builds upon the foundations laid by previous achievements [1-3], including our recent work on efficient Internet-wide IPv6 router interface discovery and service analysis [4], and introduces the innovative concept of dynamic probing. This novel approach significantly minimizes its impact on the Internet, thereby enabling the discovery of a larger number of router interfaces within the vast IPv6 address space in the same amount of time when compared to other available alternatives.
 
 ## Installation
 
@@ -103,3 +103,5 @@ bazel run parsers/route_path -- --file [filepath]
 [2] R. Beverly, “Yarrp’ing the Internet: Randomized High-Speed Active Topology Discovery,” in IMC, 2016.
 
 [3] Y. Huang, M. Rabinovich, and R. Al-Dalky, “FlashRoute: Efficient Traceroute on a Massive Scale,” in IMC, 2020.
+
+[4] Z. Yang, X. Meng, X. Wang, Y. Yang, L. Hu, X. Li, B. Hou, and Z. Cai, “Efficient Internet-wide IPv6 Router Interface Discovery and Service Analysis,” The Computer Journal, 2026.
